@@ -8,9 +8,12 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - Initial version.
-- **Tag Queue window** (Tools → Tag Queue, Cmd/Ctrl+Alt+Q). It has a tag tree
-  grouped by resource with checkboxes to queue topics, new and total card counts,
-  per-resource progress, and search.
+- **Tag Queue window** (Tools → Tag Queue, Cmd/Ctrl+Alt+Q), a React web UI
+  that follows Anki's light and dark themes. It has a tag tree grouped by
+  resource with checkboxes to queue topics, new and total card counts,
+  per-resource progress bars, search with highlighted matches, a right-click
+  menu, toasts, and keyboard navigation (↑/↓, ←/→, Space to queue, / to
+  search).
 - **Resource filter** next to the search box: show and search all resources,
   only pinned resources, or a single resource. The choice is remembered.
 - **Queue all matches**: one click queues every search match that isn't already
@@ -28,3 +31,5 @@ All notable changes to this project are documented here. The format is based on
 - **Colorful Tags** integration: queued and completed tags are coloured in the
   sidebar automatically, plus a one-time import of existing colours.
 - Queue state is stored in the collection, so it's per profile and syncs.
+- `tools/devserver.py` runs the UI in a browser against a copy of a real
+  collection, for frontend work with live reload.

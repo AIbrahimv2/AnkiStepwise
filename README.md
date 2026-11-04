@@ -7,7 +7,8 @@ against your session limit. When you've watched the videos, mark the topics
 completed, which also unsuspends their cards.
 
 It's built for the AnKing workflow of "watch the video, unsuspend its cards",
-and works with any hierarchical tags.
+and works with any hierarchical tags. The window is a web UI (React) that follows
+Anki's light and dark themes, with keyboard navigation throughout.
 
 ## Features
 
@@ -69,14 +70,35 @@ double-click it, or run `./build.sh` and open the file it writes to `dist/`.
 
 ## Development
 
-The add-on lives entirely in `src/`. To test changes live, symlink `src/` into
-your Anki add-ons folder and restart Anki:
+The add-on that Anki loads lives entirely in `src/`. To test changes live,
+symlink `src/` into your Anki add-ons folder and restart Anki:
 
 ```bash
 ln -s "$(pwd)/src" ~/Library/Application\ Support/Anki2/addons21/anki-tag-queue
 ```
 
-Run `./build.sh` to produce a distributable `.ankiaddon` in `dist/`.
+The window's UI is a React + TypeScript app in `web/`, built with Vite into
+`src/web/app.js` and `src/web/app.css` (committed, so the add-on works straight
+from a checkout). It talks to Python through Anki's `pycmd` bridge:
+`src/bridge.py` handles the commands, and `src/viewmodel.py` shapes the data.
+
+```bash
+cd web && npm install
+npm run build        # rebuild src/web/ after changing the UI
+```
+
+To work on the UI with live reload and **real data**, run the dev server. It
+uses Anki's own Python to serve the real bridge against a temporary copy of a
+collection, then start Vite:
+
+```bash
+PY=~/Library/Application\ Support/AnkiProgramFiles/python/cpython-3.13.5-macos-aarch64-none/bin/python3
+"$PY" tools/devserver.py --collection ~/Library/Application\ Support/Anki2/User\ 1/collection.anki2
+cd web && npm run dev   # http://localhost:5173 (add ?theme=dark for dark mode)
+```
+
+Run `./build.sh` to build the UI and produce a distributable `.ankiaddon` in
+`dist/`.
 
 ## License
 
