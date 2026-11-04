@@ -15,7 +15,8 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 - **Tag tree by resource, split by step.** Resources sit under colour-coded
   **Step 1 / Step 2 / Step 3** sections that stay pinned to the top while you
   scroll, with checkboxes to queue topics and columns for new cards, total cards
-  and progress (e.g. `43/51 done`). Queue, Later and Done rows carry a matching
+  and a progress bar (hover it for the numbers); the status column only spells
+  out **Later** and **Done**. Queue, Later and Done rows carry a matching
   step chip.
 - **Keyword search.** Type `brainstem` or `b&b cardio` to see matching topics
   from every resource, nested under the resource they belong to. A dropdown next
