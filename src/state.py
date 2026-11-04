@@ -14,6 +14,8 @@ import time
 CONFIG_KEY = "tagQueue"
 QUEUED = "queued"
 COMPLETED = "completed"
+LATER = "later"  # found it, but it doesn't fit this session: park it
+STATUSES = (QUEUED, COMPLETED, LATER)
 SEP = "::"
 
 
@@ -32,7 +34,7 @@ class QueueState:
         raw = (data or {}).get("tags")
         if isinstance(raw, dict):
             for name, entry in raw.items():
-                if isinstance(entry, dict) and entry.get("status") in (QUEUED, COMPLETED):
+                if isinstance(entry, dict) and entry.get("status") in STATUSES:
                     self.tags[str(name)] = {
                         "status": entry["status"],
                         "at": int(entry.get("at") or 0),
@@ -64,6 +66,10 @@ class QueueState:
         k = self._key(tag)
         return self.tags[k]["status"] if k else None
 
+    def since(self, tag: str) -> int:
+        """When the tag got its current status."""
+        return self.completed_at(tag)
+
     def completed_at(self, tag: str) -> int:
         k = self._key(tag)
         return self.tags[k]["at"] if k else 0
@@ -91,6 +97,10 @@ class QueueState:
         """Completed tags, most recently completed first."""
         return self._with_status(COMPLETED, newest_first=True)
 
+    def later(self) -> list[str]:
+        """Tags saved for later, oldest first (the order they get queued)."""
+        return self._with_status(LATER, newest_first=False)
+
     # --- changes ---------------------------------------------------------
     # Each mutator returns {tag: new status or None} so callers can mirror
     # the change elsewhere (e.g. Colorful Tags sidebar colours).
@@ -111,27 +121,44 @@ class QueueState:
         self._reindex()
         return {k: None}
 
-    def queue(self, tag: str) -> dict:
-        """Queue a tag. Queued tags nested under it are folded into it, so
-        the queue never lists the same cards twice."""
+    def _fold(self, tag: str, statuses: tuple[str, ...]) -> dict:
+        """Drop own statuses of tags nested under `tag` (they're covered)."""
         changes: dict = {}
-        for q in self.queued():
-            if is_under(q, tag) and q.lower() != tag.lower():
-                changes.update(self._drop(q))
+        for k in [k for k, e in self.tags.items() if e["status"] in statuses]:
+            if is_under(k, tag) and k.lower() != tag.lower():
+                changes.update(self._drop(k))
+        return changes
+
+    def queue(self, tag: str) -> dict:
+        """Queue a tag (also takes it off the Later list). Queued or Later
+        tags nested under it are folded into it, so the queue never lists
+        the same cards twice."""
+        changes = self._fold(tag, (QUEUED, LATER))
         changes.update(self._set(tag, QUEUED))
         return changes
 
     def unqueue(self, tag: str) -> dict:
         return self._drop(tag) if self.status(tag) == QUEUED else {}
 
+    def save_later(self, tag: str) -> dict:
+        """Park a tag for a later session (moving it out of the queue if it
+        was queued). Later tags nested under it fold into it."""
+        changes = self._fold(tag, (LATER,))
+        changes.update(self._set(tag, LATER))
+        return changes
+
+    def unlater(self, tag: str) -> dict:
+        return self._drop(tag) if self.status(tag) == LATER else {}
+
     def complete(self, tags: list[str], at: int | None = None) -> dict:
-        """Mark tags completed, along with any queued tags nested under them."""
+        """Mark tags completed, along with any queued or Later tags nested
+        under them."""
         now = int(time.time()) if at is None else int(at)
         changes: dict = {}
         for tag in tags:
-            for q in self.queued():
-                if is_under(q, tag) and q.lower() != tag.lower():
-                    changes.update(self._set(q, COMPLETED, now))
+            for k in [k for k, e in self.tags.items() if e["status"] in (QUEUED, LATER)]:
+                if is_under(k, tag) and k.lower() != tag.lower():
+                    changes.update(self._set(k, COMPLETED, now))
             changes.update(self._set(tag, COMPLETED, now))
         return changes
 
