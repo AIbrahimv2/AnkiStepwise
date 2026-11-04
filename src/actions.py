@@ -61,7 +61,17 @@ def refresh_main_screen() -> None:
 
 
 def _plural(n: int, word: str) -> str:
-    return f"{n} {word}" + ("" if n == 1 else "s")
+    return f"{n:,} {word}" + ("" if n == 1 else "s")
+
+
+def say(message: str, parent=None) -> None:
+    """Show a short confirmation. Windows that can display their own toasts
+    (the web UI) expose `show_toast`; anything else gets Anki's tooltip."""
+    show = getattr(parent, "show_toast", None)
+    if callable(show):
+        show(message)
+    else:
+        tooltip(message, parent=parent or mw)
 
 
 # --- status changes ----------------------------------------------------------
@@ -102,11 +112,11 @@ def complete(tags: list[str], parent=None) -> None:
     commit(state, state.complete(tags))
     done = f"Marked {_plural(len(tags), 'topic')} completed"
     if not cids:
-        tooltip(done, parent=parent)
+        say(done, parent)
         return
 
     def on_success(_changes) -> None:
-        tooltip(f"{done} · unsuspended {_plural(len(cids), 'card')}", parent=parent)
+        say(f"{done} · unsuspended {_plural(len(cids), 'card')}", parent)
 
     unsuspend_cards(parent=parent, card_ids=cids).success(on_success).run_in_background()
 
@@ -115,11 +125,11 @@ def unsuspend(tags: list[str], parent=None) -> None:
     parent = parent or mw
     cids = suspended_ids(mw.col, tags)
     if not cids:
-        tooltip("No suspended cards in these topics.", parent=parent)
+        say("No suspended cards in these topics.", parent)
         return
 
     def on_success(_changes) -> None:
-        tooltip(f"Unsuspended {_plural(len(cids), 'card')}", parent=parent)
+        say(f"Unsuspended {_plural(len(cids), 'card')}", parent)
 
     unsuspend_cards(parent=parent, card_ids=cids).success(on_success).run_in_background()
 
