@@ -20,6 +20,7 @@ DEFAULTS: dict = {
     "colorful_tags_sync": True,
     "queued_color": "#ff9300",
     "completed_color": "#00f900",
+    "later_color": "#af52de",
     "shortcut": "Ctrl+Alt+Q",
     "import_offered": False,
 }

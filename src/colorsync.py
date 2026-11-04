@@ -13,7 +13,7 @@ from __future__ import annotations
 import colorsys
 import sys
 
-from .state import COMPLETED, QUEUED
+from .state import COMPLETED, LATER, QUEUED
 
 
 def find_user_data():
@@ -36,7 +36,8 @@ def available() -> bool:
     return find_user_data() is not None
 
 
-def apply(changes: dict, queued_color: str, completed_color: str, ud=None) -> bool:
+def apply(changes: dict, queued_color: str, completed_color: str, ud=None,
+          later_color: str | None = None) -> bool:
     """Mirror status changes ({tag: status or None}) as sidebar colours.
 
     Clearing a status only removes the colour if it is one of ours, so
@@ -46,12 +47,16 @@ def apply(changes: dict, queued_color: str, completed_color: str, ud=None) -> bo
     if ud is None or not changes:
         return False
     ours = {queued_color.lower(), completed_color.lower()}
+    if later_color:
+        ours.add(later_color.lower())
     for tag, status in changes.items():
         entry = dict(ud.tags.get(tag) or {})
         if status == QUEUED:
             entry["color"] = queued_color
         elif status == COMPLETED:
             entry["color"] = completed_color
+        elif status == LATER and later_color:
+            entry["color"] = later_color
         elif str(entry.get("color", "")).lower() in ours:
             entry.pop("color", None)
         if entry:
