@@ -7,6 +7,10 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- Course-order numbers are dropped from tag names everywhere except the main
+  tree (`03_Pharmacology` shows as "Pharmacology" in the side panel,
+  breadcrumbs, folder labels and toasts). Names that are only a number, like
+  UWorld question IDs, are kept.
 - Queue and Later are grouped by resource, with topics that share a parent
   folder clustered under it, a unique card count per group, and group buttons
   (complete all / move to Later / move to queue). "Order added" shows the flat
