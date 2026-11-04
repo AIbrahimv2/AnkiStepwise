@@ -99,7 +99,9 @@ without completing, clear its status, or pin a resource to the top.
 
 ### Keyboard
 
-The tag tree uses vim keys (arrow keys, Home and End work too):
+The tree remembers which folders you had open (and which step sections you
+closed), even after restarting Anki. It uses vim keys (arrow keys, Home and End work too). They work as
+soon as the window opens, and from anywhere on the page except text fields:
 
 | Keys | Does |
 | --- | --- |
@@ -113,6 +115,9 @@ The tag tree uses vim keys (arrow keys, Home and End work too):
 | `u` or `Cmd/Ctrl+Z` | Undo the last change |
 | `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
+| `Enter` / `Shift+Enter` (in search) | Jump to the next / previous match |
+| `n` / `N` | Next / previous search match |
+| `Esc` | Leave the search box (results stay); again to clear the search |
 
 Undo covers what you do in the Tag Queue window (queue, unqueue, Later,
 check off, clear, Fill queue, queue or save all search matches, imports),

@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
+- **Jump between search matches**: Enter / Shift+Enter in the search box,
+  or `n` / `N` in the tree, select the next / previous match (wrapping
+  around), and the bar shows "Match 3 of 47". Esc leaves the search box
+  with the results kept; Esc again clears the search.
+- The tree remembers which folders are open and which step sections you
+  closed, across restarts (kept in the Anki profile).
 - **Undo and redo** for changes made in the Tag Queue window: `u` or
   Cmd/Ctrl+Z undoes, `Ctrl-r` or Cmd/Ctrl+Shift+Z redoes, up to 50 steps.
   Undoing a check-off also re-suspends the cards it unsuspended (if still
@@ -22,6 +28,9 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- The tree's keys work as soon as the window opens (no click first), and
+  from anywhere on the page that isn't a text field, button, menu or
+  dialog.
 - The tree's Status column is down to one thing per row: a progress bar
   (numbers in its tooltip), or a bookmark for Later and a check for Done
   (dates in the tooltip), all ending at one edge. The Queued badge, the queued/Later counts inside folders and
