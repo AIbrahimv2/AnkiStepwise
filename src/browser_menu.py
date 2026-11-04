@@ -6,7 +6,7 @@ Mark completed. Works on several selected tags at once."""
 from __future__ import annotations
 
 from . import actions
-from .state import COMPLETED, QUEUED
+from .state import COMPLETED, LATER, QUEUED
 
 
 def _selected_tags(sidebar, item) -> list[str]:
@@ -35,6 +35,10 @@ def on_sidebar_menu(sidebar, menu, item, index) -> None:
         sub.addAction("Add to queue", lambda: actions.queue(tags))
     if QUEUED in statuses:
         sub.addAction("Remove from queue", lambda: actions.unqueue(tags))
+    if statuses != {LATER}:
+        sub.addAction("Save for later", lambda: actions.save_later(tags))
+    if LATER in statuses:
+        sub.addAction("Remove from Later", lambda: actions.unlater(tags))
     if statuses != {COMPLETED}:
         sub.addAction("Mark completed", lambda: actions.complete(tags, parent))
     if statuses - {None}:

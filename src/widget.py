@@ -59,7 +59,8 @@ def _plural(n: int, word: str) -> str:
 
 def build_widget() -> str:
     cfg = get_config()
-    queued = actions.load_state().queued()
+    state = actions.load_state()
+    queued, later = state.queued(), state.later()
     mode = cfg["count_mode"]
     n = len(fresh_ids(mw.col, queued, mode)) if queued else 0
     limit = cfg["card_limit"]
@@ -70,6 +71,8 @@ def build_widget() -> str:
         sub = f"{_plural(len(queued), 'topic')} · {n - limit:,} over your limit"
     else:
         sub = f"{_plural(len(queued), 'topic')} · {limit - n:,} left"
+    if later:
+        sub += f" · {len(later):,} saved for later"
     pct = min(100, round(100 * n / limit)) if limit else 0
     cls = "tq-wrap tq-over" if over else "tq-wrap"
     return (
