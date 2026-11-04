@@ -1,5 +1,5 @@
 import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, Moon, SearchX, Star } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, memo, useEffect, useRef, useState } from "react";
+import { type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
 import { Checkbox, Highlight, fmt } from "./ui";
@@ -31,6 +31,10 @@ interface TreeProps {
   onToggleLater: (node: TagNode) => void;
   onLoadMore: (key: string) => void;
   onContext: (key: string, x: number, y: number) => void;
+  /** n / N: jump to the next or previous search match. */
+  onJumpMatch: (dir: 1 | -1) => void;
+  /** Esc in the tree: clear the search, if there is one. */
+  onEscape: () => void;
 }
 
 /** Small coloured "Step 1" pill; colours cycle per resource root. */
@@ -38,6 +42,17 @@ export function StepChip({ step, index }: { step: string | null; index: number |
   if (!step) return null;
   return <span className={`step-chip step-${(index ?? 0) % 4}`}>{step}</span>;
 }
+
+/** The bits of a key event the tree reads (React's and the DOM's both fit). */
+type KeyLike = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey" | "preventDefault">;
+
+const TREE_KEYS = new Set([
+  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", " ", "Enter", "Escape",
+  "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End",
+]);
+
+/** Nothing on the page has focus (it's on the body). */
+const pageIdle = () => !document.activeElement || document.activeElement === document.body;
 
 export function Tree(props: TreeProps) {
   const { rows, nodes, expanded, selected } = props;
@@ -66,9 +81,11 @@ export function Tree(props: TreeProps) {
   }, [props.flash]);
 
   // Vim keys: j/k move, h/l close or go up / open or go in, gg/G top and
-  // bottom, Ctrl-d/Ctrl-u half a page. Arrow keys, Home and End work too.
+  // bottom, Ctrl-d/Ctrl-u half a page, n/N next/previous search match.
+  // Arrow keys, Home and End work too.
   const lastG = useRef(0);
-  const onKeyDown = (e: KeyboardEvent) => {
+  const onKeyDown = (e: KeyLike) => {
+    if (e.key === "Escape") return props.onEscape(); // even when a search found nothing
     if (!rows.length) return;
     const ctrl = e.ctrlKey && !e.metaKey && !e.altKey;
     if ((e.metaKey || e.altKey || e.ctrlKey) && !ctrl) return; // leave app shortcuts alone
@@ -83,7 +100,15 @@ export function Tree(props: TreeProps) {
     const move = (j: number) => props.onSelect(rows[Math.max(0, Math.min(rows.length - 1, j))].key);
     const halfPage = Math.max(1, Math.floor((box.current?.clientHeight ?? 600) / 30 / 2));
     let key = e.key;
-    if (key === "g" && e.shiftKey) key = "G"; // some keyboards report Shift+g as "g"
+    // Some keyboards report Shift+g as "g" (and so on).
+    if (key === "g" && e.shiftKey) key = "G";
+    if (key === "n" && e.shiftKey) key = "N";
+    if (key === "n" || key === "N") {
+      props.onJumpMatch(key === "n" ? 1 : -1);
+      e.preventDefault();
+      return;
+    }
+
     if (ctrl) {
       if (key !== "d" && key !== "u") return;
       key = key === "d" ? "PageHalfDown" : "PageHalfUp";
@@ -146,6 +171,40 @@ export function Tree(props: TreeProps) {
     e.preventDefault();
   };
 
+
+  // The keys work as soon as the window opens: the tree takes focus once it
+  // has rows, and again whenever the window comes back, unless something
+  // else (the search box, a dialog) has it.
+  const hasRows = rows.length > 0;
+  useEffect(() => {
+    if (hasRows && pageIdle()) box.current?.focus({ preventScroll: true });
+  }, [hasRows]);
+  useEffect(() => {
+    const onFocus = () => pageIdle() && box.current?.focus({ preventScroll: true });
+    window.addEventListener("focus", onFocus);
+    return () => window.removeEventListener("focus", onFocus);
+  }, []);
+
+  // Tree keys pressed while focus is elsewhere on the page (after clicking a
+  // queue row, say) still drive the tree; not in text fields, on buttons, or
+  // with a menu or dialog open.
+  const keyRef = useRef(onKeyDown);
+  keyRef.current = onKeyDown;
+  useEffect(() => {
+    const onKey = (e: KeyboardEvent) => {
+      const tree = box.current;
+      if (e.defaultPrevented || !tree || tree.contains(e.target as Node)) return;
+      const t = e.target as HTMLElement;
+      if (t.closest?.("input, textarea, select, button, [contenteditable]")) return;
+      if (document.querySelector(".overlay, .menu")) return;
+      const half = e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "d" || e.key === "u");
+      if (!half && (e.ctrlKey || e.metaKey || e.altKey || !TREE_KEYS.has(e.key))) return;
+      tree.focus({ preventScroll: true });
+      keyRef.current(e);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return (
     <>
       <div className="tree" ref={box} tabIndex={0} onKeyDown={onKeyDown} role="tree">
@@ -486,13 +545,13 @@ function Skeleton() {
   );
 }
 
-export function DetailsBar({ details }: { details: Details | null }) {
+export function DetailsBar({ details, searching }: { details: Details | null; searching: boolean }) {
   if (!details) {
     // Nothing selected: just the keys, no instructions.
     return (
       <div className="details">
         <div className="details-main" />
-        <KeyHints />
+        <KeyHints searching={searching} />
       </div>
     );
   }
@@ -569,7 +628,7 @@ function DetailsBadge({ d }: { d: Details }) {
 }
 
 /** Vim-style keys for the tree (arrow keys work too). */
-function KeyHints() {
+function KeyHints({ searching }: { searching: boolean }) {
   return (
     <div className="hint-keys">
       <span>
@@ -589,9 +648,16 @@ function KeyHints() {
       <span>
         <kbd className="kbd">u</kbd>undo
       </span>
-      <span>
-        <kbd className="kbd">/</kbd>search
-      </span>
+      {searching ? (
+        <span>
+          <kbd className="kbd">n</kbd>
+          <kbd className="kbd">N</kbd>next match
+        </span>
+      ) : (
+        <span>
+          <kbd className="kbd">/</kbd>search
+        </span>
+      )}
     </div>
   );
 }

@@ -5,7 +5,7 @@ import { type Anchor, Menu, type MenuEntry, Switch, anchorBelow, fmt, plural } f
 
 export const SearchBox = forwardRef<
   HTMLInputElement,
-  { value: string; onChange: (v: string) => void; onSubmit: () => void }
+  { value: string; onChange: (v: string) => void; onSubmit: (back: boolean) => void }
 >(function SearchBox(props, ref) {
   return (
     <div className="search">
@@ -16,14 +16,19 @@ export const SearchBox = forwardRef<
         ref={ref}
         value={props.value}
         placeholder="Search topics…"
-        title="Search topic names, e.g. brainstem or b&b cardio. Press / to focus."
+        title="Search topic names, e.g. brainstem or b&b cardio. / to search, Enter / Shift+Enter for the next / previous match, Esc to go back to the tree."
         spellCheck={false}
         onChange={(e) => props.onChange(e.target.value)}
         onKeyDown={(e) => {
-          if (e.key === "Enter") props.onSubmit();
-          if (e.key === "Escape" && props.value) {
+          if (e.key === "Enter") {
+            e.preventDefault();
+            props.onSubmit(e.shiftKey);
+          }
+          // Esc leaves the box like vim's normal mode: the results stay, and
+          // n / N, j / k work on them (Esc again clears the search).
+          if (e.key === "Escape") {
             e.stopPropagation();
-            props.onChange("");
+            e.currentTarget.blur();
           }
         }}
       />
@@ -141,11 +146,15 @@ export function HideDoneSwitch(props: { checked: boolean; onChange: (v: boolean)
   return <Switch checked={props.checked} label="Hide done" onChange={props.onChange} />;
 }
 
-export function MatchBar(props: { summary: Summary; onQueueAll: () => void; onLaterAll: () => void }) {
+export function MatchBar(props: { summary: Summary; at: number; onQueueAll: () => void; onLaterAll: () => void }) {
   // Just the count and the two actions. What queuing adds is in the Queue
   // button's tooltip, and going over the limit asks first anyway.
   const s = props.summary;
-  const head = s.truncated ? `First ${fmt(s.count)} matches` : plural(s.count, "match", "matches");
+  const head = props.at
+    ? `Match ${fmt(props.at)} of ${fmt(s.count)}`
+    : s.truncated
+      ? `First ${fmt(s.count)} matches`
+      : plural(s.count, "match", "matches");
   const queueTitle = s.truncated
     ? "Too many matches to queue at once"
     : s.candidates

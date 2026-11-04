@@ -119,6 +119,9 @@ class QueueDialog(QDialog):
         else:
             self.push({"type": "sync"})
             self.request_index()
+        # Keyboard focus to the page, so the tree's keys work without a
+        # click first (the page then focuses the tree itself).
+        self.web.setFocus()
 
     def hideEvent(self, ev) -> None:
         actions.unsubscribe(self.on_state_changed)

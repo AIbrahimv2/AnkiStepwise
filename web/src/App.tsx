@@ -367,6 +367,50 @@ export function App() {
     return () => window.removeEventListener("keydown", onKey);
   }, [act]);
 
+  // --- jumping between search matches ----------------------------------------
+
+  /** Matches in the order they appear in the tree. */
+  const matchKeys = useMemo(() => {
+    if (!search) return [];
+    const hit = new Set(search.matches);
+    return rows.filter((r) => hit.has(r.key)).map((r) => r.key);
+  }, [rows, search]);
+  const matchAt = selected ? matchKeys.indexOf(selected) + 1 : 0;
+
+  /** Select the next (1) or previous (-1) match after the selected row,
+   *  wrapping around: n / N in the tree, Enter / Shift+Enter in search. */
+  const jumpMatch = useCallback(
+    (dir: 1 | -1) => {
+      if (!matchKeys.length) return;
+      const order = new Map(rows.map((r, i) => [r.key, i]));
+      const here = selected ? (order.get(selected) ?? -1) : -1;
+      const pos = matchKeys.map((k) => order.get(k) ?? 0);
+      let j = dir === 1 ? pos.findIndex((p) => p > here) : pos.findLastIndex((p) => p < here);
+      if (j < 0) j = dir === 1 ? 0 : matchKeys.length - 1;
+      setSelected(matchKeys[j]);
+    },
+    [matchKeys, rows, selected],
+  );
+
+  // Enter in the search box: search now if the results are stale, then go
+  // to the next match (Shift+Enter: previous), staying in the box.
+  const pendingJump = useRef<0 | 1 | -1>(0);
+  const submitSearch = (back: boolean) => {
+    const q = query.trim();
+    if (!q) return;
+    if (search?.query === q) jumpMatch(back ? -1 : 1);
+    else {
+      pendingJump.current = back ? -1 : 1;
+      runSearch(q);
+    }
+  };
+  useEffect(() => {
+    if (pendingJump.current && matchKeys.length) {
+      jumpMatch(pendingJump.current);
+      pendingJump.current = 0;
+    }
+  }, [matchKeys, jumpMatch]);
+
   // --- tree interactions ---------------------------------------------------
 
   const toggleExpand = useCallback(
@@ -680,12 +724,12 @@ export function App() {
       <main className="main">
         <section className="panel">
           <div className="toolbar">
-            <SearchBox ref={searchInput} value={query} onChange={setQuery} onSubmit={() => query.trim() && runSearch(query.trim())} />
+            <SearchBox ref={searchInput} value={query} onChange={setQuery} onSubmit={submitSearch} />
             <ScopePicker scopes={scopes} value={scope} onChange={changeScope} />
             <HideDoneSwitch checked={hideDone} onChange={(v) => setOption("hideCompleted", v)} />
           </div>
           {search && summary && summary.count > 0 && (
-            <MatchBar summary={summary} onQueueAll={queueMatches} onLaterAll={() => act("later_matches")} />
+            <MatchBar summary={summary} at={matchAt} onQueueAll={queueMatches} onLaterAll={() => act("later_matches")} />
           )}
           <Tree
             rows={rows}
@@ -702,8 +746,10 @@ export function App() {
             onToggleQueue={toggleQueue}
             onToggleLater={toggleLater}
             onContext={(key, x, y) => setMenu({ key, anchor: { x, y } })}
+            onJumpMatch={jumpMatch}
+            onEscape={() => queryRef.current && setQuery("")}
           />
-          <DetailsBar details={details} />
+          <DetailsBar details={details} searching={!!search} />
         </section>
         {side && (
           <SidePanel
