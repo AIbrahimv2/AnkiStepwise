@@ -259,6 +259,23 @@ export interface Toast {
   action?: { label: string; onClick: () => void };
 }
 
+/** A toast's first line is its headline; any further lines are details,
+ *  set side by side underneath. */
+function ToastText({ message }: { message: string }) {
+  const [head, ...rest] = message.split("\n");
+  if (!rest.length) return <span>{head}</span>;
+  return (
+    <span className="t-text">
+      <span>{head}</span>
+      <span className="t-detail">
+        {rest.map((line) => (
+          <span key={line}>{line}</span>
+        ))}
+      </span>
+    </span>
+  );
+}
+
 export function Toasts({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: number) => void }) {
   return (
     <div className="toasts" aria-live="polite">
@@ -273,7 +290,7 @@ export function Toasts({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id:
               <Info size={15} />
             )}
           </span>
-          {t.message}
+          <ToastText message={t.message} />
           {t.action && (
             <button
               type="button"

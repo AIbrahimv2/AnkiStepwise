@@ -84,14 +84,15 @@ export function SidePanel(props: Props) {
         <div className="meter-hint">
           {!queued ? (
             "Nothing queued yet — tick topics to start a session."
-          ) : side.over ? (
-            <>
-              <TriangleExclamationPoint size={13} />
-              {fmt(-left)} over your limit · {side.watched}/{queued} watched
-            </>
           ) : (
             <>
-              {fmt(left)} left · {side.watched}/{queued} watched
+              <span className="meter-left">
+                {side.over && <TriangleExclamationPoint size={13} />}
+                {side.over ? `${fmt(-left)} over your limit` : `${fmt(left)} left`}
+              </span>
+              <span className="meter-watched">
+                {side.watched}/{queued} watched
+              </span>
             </>
           )}
         </div>
@@ -460,11 +461,13 @@ function FillBar({ plan, onFill }: { plan: LaterPlan | null; onFill: () => void 
     else
       text = (
         <>
-          <b>{plural(plan.picked, "topic")}</b> fit — adds <b>+{fmt(plan.add)}</b> →{" "}
-          <b>
-            {fmt(plan.after)} / {fmt(plan.limit ?? 0)}
-          </b>
-          {plan.skipped ? ` · ${plan.skipped} too big for now` : ""}
+          <span>
+            <b>{plural(plan.picked, "topic")}</b> fit — adds <b>+{fmt(plan.add)}</b> →{" "}
+            <b>
+              {fmt(plan.after)} / {fmt(plan.limit ?? 0)}
+            </b>
+          </span>
+          {plan.skipped ? <span className="fill-skip">{plan.skipped} too big for now</span> : null}
         </>
       );
   }

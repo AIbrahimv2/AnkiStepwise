@@ -389,7 +389,10 @@ function Progress({ done, total }: { done: number; total: number }) {
   );
 }
 
-const sinceText = (since: string | null) => (since && since !== "imported" ? ` · ${since}` : "");
+/** When a status was set, set apart from the status word by weight and
+ *  spacing rather than a separator. */
+const sinceText = (since: string | null) =>
+  since && since !== "imported" ? <span className="since">{since}</span> : null;
 
 function StatusCell({ node }: { node: TagNode }) {
   const via = node.inherited ? ` as part of ${node.source}` : "";
@@ -501,16 +504,14 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
     tail = <>Done — every card is studied</>;
   } else if (d.status === "completed") {
     tail = <>{d.date === "imported" ? "Completed (imported from Colorful Tags)" : `Completed ${d.date}`}</>;
-  } else if (d.status === "later") {
-    tail = (
-      <>
-        Saved for later{d.via ? <> as part of <span className="strong">{d.via}</span></> : ` ${d.date}`} ·{" "}
-        {projection}
-      </>
-    );
   } else {
     tail = projection;
   }
+  // A Later topic shows both where it's parked and what queuing it would add.
+  const parked =
+    d.status === "later" ? (
+      <span>Saved for later{d.via ? <> as part of <span className="strong">{d.via}</span></> : ` ${d.date}`}</span>
+    ) : null;
   return (
     <div className="details">
       <div className="details-main">
@@ -522,14 +523,14 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
         <div className="details-sub">
           <span className={d.suspended ? "strong" : undefined}>{fmt(d.suspended)} suspended</span>
           {d.waiting > 0 && (
-            <>
-              {" · "}
+            <span>
               {fmt(d.waiting)} waiting
               {d.buried > 0 && <> ({fmt(d.buried)} buried, back on their own)</>}
-            </>
+            </span>
           )}
-          {" · "}
-          {fmt(d.total)} total · {tail}
+          <span>{fmt(d.total)} total</span>
+          {parked}
+          <span className="details-tail">{tail}</span>
         </div>
       </div>
     </div>

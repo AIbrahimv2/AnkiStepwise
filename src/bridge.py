@@ -69,6 +69,8 @@ class Bridge:
         return self._toasts is not None
 
     def toast(self, message: str) -> None:
+        """Show a toast in the page. The first line is the headline; any
+        further lines are details, laid out side by side under it."""
         if self._toasts is not None:
             self._toasts.append(message)
         else:
@@ -195,7 +197,7 @@ class Bridge:
         if cands and not msg.get("truncated"):
             add, _overlap, _after = view.projection(cands)
             actions.queue(cands)
-            self.toast(f"Queued {_plural(len(cands), 'topic')} · +{add:,} cards")
+            self.toast(f"Queued {_plural(len(cands), 'topic')}\n+{add:,} cards")
         return self.bundle(msg)
 
     # --- later ---------------------------------------------------------------
@@ -224,9 +226,9 @@ class Bridge:
     def cmd_fill_from_later(self, msg: dict) -> dict:
         picked, added, skipped = actions.fill_from_later()
         if picked:
-            text = f"Queued {_plural(len(picked), 'topic')} from Later · +{added:,} cards"
+            text = f"Queued {_plural(len(picked), 'topic')} from Later\n+{added:,} cards"
             if skipped:
-                text += f" · {len(skipped):,} didn't fit"
+                text += f"\n{len(skipped):,} didn't fit"
             self.toast(text)
         elif skipped:
             self.toast("Nothing from Later fits under your limit right now")
@@ -314,7 +316,7 @@ class Bridge:
         parts = [f"{counts[k]:,} {k}" for k in (QUEUED, LATER, COMPLETED) if counts[k]]
         text = "Imported " + (", ".join(parts) if parts else "nothing")
         if skipped:
-            text += f" · skipped {skipped:,} tags that no longer exist"
+            text += f"\nSkipped {skipped:,} tags that no longer exist"
         self.toast(text)
         view = self.view()
         return {"scopes": view.scopes(), "scope": view.scope_value(), "options": view.options()}

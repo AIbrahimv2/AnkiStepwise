@@ -49,6 +49,7 @@ export function ScopePicker(props: {
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const [filter, setFilter] = useState("");
   const current = props.scopes.find((s) => s.value === props.value) ?? props.scopes[0];
+  const manySteps = props.scopes.filter((s) => s.kind === "root").length > 1;
 
   // One section per step ("Step 1", "Step 2", ...), each starting with
   // "All of Step N", then "Other tags".
@@ -99,6 +100,7 @@ export function ScopePicker(props: {
           <Layers size={14} />
         )}
         <span className="picker-label">{current?.label ?? "All resources"}</span>
+        {current?.kind === "resource" && manySteps && <span className="picker-step">{current.group}</span>}
         <span className="muted">
           <ChevronsUpDown size={13} />
         </span>
@@ -148,12 +150,12 @@ export function MatchBar(props: { summary: Summary; onQueueAll: () => void; onLa
     s.done ? `${fmt(s.done)} done` : null,
   ].filter(Boolean);
   let tail: ReactNode = null;
-  if (s.truncated) tail = <> — too many to queue at once; narrow the search or pick a resource</>;
-  else if (!s.candidates) tail = <> — nothing left to queue</>;
+  if (s.truncated) tail = <>Too many to queue at once; narrow the search or pick a resource</>;
+  else if (!s.candidates) tail = <>Nothing left to queue</>;
   else
     tail = (
       <>
-        {" "}— queuing the rest adds <span className="add">+{fmt(s.add)}</span> →{" "}
+        Queuing the rest adds <span className="add">+{fmt(s.add)}</span> →{" "}
         <span className={s.over ? "over" : "add"}>
           {fmt(s.after)} / {fmt(s.limit)}
         </span>
@@ -163,8 +165,12 @@ export function MatchBar(props: { summary: Summary; onQueueAll: () => void; onLa
     <div className="matchbar">
       <div className="matchbar-text">
         <b>{head}</b>
-        {bits.length ? ` · ${bits.join(" · ")}` : ""}
-        {tail}
+        {bits.map((b) => (
+          <span key={b} className="match-bit">
+            {b}
+          </span>
+        ))}
+        <span className="match-tail">{tail}</span>
       </div>
       <button
         type="button"

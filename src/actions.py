@@ -178,13 +178,14 @@ def _plural(n: int, word: str) -> str:
 
 
 def say(message: str, parent=None) -> None:
-    """Show a short confirmation. Windows that can display their own toasts
-    (the web UI) expose `show_toast`; anything else gets Anki's tooltip."""
+    """Show a short confirmation: a headline, then optional detail lines.
+    Windows that can display their own toasts (the web UI) expose
+    `show_toast`; anything else gets Anki's tooltip."""
     show = getattr(parent, "show_toast", None)
     if callable(show):
         show(message)
     else:
-        tooltip(message, parent=parent or mw)
+        tooltip(message.replace("\n", "<br>"), parent=parent or mw)
 
 
 # --- status changes ----------------------------------------------------------
@@ -278,7 +279,7 @@ def complete(tags: list[str], parent=None) -> None:
         return
 
     def on_success(_changes) -> None:
-        say(f"{done} · unsuspended {_plural(len(cids), 'card')}", parent)
+        say(f"{done}\nUnsuspended {_plural(len(cids), 'card')}", parent)
 
     unsuspend_cards(parent=parent, card_ids=cids).success(on_success).run_in_background()
 

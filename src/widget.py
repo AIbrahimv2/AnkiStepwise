@@ -30,8 +30,11 @@ STYLE = """
 .tq-bar { height: 4px; border-radius: 2px; background: rgba(127,127,127,.18); margin-top: 7px;
           overflow: hidden; }
 .tq-fill { height: 100%; border-radius: 2px; background: var(--fg, #555); opacity: .5; }
-.tq-sub { font-size: 11px; opacity: .45; margin-top: 6px; }
-.tq-over .tq-num b, .tq-over .tq-sub { color: #e5484d; opacity: 1; }
+.tq-sub { display: flex; gap: 14px; font-size: 11px; margin-top: 6px; }
+.tq-sub span { opacity: .45; }
+.tq-sub .tq-end { margin-left: auto; }
+.tq-over .tq-num b { color: #e5484d; }
+.tq-over .tq-sub span:first-child { color: #e5484d; opacity: 1; }
 .tq-over .tq-fill { background: #e5484d; opacity: .9; }
 </style>
 """
@@ -62,7 +65,7 @@ window.tqUpdate = function (d) {
   w.querySelector('.tq-num b').textContent = d.count;
   w.querySelector('.tq-unit').textContent = ' / ' + d.limit + ' ' + d.unit;
   w.querySelector('.tq-fill').style.width = d.pct + '%';
-  w.querySelector('.tq-sub').textContent = d.sub;
+  w.querySelector('.tq-sub').innerHTML = d.sub;
 };
 </script>
 """
@@ -85,19 +88,27 @@ def _data() -> dict | None:
     n = len(actions.fresh_cards(session)) if session else 0
     limit = cfg["card_limit"]
     over = n > limit
-    progress = f"{watched}/{len(session)} watched"
+    # Separate facts sit apart, not strung together with dots: what's left
+    # (and what's saved for later) on the left, today's progress on the right.
     if not session:
-        sub = "Nothing queued — click to pick topics"
-    elif over:
-        sub = f"{progress} · {n - limit:,} over your limit"
+        sub = _sub("Nothing queued — click to pick topics")
     else:
-        sub = f"{progress} · {limit - n:,} left"
-    if later:
-        sub += f" · {len(later):,} saved for later"
+        left = f"{n - limit:,} over your limit" if over else f"{limit - n:,} left"
+        sub = _sub(left, f"{len(later):,} saved for later" if later else None,
+                   end=f"{watched}/{len(session)} watched")
     return {
         "count": f"{n:,}", "limit": f"{limit:,}", "unit": UNITS.get(cfg["count_mode"], "cards"),
         "over": over, "pct": min(100, round(100 * n / limit)) if limit else 0, "sub": sub,
     }
+
+
+def _sub(*parts: str | None, end: str | None = None) -> str:
+    """The meter's small print: each fact in its own span, `end` pushed to
+    the right edge."""
+    out = "".join(f"<span>{html.escape(p)}</span>" for p in parts if p)
+    if end:
+        out += f'<span class="tq-end">{html.escape(end)}</span>'
+    return out
 
 
 def build_widget() -> str:
@@ -108,7 +119,7 @@ def build_widget() -> str:
         cfg = get_config()
         d = {"count": "…", "limit": f"{cfg['card_limit']:,}",
              "unit": UNITS.get(cfg["count_mode"], "cards"), "over": False, "pct": 0,
-             "sub": "Counting cards…"}
+             "sub": _sub("Counting cards…")}
     cls = "tq-wrap tq-over" if d["over"] else "tq-wrap"
     return (
         f'<div id="tq-widget" class="{cls}" onclick="pycmd(\'{OPEN_CMD}\')" title="Open Tag Queue">'
@@ -116,7 +127,7 @@ def build_widget() -> str:
         f'<span class="tq-num"><b>{d["count"]}</b><span class="tq-unit"> / {d["limit"]} '
         f'{html.escape(d["unit"])}</span></span></div>'
         f'<div class="tq-bar"><div class="tq-fill" style="width:{d["pct"]}%"></div></div>'
-        f'<div class="tq-sub">{html.escape(d["sub"])}</div>'
+        f'<div class="tq-sub">{d["sub"]}</div>'
         "</div>" + STYLE + PLACE_SCRIPT + UPDATE_SCRIPT
     )
 

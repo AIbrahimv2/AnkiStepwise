@@ -109,12 +109,6 @@ class View:
         parent = key.rsplit(SEP, 1)[0] if SEP in key else ""
         return parent in self.roots or (parent == "" and key not in self.roots)
 
-    def resource_label(self, key: str, root: str | None) -> str:
-        label = prettify(self.index.last(key))
-        if root and len(self.roots) > 1:
-            label += f" · {root_label(self.index.name(root))}"
-        return label
-
     def browse_entries(self) -> tuple[list[tuple[str, str]], list[str]]:
         idx, pinned = self.index, self.pinned
 
@@ -167,8 +161,10 @@ class View:
                         "kind": "root", "group": step, "stepIndex": i})
             for key, r in resources:
                 if r == root:
-                    out.append({"value": key, "label": self.resource_label(key, root),
-                                "short": prettify(self.index.last(key)), "kind": "resource",
+                    # The picker shows the step beside the name, so the
+                    # label stays just the resource.
+                    name = prettify(self.index.last(key))
+                    out.append({"value": key, "label": name, "short": name, "kind": "resource",
                                 "group": step, "stepIndex": i, "pinned": key in self.pinned})
         for key in others:
             name = prettify(self.index.last(key))

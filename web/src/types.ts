@@ -166,7 +166,7 @@ export interface Details {
 
 export interface ScopeOption {
   value: string;
-  /** Full label for the picker button, e.g. "B&B · Step 1". */
+  /** Label for the picker button, e.g. "B&B" (its step shows beside it). */
   label: string;
   /** Label inside the list, under its step's section. */
   short?: string;

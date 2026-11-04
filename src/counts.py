@@ -313,9 +313,9 @@ def display_parts(tag: str, is_root) -> tuple[str | None, list[str]]:
 
 
 def short_path(tag: str, is_root, with_root: bool) -> str:
-    """Breadcrumb for a tag's *parents*, e.g. `Step 1 · B&B › 16 Neuro`."""
+    """Breadcrumb for a tag's *parents*, e.g. `Step 1 › B&B › 16 Neuro`."""
     root, parts = display_parts(tag, is_root)
     crumbs = " › ".join(short_name(p) for p in parts[:-1])
     if root and with_root:
-        return f"{root_label(root)} · {crumbs}" if crumbs else root_label(root)
+        return f"{root_label(root)} › {crumbs}" if crumbs else root_label(root)
     return crumbs
