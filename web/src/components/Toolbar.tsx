@@ -1,5 +1,5 @@
 import { BookmarkPlus, ChevronsUpDown, Layers, ListPlus, Search, Star, X } from "lucide-react";
-import { type ReactNode, forwardRef, useMemo, useRef, useState } from "react";
+import { forwardRef, useMemo, useRef, useState } from "react";
 import type { ScopeOption, Summary } from "../types";
 import { type Anchor, Menu, type MenuEntry, Switch, anchorBelow, fmt, plural } from "./ui";
 
@@ -142,35 +142,20 @@ export function HideDoneSwitch(props: { checked: boolean; onChange: (v: boolean)
 }
 
 export function MatchBar(props: { summary: Summary; onQueueAll: () => void; onLaterAll: () => void }) {
+  // Just the count and the two actions. What queuing adds is in the Queue
+  // button's tooltip, and going over the limit asks first anyway.
   const s = props.summary;
   const head = s.truncated ? `First ${fmt(s.count)} matches` : plural(s.count, "match", "matches");
-  const bits = [
-    s.queued ? `${fmt(s.queued)} queued` : null,
-    s.later ? `${fmt(s.later)} later` : null,
-    s.done ? `${fmt(s.done)} done` : null,
-  ].filter(Boolean);
-  let tail: ReactNode = null;
-  if (s.truncated) tail = <>Too many to queue at once; narrow the search or pick a resource</>;
-  else if (!s.candidates) tail = <>Nothing left to queue</>;
-  else
-    tail = (
-      <>
-        Queuing the rest adds <span className="add">+{fmt(s.add)}</span> →{" "}
-        <span className={s.over ? "over" : "add"}>
-          {fmt(s.after)} / {fmt(s.limit)}
-        </span>
-      </>
-    );
+  const queueTitle = s.truncated
+    ? "Too many matches to queue at once"
+    : s.candidates
+      ? `Queue the ${plural(s.candidates, "match", "matches")} not yet queued or done: adds +${fmt(s.add)} → ${fmt(s.after)} / ${fmt(s.limit)}`
+      : "Every match is already queued or done";
   return (
     <div className="matchbar">
       <div className="matchbar-text">
         <b>{head}</b>
-        {bits.map((b) => (
-          <span key={b} className="match-bit">
-            {b}
-          </span>
-        ))}
-        <span className="match-tail">{tail}</span>
+        {s.truncated && <span className="match-bit">Narrow the search or pick a resource to queue them</span>}
       </div>
       <button
         type="button"
@@ -181,13 +166,7 @@ export function MatchBar(props: { summary: Summary; onQueueAll: () => void; onLa
       >
         <BookmarkPlus size={14} /> Later
       </button>
-      <button
-        type="button"
-        className="btn"
-        disabled={s.truncated || !s.candidates}
-        onClick={props.onQueueAll}
-        title="Queue every match that isn't already queued or completed"
-      >
+      <button type="button" className="btn" disabled={s.truncated || !s.candidates} onClick={props.onQueueAll} title={queueTitle}>
         <ListPlus size={14} /> Queue {s.candidates && !s.truncated ? fmt(s.candidates) : "all"}
       </button>
     </div>

@@ -340,8 +340,6 @@ body {
 .matchbar-text { flex: 1; color: var(--text-2); min-width: 0; display: flex; flex-wrap: wrap; align-items: baseline; column-gap: 14px; row-gap: 2px; }
 .matchbar-text .match-bit { color: var(--text-3); white-space: nowrap; }
 .matchbar-text b { color: var(--text); font-weight: 600; }
-.matchbar-text .over { color: var(--danger); font-weight: 600; }
-.matchbar-text .add { color: var(--text); font-weight: 600; }
 
 /* --- tree ------------------------------------------------------------------- */
 

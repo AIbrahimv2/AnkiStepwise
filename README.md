@@ -22,8 +22,8 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   to the search box limits the tree and the search to **all resources**, your
   **pinned resources**, or a **single resource**.
 - **Queue all matches.** One click queues every topic the search found that
-  isn't already queued or completed. Before you click, it shows how many new
-  cards that adds, and it asks first if the total would go over your limit.
+  isn't already queued or completed. Hover the button to see how many new
+  cards that adds; it asks first if the total would go over your limit.
 - **Save for later.** Found a topic that won't fit this session? Hover it and
   click the bookmark (or press **s**) to park it in the **Later** tab, where it
   doesn't count toward your limit. Going over the limit offers **Move to
