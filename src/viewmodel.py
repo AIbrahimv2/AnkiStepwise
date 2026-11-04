@@ -246,6 +246,39 @@ class View:
         end = len(kids) if limit is None else offset + limit
         return [self.node(c) for c in kids[offset:end]], len(kids)
 
+    def locate(self, key: str) -> dict:
+        """How to show `key` in the browse tree: the rows to expand, top
+        down (step section or "Other tags", resource, parent folders), how
+        many children each folder must load to include the next one, and
+        whether the current resource filter hides it."""
+        idx = self.index
+        if idx is None or key not in idx.names:
+            return {"exists": False}
+        parts = key.split(SEP)
+        chain: list[str] = []
+        limits: dict[str, int] = {}
+        if len(parts) > 1 and parts[0] in self.roots:
+            chain.append(ROOT_PREFIX + parts[0])
+            start = 2
+        else:
+            if self.roots:
+                chain.append(GROUP_KEY)
+            start = 1
+        for i in range(start, len(parts)):
+            folder, child = SEP.join(parts[:i]), SEP.join(parts[:i + 1])
+            chain.append(folder)
+            kids = idx.kids(folder)
+            if child in kids:
+                limits[folder] = kids.index(child) + 1
+        status, _src = self.state.effective(idx.name(key))
+        return {
+            "exists": True,
+            "open": chain,
+            "limits": limits,
+            "inScope": self.in_scope(key, self.scope_keys()),
+            "status": status,
+        }
+
     def top_level(self) -> list[dict]:
         """One header per step (Step 1, Step 2, ...) holding its resources,
         then "Other tags". A single resource in scope is shown directly."""

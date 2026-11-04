@@ -39,6 +39,8 @@ interface Props {
   onUnsuspend: () => void;
   onBrowse: () => void;
   onReveal: (key: string) => void;
+  /** The tree's selected tag, highlighted here too. */
+  activeKey: string | null;
 }
 
 const TABS: Tab[] = ["queue", "later", "done"];
@@ -94,9 +96,9 @@ export function SidePanel(props: Props) {
             side.queued.map((row) => (
               <div
                 key={row.tag}
-                className={`item${row.missing ? " missing" : ""}`}
-                onDoubleClick={() => props.onReveal(row.key)}
-                title={row.tag}
+                className={`item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
+                onClick={() => props.onReveal(row.key)}
+                title={`${row.tag}\nClick to show it in the tree`}
               >
                 <span className="item-bullet" />
                 <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
@@ -135,9 +137,9 @@ export function SidePanel(props: Props) {
               {side.later.map((row) => (
                 <div
                   key={row.tag}
-                  className={`item later-item${row.missing ? " missing" : ""}`}
-                  title={row.tag}
-                  onDoubleClick={() => props.onReveal(row.key)}
+                  className={`item later-item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
+                  title={`${row.tag}\nClick to show it in the tree`}
+                  onClick={() => props.onReveal(row.key)}
                 >
                   <span className="item-bullet" />
                   <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
@@ -165,7 +167,12 @@ export function SidePanel(props: Props) {
         {tab === "done" && (
           side.completed.length ? (
             side.completed.map((row) => (
-              <div key={row.tag} className="item done-item" title={row.tag} onDoubleClick={() => props.onReveal(row.key)}>
+              <div
+                key={row.tag}
+                className={`item done-item${props.activeKey === row.key ? " active" : ""}`}
+                title={`${row.tag}\nClick to show it in the tree`}
+                onClick={() => props.onReveal(row.key)}
+              >
                 <span className="item-bullet" />
                 <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
                 <div className="item-meta">{row.date}</div>

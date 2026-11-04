@@ -890,3 +890,14 @@ body {
 }
 #root .more-btn:hover { background: var(--hover); color: var(--text); }
 .more-left { color: var(--text-3); font-size: 12px; margin-left: 4px; }
+
+/* --- reveal from the queue panel -------------------------------------------- */
+
+.item { cursor: pointer; }
+.item.active { background: var(--select); }
+.item.active:hover { background: var(--select-strong); }
+.row.pulse { animation: pulse 1.3s ease-out; }
+@keyframes pulse {
+  0%, 30% { background: color-mix(in srgb, var(--q-raw) 30%, transparent); }
+  100% { background: var(--select); }
+}

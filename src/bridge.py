@@ -121,6 +121,9 @@ class Bridge:
             key, offset, None if limit is None else max(1, int(limit)))
         return {"key": key, "nodes": nodes, "total": total, "offset": offset}
 
+    def cmd_locate(self, msg: dict) -> dict:
+        return self.view().locate(str(msg.get("key", "")).lower())
+
     def cmd_search(self, msg: dict) -> dict:
         view = self.view()
         if view.index is None:

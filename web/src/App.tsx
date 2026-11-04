@@ -83,6 +83,8 @@ export function App() {
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<Tab>("queue");
   const [laterPlan, setLaterPlan] = useState<LaterPlan | null>(null);
+  // A row to scroll to and briefly highlight (bumped on every reveal).
+  const [flash, setFlash] = useState({ key: "", n: 0 });
 
   const searchInput = useRef<HTMLInputElement>(null);
   const searchSeq = useRef(0);
@@ -213,7 +215,7 @@ export function App() {
    *  resource. Pass `open` when the expanded set is changing in the same
    *  update. */
   const loadTree = useCallback(
-    async (open?: Set<string>) => {
+    async (open?: Set<string>, minLimits: Record<string, number> = {}) => {
       const q = queryRef.current.trim();
       if (q) return runSearch(q);
       const top = await call<NodeList>("children", { key: "" });
@@ -226,7 +228,10 @@ export function App() {
       const keys = [...want];
       const lists = await Promise.all(
         keys.map((key) =>
-          call<NodeList>("children", { key, limit: Math.max(PAGE, kidsRef.current[key]?.length ?? 0) }),
+          call<NodeList>("children", {
+            key,
+            limit: Math.max(PAGE, kidsRef.current[key]?.length ?? 0, minLimits[key] ?? 0),
+          }),
         ),
       );
       mergeNodes([...top.nodes, ...lists.flatMap((l) => l.nodes)], false);
@@ -497,12 +502,49 @@ export function App() {
     await sync();
   };
 
+  /** Show a tag in the tree: leave search, widen the resource filter if
+   *  it hides the tag, open its step/resource/parent folders (loading
+   *  enough of a big folder to include it), then select, scroll to and
+   *  flash it. */
   const reveal = async (key: string) => {
-    // Double-click a queue row: find it in the tree via search.
-    const n = nodes[key];
-    const label = n && !isGroup(n) ? n.label : key.split("::").pop()?.replace(/_/g, " ") ?? key;
-    setQuery(label.replace(/^#/, ""));
+    type Located = {
+      exists: boolean;
+      open?: string[];
+      limits?: Record<string, number>;
+      inScope?: boolean;
+      status?: Status;
+    };
+    let loc = await call<Located>("locate", { key });
+    if (!loc.exists) {
+      toast("That tag isn't in this collection anymore", "warn");
+      return;
+    }
+    if (!loc.inScope) {
+      const r = await call<{ scopes: ScopeOption[]; scope: string }>("set_scope", { value: "all" });
+      setScopes(r.scopes);
+      setScope(r.scope);
+      loc = await call<Located>("locate", { key });
+    }
+    if (loc.status === "completed" && options?.hideCompleted) {
+      await act("set_option", { key: "hideCompleted", value: false });
+      toast("Showing done topics", "info");
+    }
+    if (queryRef.current) {
+      // Leave search mode right away (the debounced effect would lag).
+      queryRef.current = "";
+      searchSeq.current++;
+      setQuery("");
+      setSearch(null);
+      setSummary(null);
+    }
+    const open = new Set(expandedRef.current);
+    for (const k of loc.open ?? []) {
+      open.add(k);
+      collapsedRef.current.delete(k);
+    }
+    await loadTree(open, loc.limits ?? {});
     setSelected(key);
+    setFlash((f) => ({ key, n: f.n + 1 }));
   };
 
   // Context menu for a tree row.
@@ -596,6 +638,7 @@ export function App() {
             nodes={nodes}
             expanded={search ? search.expanded : expanded}
             selected={selected}
+            flash={flash}
             words={words}
             loading={!ready}
             emptyText={emptyText}
@@ -627,6 +670,7 @@ export function App() {
             onUnsuspend={() => act("unsuspend", { tags: [] })}
             onBrowse={() => call("browse", { tags: [] })}
             onReveal={reveal}
+            activeKey={selected}
           />
         )}
       </main>

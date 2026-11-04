@@ -1,5 +1,5 @@
 import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CornerDownLeft, Folder, SearchX, Star } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, memo, useEffect, useRef } from "react";
+import { type KeyboardEvent, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
 import { Checkbox, Highlight, fmt } from "./ui";
@@ -20,6 +20,8 @@ interface TreeProps {
   nodes: Record<string, AnyNode>;
   expanded: Set<string>;
   selected: string | null;
+  /** Scroll to and highlight this row; `n` changes on every request. */
+  flash: { key: string; n: number };
   words: string[];
   loading: boolean;
   emptyText: string | null;
@@ -47,6 +49,21 @@ export function Tree(props: TreeProps) {
     const el = box.current.querySelector<HTMLElement>(`[data-key="${CSS.escape(selected)}"]`);
     el?.scrollIntoView({ block: "nearest" });
   }, [selected]);
+
+  // Revealed from the queue panel: centre it, pulse it, and take focus so
+  // the arrow keys carry on from there.
+  const [pulse, setPulse] = useState<string | null>(null);
+  useEffect(() => {
+    const { key, n } = props.flash;
+    if (!n || !box.current) return;
+    const el = box.current.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
+    if (!el) return;
+    el.scrollIntoView({ block: "center" });
+    box.current.focus({ preventScroll: true });
+    setPulse(key);
+    const t = setTimeout(() => setPulse(null), 1300);
+    return () => clearTimeout(t);
+  }, [props.flash]);
 
   const onKeyDown = (e: KeyboardEvent) => {
     if (!rows.length) return;
@@ -136,6 +153,7 @@ export function Tree(props: TreeProps) {
                 depth={r.depth}
                 open={expanded.has(r.key)}
                 selected={selected === r.key}
+                pulse={pulse === r.key}
                 words={props.words}
                 onSelect={props.onSelect}
                 onToggleExpand={props.onToggleExpand}
@@ -156,6 +174,7 @@ const TreeRow = memo(function TreeRow(props: {
   depth: number;
   open: boolean;
   selected: boolean;
+  pulse: boolean;
   words: string[];
   onSelect: (key: string) => void;
   onToggleExpand: (key: string) => void;
@@ -190,6 +209,7 @@ const TreeRow = memo(function TreeRow(props: {
     node.status === "completed" && "done",
     node.status === "later" && "later",
     selected && "selected",
+    props.pulse && "pulse",
   ]
     .filter(Boolean)
     .join(" ");
