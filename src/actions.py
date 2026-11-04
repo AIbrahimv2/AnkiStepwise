@@ -11,7 +11,7 @@ from typing import Callable
 import aqt
 from aqt import mw
 from aqt.operations import QueryOp
-from aqt.operations.scheduling import unsuspend_cards
+from aqt.operations.scheduling import suspend_cards, unsuspend_cards  # noqa: F401 (history)
 from aqt.qt import QKeySequence
 from aqt.utils import tooltip
 
@@ -312,6 +312,16 @@ def clear(tags: list[str]) -> None:
     commit(state, changes)
 
 
+# Cards unsuspended by the last action, so undo can suspend them again.
+_unsuspended: list[int] = []
+
+
+def take_unsuspended() -> list[int]:
+    global _unsuspended
+    out, _unsuspended = _unsuspended, []
+    return out
+
+
 def complete(tags: list[str], parent=None) -> None:
     """Mark tags completed and (by default) unsuspend their cards."""
     if not tags:
@@ -319,6 +329,7 @@ def complete(tags: list[str], parent=None) -> None:
     parent = parent or mw
     cfg = get_config()
     cids = suspended_cards(tags) if cfg["unsuspend_on_complete"] else []
+    _unsuspended.extend(cids)
     state = load_state()
     in_queue = all(state.status(t) == QUEUED for t in tags)
     commit(state, state.complete(tags))
@@ -340,6 +351,7 @@ def unsuspend(tags: list[str], parent=None) -> None:
     if not cids:
         say("No suspended cards in these topics.", parent)
         return
+    _unsuspended.extend(cids)
 
     def on_success(_changes) -> None:
         say(f"Unsuspended {_plural(len(cids), 'card')}", parent)

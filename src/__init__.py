@@ -14,7 +14,7 @@ from __future__ import annotations
 from aqt import gui_hooks, mw
 from aqt.qt import QAction, QKeySequence, QTimer, qconnect
 
-from . import actions, browser_menu, ui, widget
+from . import actions, browser_menu, history, ui, widget
 from .config import ADDON, get_config
 
 
@@ -37,6 +37,7 @@ def _prebuild_index() -> None:
 def _on_profile_close() -> None:
     ui.close_dialog()
     actions.reset()
+    history.reset()
 
 
 def _on_config_saved(_cfg) -> None:

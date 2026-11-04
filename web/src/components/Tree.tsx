@@ -587,6 +587,9 @@ function KeyHints() {
         <kbd className="kbd">s</kbd>later
       </span>
       <span>
+        <kbd className="kbd">u</kbd>undo
+      </span>
+      <span>
         <kbd className="kbd">/</kbd>search
       </span>
     </div>

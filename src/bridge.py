@@ -19,7 +19,7 @@ import json
 import time
 import traceback
 
-from . import actions, colorsync
+from . import actions, colorsync, history
 from .config import check_settings, get_config, update_config
 from .state import COMPLETED, LATER, QUEUED
 from .viewmodel import View
@@ -29,6 +29,14 @@ OPTION_KEYS = {
     "showOnDeck": "show_on_deck_screen",
     "colorSync": "colorful_tags_sync",
     "hideCompleted": "hide_completed",
+}
+
+
+# Commands that change the queue (or unsuspend cards): each becomes one
+# undo step.
+UNDOABLE = {
+    "queue", "unqueue", "clear", "complete", "unsuspend", "unwatch", "finish_session",
+    "queue_matches", "later", "unlater", "later_matches", "fill_from_later", "import_colors",
 }
 
 
@@ -56,7 +64,14 @@ class Bridge:
             if fn is None:
                 return {"error": f"Unknown command: {msg.get('cmd')}"}
             self._toasts = []
+            cmd = str(msg.get("cmd"))
+            if cmd in UNDOABLE:
+                before = history.snapshot()
+                actions.take_unsuspended()
             result = fn(msg) or {}
+            if cmd in UNDOABLE:
+                history.record(self._undo_label(cmd, msg), before, history.snapshot(),
+                               actions.take_unsuspended())
             result["toasts"] = self._toasts
             return result
         except Exception as exc:  # report to the page instead of a Qt error dialog
@@ -64,6 +79,29 @@ class Bridge:
             return {"error": f"{type(exc).__name__}: {exc}"}
         finally:
             self._toasts = None
+
+    def _undo_label(self, cmd: str, msg: dict) -> str:
+        """What an undo step did, for the "Undone" toast."""
+        from .counts import short_name
+
+        tags = self._tags(msg)
+        what = (short_name(tags[0].rsplit("::", 1)[-1]) if len(tags) == 1
+                else _plural(len(tags), "topic"))
+        return {
+            "queue": f"Queued {what}",
+            "unqueue": f"Removed {what} from the queue",
+            "clear": f"Cleared {what}",
+            "complete": f"Checked off {what}",
+            "unsuspend": f"Unsuspended {what}",
+            "unwatch": f"Unchecked {what}",
+            "finish_session": "Cleared checked-off topics",
+            "queue_matches": "Queued the search matches",
+            "later": f"Saved {what} for later",
+            "unlater": f"Took {what} off Later",
+            "later_matches": "Saved the search matches for later",
+            "fill_from_later": "Filled the queue from Later",
+            "import_colors": "Imported Colorful Tags colours",
+        }[cmd]
 
     @property
     def busy(self) -> bool:
@@ -121,6 +159,16 @@ class Bridge:
         offset = max(0, int(msg.get("offset") or 0))
         limit = max(1, min(1000, int(msg.get("limit") or 200)))
         return {"rows": view.done_rows(offset, limit), "total": len(view.state.completed())}
+
+    def cmd_undo(self, msg: dict) -> dict:
+        label = history.undo(self.host)
+        self.toast(f"Undone\n{label}" if label else "Nothing to undo")
+        return self.bundle(msg)
+
+    def cmd_redo(self, msg: dict) -> dict:
+        label = history.redo(self.host)
+        self.toast(f"Redone\n{label}" if label else "Nothing to redo")
+        return self.bundle(msg)
 
     def cmd_scopes(self, msg: dict) -> dict:
         view = self.view()

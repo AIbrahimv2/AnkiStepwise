@@ -153,8 +153,15 @@ def main() -> None:
             if self.ok:
                 self.ok(None)
 
+    class SyncSuspend(SyncUnsuspend):  # undoing a check-off re-suspends
+        def run_in_background(self):
+            col.sched.suspend_cards(self.cids)
+            actions.mark_index_dirty()
+            actions.request_index()
+
     actions.QueryOp = SyncQueryOp
     actions.unsuspend_cards = lambda *, parent, card_ids: SyncUnsuspend(card_ids)
+    actions.suspend_cards = lambda *, parent, card_ids: SyncSuspend(card_ids)
     actions.aqt = types.SimpleNamespace(dialogs=types.SimpleNamespace(
         open=lambda name, *a, **kw: print(f"[dev] would open {name} {kw.get('search') or ''}")))
 

@@ -322,19 +322,32 @@ export function App() {
     // Re-run only when the selection changes; mutations send fresh details.
   }, [selected]);
 
-  // "/" focuses search.
+  // "/" focuses search. u or Cmd/Ctrl+Z undoes the last change, Ctrl-r or
+  // Cmd/Ctrl+Shift+Z redoes it (not while typing, or with a dialog open,
+  // where those keys belong to the text field or the dialog).
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const t = e.target as HTMLElement;
-      if (e.key === "/" && t.tagName !== "INPUT") {
+      const typing = t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
+      if (e.key === "/" && !typing) {
         e.preventDefault();
         searchInput.current?.focus();
         searchInput.current?.select();
+        return;
+      }
+      if (typing || e.altKey || document.querySelector(".overlay")) return;
+      const k = e.key.toLowerCase();
+      const cmdOrCtrl = e.metaKey || e.ctrlKey;
+      const undo = (k === "u" && !cmdOrCtrl && !e.shiftKey) || (k === "z" && cmdOrCtrl && !e.shiftKey);
+      const redo = (k === "r" && e.ctrlKey && !e.metaKey && !e.shiftKey) || (k === "z" && cmdOrCtrl && e.shiftKey);
+      if (undo || redo) {
+        e.preventDefault();
+        act(undo ? "undo" : "redo").catch(() => undefined);
       }
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, []);
+  }, [act]);
 
   // --- tree interactions ---------------------------------------------------
 
