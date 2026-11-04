@@ -267,12 +267,30 @@ export function App() {
       setScope(b.scope);
       applyColors(b.colors);
       if (b.openSettings) setSettingsOpen(true);
+      // Reopen the folders that were open last time (and keep closed the
+      // step sections you closed).
+      const open = new Set(b.tree?.open ?? []);
+      collapsedRef.current = new Set(b.tree?.closed ?? []);
+      expandedRef.current = open;
+      setExpanded(open);
+      treeRestored.current = true;
       if (b.ready) {
         setReady(true);
-        loadTree();
+        loadTree(open);
       }
     });
   }, [loadTree]);
+
+  // Remember which folders are open, for next time (browse tree only; a
+  // search's folders are its own).
+  const treeRestored = useRef(false);
+  useEffect(() => {
+    if (!treeRestored.current || !ready) return;
+    const t = setTimeout(() => {
+      call("save_tree", { open: [...expanded], closed: [...collapsedRef.current] }).catch(() => undefined);
+    }, 400);
+    return () => clearTimeout(t);
+  }, [expanded, ready]);
 
   useEffect(() => {
     window.tagQueue = {

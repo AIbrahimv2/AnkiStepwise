@@ -19,6 +19,8 @@ import json
 import time
 import traceback
 
+from aqt import mw
+
 from . import actions, colorsync, history
 from .config import check_settings, get_config, update_config
 from .state import COMPLETED, LATER, QUEUED
@@ -38,6 +40,17 @@ UNDOABLE = {
     "queue", "unqueue", "clear", "complete", "unsuspend", "unwatch", "finish_session",
     "queue_matches", "later", "unlater", "later_matches", "fill_from_later", "import_colors",
 }
+
+
+# Which tree folders are open (and which step sections you closed), kept in
+# the Anki profile: per profile, not synced, like window sizes.
+TREE_KEY = "tagQueue.tree"
+_tree_fallback: dict = {}  # outside Anki (tests, dev server)
+
+
+def _tree_store() -> dict:
+    profile = getattr(getattr(mw, "pm", None), "profile", None)
+    return profile if isinstance(profile, dict) else _tree_fallback
 
 
 def _plural(n: int, word: str) -> str:
@@ -145,6 +158,7 @@ class Bridge:
         open_settings, self.settings_on_boot = self.settings_on_boot, False
         return {
             "openSettings": open_settings,
+            "tree": self._tree_memory(view),
             "ready": view.index is not None,
             "side": view.side(),
             "scopes": view.scopes(),
@@ -169,6 +183,22 @@ class Bridge:
         label = history.redo(self.host)
         self.toast(f"Redone\n{label}" if label else "Nothing to redo")
         return self.bundle(msg)
+
+    def _tree_memory(self, view: View) -> dict:
+        saved = _tree_store().get(TREE_KEY) or {}
+        keys = lambda name: [str(k) for k in saved.get(name) or [] if isinstance(k, str)]  # noqa: E731
+        opened, closed = keys("open"), keys("closed")
+        if view.index is not None:  # forget folders that no longer exist
+            names = view.index.names
+            opened = [k for k in opened if k in names or k.startswith("__")]
+        return {"open": opened, "closed": closed}
+
+    def cmd_save_tree(self, msg: dict) -> dict:
+        _tree_store()[TREE_KEY] = {
+            "open": [str(k) for k in msg.get("open") or []][:2000],
+            "closed": [str(k) for k in msg.get("closed") or []][:200],
+        }
+        return {}
 
     def cmd_scopes(self, msg: dict) -> dict:
         view = self.view()

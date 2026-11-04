@@ -227,6 +227,8 @@ export interface SettingsSaved {
 export interface Boot {
   /** Anki's Config button asked for Settings before the page loaded. */
   openSettings?: boolean;
+  /** Folders open last time, and step sections you closed. */
+  tree?: { open: string[]; closed: string[] };
   ready: boolean;
   side: Side;
   scopes: ScopeOption[];
