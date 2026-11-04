@@ -1,0 +1,17 @@
+{
+  "card_limit": 150,
+  "count_mode": "new",
+  "unsuspend_on_complete": true,
+  "resource_roots": [
+    "#AK_Step*"
+  ],
+  "pinned_resources": [],
+  "hide_completed": false,
+  "search_scope": "all",
+  "show_on_deck_screen": true,
+  "colorful_tags_sync": true,
+  "queued_color": "#ff9300",
+  "completed_color": "#00f900",
+  "shortcut": "Ctrl+Alt+Q",
+  "import_offered": false
+}
