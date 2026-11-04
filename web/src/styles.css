@@ -1005,3 +1005,12 @@ body {
 /* Same right inset as rows, so header counts line up with row counts. */
 .group-head { padding-right: 8px; }
 .group-meta { margin-right: 4px; } /* rows have a 10px gap before their buttons, headers 6px */
+
+/* Numbers, bullets and buttons sit on the topic name's line rather than
+   midway down a two-line row (the path or caption takes the second line). */
+.list .item { align-items: flex-start; }
+.list .item-bullet { margin-top: 6px; }
+.list .item-check { margin-top: 2px; }
+.list .item-meta { line-height: 18px; }
+.list .item-meta .item-sub { line-height: 16px; }
+.list .item-actions { margin-top: -3px; }
