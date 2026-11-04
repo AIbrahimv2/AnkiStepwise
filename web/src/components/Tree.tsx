@@ -503,7 +503,7 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
   if (!details) {
     return (
       <div className="details">
-        <div className="details-main">
+        <div className="details-main details-empty">
           {searching
             ? "Tick matches to queue them, or queue them all from the bar above."
             : "Select a topic to see how many cards it would add."}
@@ -512,55 +512,76 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
       </div>
     );
   }
+  // The row's own columns already show its suspended, waiting and total
+  // cards, so the bar sticks to what the row can't: where the topic sits,
+  // what queuing it would do, and its status.
   const d = details;
-  const projection = (
-    <>
-      Queuing it adds <span className="strong">+{fmt(d.add ?? 0)}</span>
-      {d.overlap ? <> ({fmt(d.overlap)} already queued via other topics)</> : null}
-      {" → "}
-      <span className={d.over ? "over" : "strong"}>
-        {fmt(d.after ?? 0)} / {fmt(d.limit)}
+  const projection =
+    d.status === null || d.status === "later" ? (
+      <span
+        className="details-add"
+        title={
+          d.overlap ? `${fmt(d.overlap)} of its cards are already queued through other topics` : undefined
+        }
+      >
+        {d.add ? (
+          <>
+            Adds <b>+{fmt(d.add)}</b>
+            <span className={d.over ? "over" : undefined}>
+              → {fmt(d.after ?? 0)} / {fmt(d.limit)}
+            </span>
+          </>
+        ) : (
+          "Adds nothing new"
+        )}
       </span>
-    </>
-  );
-  let tail: ReactNode;
-  if (d.status === "queued") {
-    tail = d.via ? <>Queued as part of <span className="strong">{d.via}</span></> : <>In your queue</>;
-  } else if (d.status === "completed" && d.auto) {
-    tail = <>Done — every card is studied</>;
-  } else if (d.status === "completed") {
-    tail = <>{d.date === "imported" ? "Completed (imported from Colorful Tags)" : `Completed ${d.date}`}</>;
-  } else {
-    tail = projection;
-  }
-  // A Later topic shows both where it's parked and what queuing it would add.
-  const parked =
-    d.status === "later" ? (
-      <span>Saved for later{d.via ? <> as part of <span className="strong">{d.via}</span></> : ` ${d.date}`}</span>
     ) : null;
   return (
     <div className="details">
       <div className="details-main">
-        <div className="details-title">
-          {d.title}
+        <div className="details-title">{d.title}</div>
+        <div className="details-path">
           <StepChip step={d.step} index={d.stepIndex} />
-          {d.path && <span className="details-path">{d.path}</span>}
+          {d.path && <span>{d.path}</span>}
         </div>
-        <div className="details-sub">
-          <span className={d.suspended ? "strong" : undefined}>{fmt(d.suspended)} suspended</span>
-          {d.waiting > 0 && (
-            <span>
-              {fmt(d.waiting)} waiting
-              {d.buried > 0 && <> ({fmt(d.buried)} buried, back on their own)</>}
-            </span>
-          )}
-          <span>{fmt(d.total)} total</span>
-          {parked}
-          <span className="details-tail">{tail}</span>
-        </div>
+      </div>
+      <div className="details-side">
+        {projection}
+        <DetailsBadge d={d} />
       </div>
     </div>
   );
+}
+
+/** The topic's status, as the same badge the tree shows. */
+function DetailsBadge({ d }: { d: Details }) {
+  const via = d.via ? ` as part of ${d.via}` : "";
+  if (d.status === "queued")
+    return (
+      <span className={`badge q${d.via ? " inherited" : ""}`} title={`In your queue${via}`}>
+        <span className="dot" />
+        {d.via ? `In ${d.via}` : "Queued"}
+      </span>
+    );
+  if (d.status === "later")
+    return (
+      <span className={`badge l${d.via ? " inherited" : ""}`} title={`Saved for later${via}`}>
+        <Bookmark size={11} strokeWidth={2.6} />
+        {d.via ? `In ${d.via}` : "Later"}
+        {!d.via && sinceText(d.date)}
+      </span>
+    );
+  if (d.status === "completed")
+    return (
+      <span
+        className={`badge d${d.auto ? " auto" : ""}`}
+        title={d.auto ? "Done: every card is studied" : d.date === "imported" ? "Imported from Colorful Tags" : `Completed${via}`}
+      >
+        Done
+        {!d.auto && !d.via && sinceText(d.date)}
+      </span>
+    );
+  return null;
 }
 
 /** Vim-style keys for the tree (arrow keys work too). */

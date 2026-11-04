@@ -505,9 +505,6 @@ body {
 }
 .details-main { flex: 1; min-width: 0; }
 .details-title { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.details-sub { display: flex; column-gap: 16px; overflow: hidden; white-space: nowrap; }
-.details-sub > span { flex: none; }
-.details-sub > .details-tail { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .details .over { color: var(--danger); font-weight: 600; }
 .details .strong { color: var(--text); font-weight: 600; }
 .hint-keys { color: var(--text-3); display: flex; gap: 14px; white-space: nowrap; }
@@ -822,8 +819,7 @@ body {
   color: color-mix(in srgb, var(--step) 82%, var(--text));
   background: color-mix(in srgb, var(--step) 14%, transparent);
 }
-.item-path .step-chip, .details-title .step-chip { margin: 0 6px 0 0; height: 16px; font-size: 10px; padding: 0 6px; }
-.details-title .step-chip { margin-left: 8px; }
+.item-path .step-chip, .details-path .step-chip { margin: 0 6px 0 0; height: 16px; font-size: 10px; padding: 0 6px; flex: none; }
 
 /* A step's header row: sticks to the top while you scroll its resources. */
 .row.section {
@@ -879,8 +875,15 @@ body {
 .fillbar-text .over { color: var(--danger); font-weight: 600; }
 .item-path { display: flex; align-items: center; }
 .item-path > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.details-title { display: flex; align-items: center; min-width: 0; }
-.details-path { color: var(--text-3); font-weight: 400; font-size: 12px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Details bar: name and where it sits on the left; what queuing it would
+   add and its status on the right. */
+.details-path { display: flex; align-items: center; min-width: 0; margin-top: 2px; color: var(--text-3); font-size: 12px; }
+.details-path > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.details-empty { color: var(--text-2); }
+.details-side { flex: none; display: flex; align-items: center; gap: 14px; white-space: nowrap; }
+.details-add { display: inline-flex; align-items: baseline; gap: 6px; color: var(--text-2); }
+.details-add b { color: var(--text); font-weight: 650; font-size: 13.5px; font-variant-numeric: tabular-nums; }
+.details-add .over { color: var(--danger); font-weight: 600; }
 
 #root .t-action {
   margin-left: 4px;

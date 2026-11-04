@@ -419,7 +419,7 @@ class View:
         out = {
             "key": key,
             "tag": tag,
-            "title": prettify(self.index.last(key)),
+            "title": short_name(tag.rsplit(SEP, 1)[-1]),
             "path": short_path(tag, self.is_root, False),
             "step": step,
             "stepIndex": step_index,
