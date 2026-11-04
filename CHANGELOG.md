@@ -18,8 +18,8 @@ All notable changes to this project are documented here. The format is based on
 ### Changed
 
 - The tree's Status column is down to one thing per row: a progress bar
-  (numbers in its tooltip), or **Later** / **Done** as a word (dates in the
-  tooltip). The Queued badge, the queued/Later counts inside folders and
+  (numbers in its tooltip), or a bookmark for Later and a check for Done
+  (dates in the tooltip), all ending at one edge. The Queued badge, the queued/Later counts inside folders and
   the 320/507 fractions are gone: the ticked box and the queue panel already
   show those.
 - Done now covers topics you never queued or coloured: any tag whose every

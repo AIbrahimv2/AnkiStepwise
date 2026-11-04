@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, Folder, Moon, SearchX, Star } from "lucide-react";
+import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, Moon, SearchX, Star } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
@@ -434,17 +434,20 @@ function Progress({ done, total }: { done: number; total: number }) {
 const sinceText = (since: string | null) =>
   since && since !== "imported" ? <span className="since">{since}</span> : null;
 
-/** One thing per cell: "Later" or "Done" as a word (dates in the tooltip),
- *  otherwise the progress bar. Queued needs no word: the ticked box says
- *  it, and the queue panel already lists what's queued inside each
- *  resource. */
+/** One thing per cell: a bookmark for Later, a check for Done (the date
+ *  and why are in the tooltip), otherwise the progress bar. Queued needs no
+ *  mark: the ticked box says it, and the queue panel already lists what's
+ *  queued inside each resource. */
 function StatusCell({ node }: { node: TagNode }) {
   const via = node.inherited ? ` as part of ${node.source}` : "";
   const when = node.since && node.since !== "imported" ? ` ${node.since}` : "";
+  // Covered by a parent's status: same mark, drawn lighter.
+  const weight = node.inherited ? 1.8 : 2.4;
   if (node.status === "later") {
+    const title = `Saved for later${via || when}`;
     return (
-      <span className={`status-word l${node.inherited ? " inherited" : ""}`} title={`Saved for later${via || when}`}>
-        Later
+      <span className="status-icon l" title={title} role="img" aria-label={title}>
+        <Bookmark size={15} strokeWidth={weight} />
       </span>
     );
   }
@@ -455,8 +458,8 @@ function StatusCell({ node }: { node: TagNode }) {
         ? `Completed (imported from Colorful Tags)${via}`
         : `Completed${via || when}`;
     return (
-      <span className={`status-word d${node.inherited ? " inherited" : ""}`} title={title}>
-        Done
+      <span className="status-icon d" title={title} role="img" aria-label={title}>
+        <CircleCheck size={15} strokeWidth={weight} />
       </span>
     );
   }

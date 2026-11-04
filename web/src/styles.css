@@ -453,11 +453,11 @@ body {
 .badge .since { margin-left: 3px; font-weight: 500; opacity: 0.7; }
 .badge.inherited { background: transparent; box-shadow: inset 0 0 0 1px currentColor; opacity: 0.6; font-weight: 550; }
 .dot { width: 6px; height: 6px; border-radius: 50%; background: currentColor; flex: none; }
-/* Status column: a word for Later and Done, otherwise a progress bar. */
-.status-word { font-size: 11.5px; font-weight: 600; white-space: nowrap; }
-.status-word.l { color: var(--l); }
-.status-word.d { color: var(--d); }
-.status-word.inherited { font-weight: 450; }
+/* Status column: a bookmark for Later, a check for Done, otherwise a
+   progress bar. */
+.status-icon { display: grid; place-items: center; width: 16px; height: 16px; flex: none; }
+.status-icon.l { color: var(--l); }
+.status-icon.d { color: var(--d); }
 
 .mini { display: inline-flex; align-items: center; gap: 7px; color: var(--text-3); font-size: 11.5px; }
 .mini-track { width: 64px; height: 4px; border-radius: 999px; background: var(--line-strong); overflow: hidden; }
