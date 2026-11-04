@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <title>Tag Queue (dev)</title>
+    <script>
+      // Development only. Inside Anki, pycmd() is injected over QWebChannel and
+      // dark mode adds the "night-mode" class; here we fake both.
+      if (new URLSearchParams(location.search).get("theme") === "dark") {
+        document.documentElement.classList.add("night-mode");
+      }
+      window.pycmd = function (arg, cb) {
+        fetch("/bridge", { method: "POST", body: arg })
+          .then((r) => r.json())
+          .then((res) => cb && cb(res));
+        return false;
+      };
+    </script>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module" src="/src/main.tsx"></script>
+  </body>
+</html>
