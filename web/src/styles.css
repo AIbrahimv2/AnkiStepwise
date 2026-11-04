@@ -873,3 +873,20 @@ body {
 
 .menu-section.toned { display: flex; align-items: center; gap: 6px; color: color-mix(in srgb, var(--step) 75%, var(--text)); }
 .menu-section.toned::before { content: ""; width: 7px; height: 7px; border-radius: 2px; background: var(--step); }
+
+/* --- long lists ------------------------------------------------------------- */
+
+/* Let the browser skip layout and paint for rows scrolled out of view. */
+.row:not(.section) { content-visibility: auto; contain-intrinsic-size: auto 30px; }
+
+#root .more-btn {
+  height: 24px;
+  padding: 0 10px;
+  border-radius: 7px;
+  font-weight: 600;
+  font-size: 12px;
+  color: var(--text-2);
+  border: 1px dashed var(--line-strong);
+}
+#root .more-btn:hover { background: var(--hover); color: var(--text); }
+.more-left { color: var(--text-3); font-size: 12px; margin-left: 4px; }

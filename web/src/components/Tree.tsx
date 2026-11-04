@@ -8,7 +8,12 @@ export interface FlatRow {
   key: string;
   depth: number;
   parent: string | null;
+  /** For a "Show more" row: how many children are still unloaded. */
+  more?: number;
 }
+
+/** Key prefix of the "Show more" row at the end of a partly loaded folder. */
+export const MORE = "__more__:";
 
 interface TreeProps {
   rows: FlatRow[];
@@ -22,6 +27,7 @@ interface TreeProps {
   onToggleExpand: (key: string) => void;
   onToggleQueue: (node: TagNode) => void;
   onToggleLater: (node: TagNode) => void;
+  onLoadMore: (key: string) => void;
   onContext: (key: string, x: number, y: number) => void;
 }
 
@@ -47,6 +53,11 @@ export function Tree(props: TreeProps) {
     const i = Math.max(0, rows.findIndex((r) => r.key === selected));
     const row = rows[i];
     const node = nodes[row.key];
+    if (row.more && (e.key === "Enter" || e.key === " ")) {
+      e.preventDefault();
+      props.onLoadMore(row.key.slice(MORE.length));
+      return;
+    }
     const move = (j: number) => props.onSelect(rows[Math.max(0, Math.min(rows.length - 1, j))].key);
     switch (e.key) {
       case "ArrowDown":
@@ -105,6 +116,17 @@ export function Tree(props: TreeProps) {
           </div>
         ) : (
           rows.map((r) => {
+            if (r.more) {
+              return (
+                <MoreRow
+                  key={r.key}
+                  depth={r.depth}
+                  hidden={r.more}
+                  selected={selected === r.key}
+                  onLoad={() => props.onLoadMore(r.key.slice(MORE.length))}
+                />
+              );
+            }
             const node = nodes[r.key];
             if (!node) return null;
             return (
@@ -293,6 +315,19 @@ function GroupRow(props: {
       <span />
       <span />
       <span className="cell-num">{fmt(node.count)} tags</span>
+    </div>
+  );
+}
+
+function MoreRow(props: { depth: number; hidden: number; selected: boolean; onLoad: () => void }) {
+  return (
+    <div className={`row more${props.selected ? " selected" : ""}`} role="treeitem">
+      <div className="cell-name" style={{ paddingLeft: 8 + props.depth * 18 + 24 }}>
+        <button type="button" className="more-btn" onClick={props.onLoad}>
+          Show {fmt(Math.min(props.hidden, 300))} more
+        </button>
+        <span className="more-left">{fmt(props.hidden)} not shown</span>
+      </div>
     </div>
   );
 }

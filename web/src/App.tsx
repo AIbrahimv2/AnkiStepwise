@@ -24,7 +24,7 @@ import {
 } from "./components/Overlays";
 import { SidePanel, type Tab } from "./components/SidePanel";
 import { HideDoneSwitch, MatchBar, ScopePicker, SearchBox } from "./components/Toolbar";
-import { DetailsBar, type FlatRow, Tree } from "./components/Tree";
+import { DetailsBar, type FlatRow, MORE, Tree } from "./components/Tree";
 import { type Anchor, Menu, type MenuEntry, plural } from "./components/ui";
 import {
   type AnyNode,
@@ -47,12 +47,17 @@ interface SearchState {
   query: string;
   roots: string[];
   kids: Record<string, string[]>;
+  /** Child counts of folders opened from the results (for "Show more"). */
+  totals: Record<string, number>;
   expanded: Set<string>;
   matches: string[];
   truncated: boolean;
 }
 
-type NodeList = { nodes: AnyNode[] };
+type NodeList = { nodes: AnyNode[]; total?: number };
+
+/** Folders load this many children at a time (some hold thousands). */
+const PAGE = 300;
 
 export function App() {
   const [ready, setReady] = useState(false);
@@ -63,6 +68,7 @@ export function App() {
 
   const [nodes, setNodes] = useState<Record<string, AnyNode>>({});
   const [kids, setKids] = useState<Record<string, string[]>>({});
+  const [totals, setTotals] = useState<Record<string, number>>({});
   const [expanded, setExpanded] = useState<Set<string>>(new Set());
   const [query, setQuery] = useState("");
   const [search, setSearch] = useState<SearchState | null>(null);
@@ -84,6 +90,8 @@ export function App() {
   queryRef.current = query;
   const expandedRef = useRef(expanded);
   expandedRef.current = expanded;
+  const kidsRef = useRef(kids);
+  kidsRef.current = kids;
   // Step sections start open; remember the ones you close.
   const collapsedRef = useRef(new Set<string>());
 
@@ -112,6 +120,7 @@ export function App() {
   const rows = useMemo<FlatRow[]>(() => {
     const out: FlatRow[] = [];
     const kidMap = search ? search.kids : kids;
+    const totalMap = search ? search.totals : totals;
     const open = search ? search.expanded : expanded;
     const walk = (keys: string[], depth: number, parent: string | null) => {
       for (const key of keys) {
@@ -119,17 +128,21 @@ export function App() {
         if (!n) continue;
         if (hideDone && !isGroup(n) && n.status === "completed") continue;
         out.push({ key, depth, parent });
-        if (open.has(key) && kidMap[key]) walk(kidMap[key], depth + 1, key);
+        if (open.has(key) && kidMap[key]) {
+          walk(kidMap[key], depth + 1, key);
+          const hidden = (totalMap[key] ?? 0) - kidMap[key].length;
+          if (hidden > 0) out.push({ key: MORE + key, depth: depth + 1, parent: key, more: hidden });
+        }
       }
     };
     walk(search ? search.roots : (kids[""] ?? []), 0, null);
     return out;
-  }, [nodes, kids, expanded, search, hideDone]);
+  }, [nodes, kids, totals, expanded, search, hideDone]);
 
   // What every mutating command needs to send back a full refresh.
   const ctx = useRef({ visible: [] as string[], matches: null as string[] | null, truncated: false, selected: null as string | null });
   ctx.current = {
-    visible: rows.map((r) => r.key).filter((k) => !isGroup(nodes[k])),
+    visible: rows.map((r) => r.key).filter((k) => nodes[k] && !isGroup(nodes[k])),
     matches: search ? search.matches : null,
     truncated: search?.truncated ?? false,
     selected: selected && !isGroup(nodes[selected]) ? selected : null,
@@ -185,6 +198,7 @@ export function App() {
         query: q,
         roots: r.roots,
         kids: r.children,
+        totals: {},
         expanded: new Set(Object.keys(r.children)),
         matches: r.matches,
         truncated: r.truncated,
@@ -210,12 +224,17 @@ export function App() {
         if ((section || lone) && !collapsedRef.current.has(n.key)) want.add(n.key);
       }
       const keys = [...want];
-      const lists = await Promise.all(keys.map((key) => call<NodeList>("children", { key })));
+      const lists = await Promise.all(
+        keys.map((key) =>
+          call<NodeList>("children", { key, limit: Math.max(PAGE, kidsRef.current[key]?.length ?? 0) }),
+        ),
+      );
       mergeNodes([...top.nodes, ...lists.flatMap((l) => l.nodes)], false);
       setKids({
         "": top.nodes.map((n) => n.key),
         ...Object.fromEntries(keys.map((k, i) => [k, lists[i].nodes.map((n) => n.key)])),
       });
+      setTotals(Object.fromEntries(keys.map((k, i) => [k, lists[i].total ?? lists[i].nodes.length])));
       setExpanded(want);
     },
     [mergeNodes, runSearch],
@@ -314,9 +333,18 @@ export function App() {
         }
         open.add(key);
         if (!search.kids[key]) {
-          const r = await call<NodeList>("children", { key });
+          const r = await call<NodeList>("children", { key, limit: PAGE });
           mergeNodes(r.nodes, false);
-          setSearch((s) => (s ? { ...s, kids: { ...s.kids, [key]: r.nodes.map((n) => n.key) }, expanded: open } : s));
+          setSearch((s) =>
+            s
+              ? {
+                  ...s,
+                  kids: { ...s.kids, [key]: r.nodes.map((n) => n.key) },
+                  totals: { ...s.totals, [key]: r.total ?? r.nodes.length },
+                  expanded: open,
+                }
+              : s,
+          );
         } else {
           setSearch((s) => (s ? { ...s, expanded: open } : s));
         }
@@ -332,10 +360,31 @@ export function App() {
         return;
       }
       collapsedRef.current.delete(key);
-      const r = await call<NodeList>("children", { key });
+      const r = await call<NodeList>("children", { key, limit: PAGE });
       mergeNodes(r.nodes, false);
       setKids((k) => ({ ...k, [key]: r.nodes.map((n) => n.key) }));
+      setTotals((t) => ({ ...t, [key]: r.total ?? r.nodes.length }));
       setExpanded((prev) => new Set(prev).add(key));
+    },
+    [search, mergeNodes],
+  );
+
+  /** Next page of a big folder. */
+  const loadMore = useCallback(
+    async (key: string) => {
+      const have = (search ? search.kids[key] : kidsRef.current[key]) ?? [];
+      const r = await call<NodeList>("children", { key, offset: have.length, limit: PAGE });
+      mergeNodes(r.nodes, false);
+      const keys = [...have, ...r.nodes.map((n) => n.key)];
+      const total = r.total ?? keys.length;
+      if (search) {
+        setSearch((s) =>
+          s ? { ...s, kids: { ...s.kids, [key]: keys }, totals: { ...s.totals, [key]: total } } : s,
+        );
+      } else {
+        setKids((k) => ({ ...k, [key]: keys }));
+        setTotals((t) => ({ ...t, [key]: total }));
+      }
     },
     [search, mergeNodes],
   );
@@ -552,6 +601,7 @@ export function App() {
             emptyText={emptyText}
             onSelect={setSelected}
             onToggleExpand={toggleExpand}
+            onLoadMore={loadMore}
             onToggleQueue={toggleQueue}
             onToggleLater={toggleLater}
             onContext={(key, x, y) => setMenu({ key, anchor: { x, y } })}

@@ -232,6 +232,20 @@ class View:
             return [self.node(k, top=True) for k in others if self.in_scope(k, scope)]
         return [self.node(c) for c in self.index.kids(key)]
 
+    def children_page(self, key: str, offset: int = 0,
+                      limit: int | None = None) -> tuple[list[dict], int]:
+        """One page of a folder's children plus how many it has in total.
+        Some folders (UWorld question IDs) hold thousands of tags; sending
+        them all at once would stall both Python and the page."""
+        if self.index is None:
+            return [], 0
+        if key == "" or key.startswith(ROOT_PREFIX) or key == GROUP_KEY:
+            nodes = self.children(key)
+            return nodes, len(nodes)
+        kids = self.index.kids(key)
+        end = len(kids) if limit is None else offset + limit
+        return [self.node(c) for c in kids[offset:end]], len(kids)
+
     def top_level(self) -> list[dict]:
         """One header per step (Step 1, Step 2, ...) holding its resources,
         then "Other tags". A single resource in scope is shown directly."""

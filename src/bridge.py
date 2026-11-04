@@ -114,7 +114,12 @@ class Bridge:
         return {"scopes": view.scopes(), "scope": view.scope_value()}
 
     def cmd_children(self, msg: dict) -> dict:
-        return {"key": msg.get("key", ""), "nodes": self.view().children(msg.get("key", ""))}
+        key = str(msg.get("key", ""))
+        offset = max(0, int(msg.get("offset") or 0))
+        limit = msg.get("limit")
+        nodes, total = self.view().children_page(
+            key, offset, None if limit is None else max(1, int(limit)))
+        return {"key": key, "nodes": nodes, "total": total, "offset": offset}
 
     def cmd_search(self, msg: dict) -> dict:
         view = self.view()
