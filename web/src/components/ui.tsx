@@ -92,7 +92,7 @@ export type MenuEntry =
       hint?: string;
     }
   | { separator: true }
-  | { section: string };
+  | { section: string; tone?: number };
 
 export interface Anchor {
   x: number;
@@ -155,7 +155,10 @@ export function Menu(props: {
         if ("separator" in entry) return <div key={i} className="menu-sep" />;
         if ("section" in entry)
           return (
-            <div key={i} className="menu-section">
+            <div
+              key={i}
+              className={`menu-section${entry.tone !== undefined ? ` toned step-${entry.tone % 4}` : ""}`}
+            >
               {entry.section}
             </div>
           );

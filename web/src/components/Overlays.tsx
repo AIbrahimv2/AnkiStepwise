@@ -116,6 +116,8 @@ export interface ConfirmRequest {
   confirm: string;
   danger?: boolean;
   onConfirm: () => void;
+  /** Optional second choice, e.g. "Save for later" instead of queuing. */
+  alt?: { label: string; onSelect: () => void };
 }
 
 export function ConfirmDialog(props: { request: ConfirmRequest; onClose: () => void }) {
@@ -127,9 +129,21 @@ export function ConfirmDialog(props: { request: ConfirmRequest; onClose: () => v
       <h2>{r.title}</h2>
       <p>{r.body}</p>
       <div className="modal-actions">
-        <button type="button" className="btn" onClick={props.onClose}>
+        <button type="button" className="btn ghost" onClick={props.onClose}>
           Cancel
         </button>
+        {r.alt && (
+          <button
+            type="button"
+            className="btn"
+            onClick={() => {
+              props.onClose();
+              r.alt?.onSelect();
+            }}
+          >
+            {r.alt.label}
+          </button>
+        )}
         <button
           ref={ok}
           type="button"
@@ -151,7 +165,8 @@ export function ConfirmDialog(props: { request: ConfirmRequest; onClose: () => v
 const CHOICES: { value: Status; label: string; cls: string }[] = [
   { value: null, label: "Ignore", cls: "" },
   { value: "queued", label: "Queued", cls: "q" },
-  { value: "completed", label: "Completed", cls: "d" },
+  { value: "later", label: "Later", cls: "l" },
+  { value: "completed", label: "Done", cls: "d" },
 ];
 
 export function ImportDialog(props: {
@@ -241,9 +256,10 @@ export interface Toast {
   id: number;
   message: string;
   tone: Tone;
+  action?: { label: string; onClick: () => void };
 }
 
-export function Toasts({ toasts }: { toasts: Toast[] }) {
+export function Toasts({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id: number) => void }) {
   return (
     <div className="toasts" aria-live="polite">
       {toasts.map((t) => (
@@ -258,6 +274,18 @@ export function Toasts({ toasts }: { toasts: Toast[] }) {
             )}
           </span>
           {t.message}
+          {t.action && (
+            <button
+              type="button"
+              className="t-action"
+              onClick={() => {
+                onDismiss(t.id);
+                t.action?.onClick();
+              }}
+            >
+              {t.action.label}
+            </button>
+          )}
         </div>
       ))}
     </div>

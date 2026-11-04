@@ -1,4 +1,4 @@
-import { ChevronsUpDown, Layers, ListPlus, Search, Star, X } from "lucide-react";
+import { BookmarkPlus, ChevronsUpDown, Layers, ListPlus, Search, Star, X } from "lucide-react";
 import { type ReactNode, forwardRef, useMemo, useRef, useState } from "react";
 import type { ScopeOption, Summary } from "../types";
 import { type Anchor, Menu, type MenuEntry, Switch, anchorBelow, fmt, plural } from "./ui";
@@ -50,21 +50,32 @@ export function ScopePicker(props: {
   const [filter, setFilter] = useState("");
   const current = props.scopes.find((s) => s.value === props.value) ?? props.scopes[0];
 
+  // One section per step ("Step 1", "Step 2", ...), each starting with
+  // "All of Step N", then "Other tags".
   const entries = useMemo<MenuEntry[]>(() => {
     const f = filter.trim().toLowerCase();
-    const pick = (s: ScopeOption): MenuEntry => ({
-      label: s.label,
-      icon: s.kind === "pinned" || s.pinned ? <Star size={13} /> : s.kind === "all" ? <Layers size={14} /> : null,
+    const pick = (s: ScopeOption, inGroup: boolean): MenuEntry => ({
+      label: inGroup ? (s.short ?? s.label) : s.label,
+      icon:
+        s.kind === "pinned" || s.pinned ? (
+          <Star size={13} />
+        ) : s.kind === "all" || s.kind === "root" ? (
+          <Layers size={14} />
+        ) : null,
       checked: s.value === props.value,
       onSelect: () => props.onChange(s.value),
     });
-    const matches = (s: ScopeOption) => !f || s.label.toLowerCase().includes(f);
-    const general = props.scopes.filter((s) => (s.kind === "all" || s.kind === "pinned") && matches(s));
-    const resources = props.scopes.filter((s) => s.kind === "resource" && matches(s));
-    const others = props.scopes.filter((s) => s.kind === "other" && matches(s));
-    const out: MenuEntry[] = general.map(pick);
-    if (resources.length) out.push({ section: "Resources" }, ...resources.map(pick));
-    if (others.length) out.push({ section: "Other tags" }, ...others.map(pick));
+    const matches = (s: ScopeOption) =>
+      !f || s.label.toLowerCase().includes(f) || (s.group ?? "").toLowerCase().includes(f);
+    const out: MenuEntry[] = props.scopes
+      .filter((s) => (s.kind === "all" || s.kind === "pinned") && matches(s))
+      .map((s) => pick(s, false));
+    const groups = [...new Set(props.scopes.map((s) => s.group).filter((g): g is string => !!g))];
+    for (const g of groups) {
+      const items = props.scopes.filter((s) => s.group === g && matches(s));
+      if (!items.length) continue;
+      out.push({ section: g, tone: items[0].stepIndex }, ...items.map((s) => pick(s, true)));
+    }
     return out;
   }, [props.scopes, props.value, filter, props.onChange]);
 
@@ -80,7 +91,13 @@ export function ScopePicker(props: {
           setAnchor(btn.current ? anchorBelow(btn.current, true) : null);
         }}
       >
-        {current?.kind === "pinned" ? <Star size={13} /> : <Layers size={14} />}
+        {current?.stepIndex !== undefined ? (
+          <span className={`section-mark step-${current.stepIndex % 4}`} />
+        ) : current?.kind === "pinned" ? (
+          <Star size={13} />
+        ) : (
+          <Layers size={14} />
+        )}
         <span className="picker-label">{current?.label ?? "All resources"}</span>
         <span className="muted">
           <ChevronsUpDown size={13} />
@@ -122,10 +139,14 @@ export function HideDoneSwitch(props: { checked: boolean; onChange: (v: boolean)
   return <Switch checked={props.checked} label="Hide done" onChange={props.onChange} />;
 }
 
-export function MatchBar(props: { summary: Summary; onQueueAll: () => void }) {
+export function MatchBar(props: { summary: Summary; onQueueAll: () => void; onLaterAll: () => void }) {
   const s = props.summary;
   const head = s.truncated ? `First ${fmt(s.count)} matches` : plural(s.count, "match", "matches");
-  const bits = [s.queued ? `${fmt(s.queued)} queued` : null, s.done ? `${fmt(s.done)} done` : null].filter(Boolean);
+  const bits = [
+    s.queued ? `${fmt(s.queued)} queued` : null,
+    s.later ? `${fmt(s.later)} later` : null,
+    s.done ? `${fmt(s.done)} done` : null,
+  ].filter(Boolean);
   let tail: ReactNode = null;
   if (s.truncated) tail = <> — too many to queue at once; narrow the search or pick a resource</>;
   else if (!s.candidates) tail = <> — nothing left to queue</>;
@@ -145,6 +166,15 @@ export function MatchBar(props: { summary: Summary; onQueueAll: () => void }) {
         {bits.length ? ` · ${bits.join(" · ")}` : ""}
         {tail}
       </div>
+      <button
+        type="button"
+        className="btn ghost"
+        disabled={s.truncated || !s.laterCandidates}
+        onClick={props.onLaterAll}
+        title="Save every match that isn't queued, done or already saved for a later session"
+      >
+        <BookmarkPlus size={14} /> Later
+      </button>
       <button
         type="button"
         className="btn"

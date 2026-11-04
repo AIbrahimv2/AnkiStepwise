@@ -1,4 +1,6 @@
 import {
+  BookmarkMinus,
+  BookmarkPlus,
   CircleCheck,
   Eraser,
   ExternalLink,
@@ -20,7 +22,7 @@ import {
   Toasts,
   type Tone,
 } from "./components/Overlays";
-import { SidePanel } from "./components/SidePanel";
+import { SidePanel, type Tab } from "./components/SidePanel";
 import { HideDoneSwitch, MatchBar, ScopePicker, SearchBox } from "./components/Toolbar";
 import { DetailsBar, type FlatRow, Tree } from "./components/Tree";
 import { type Anchor, Menu, type MenuEntry, plural } from "./components/ui";
@@ -29,6 +31,7 @@ import {
   type Boot,
   type Bundle,
   type Details,
+  type LaterPlan,
   type Options,
   type PushEvent,
   type ScopeOption,
@@ -72,6 +75,8 @@ export function App() {
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
   const [importing, setImporting] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  const [tab, setTab] = useState<Tab>("queue");
+  const [laterPlan, setLaterPlan] = useState<LaterPlan | null>(null);
 
   const searchInput = useRef<HTMLInputElement>(null);
   const searchSeq = useRef(0);
@@ -79,14 +84,20 @@ export function App() {
   queryRef.current = query;
   const expandedRef = useRef(expanded);
   expandedRef.current = expanded;
+  // Step sections start open; remember the ones you close.
+  const collapsedRef = useRef(new Set<string>());
 
   // --- toasts --------------------------------------------------------------
 
-  const toast = useCallback((message: string, tone: Tone = "ok") => {
-    const id = Date.now() + Math.random();
-    setToasts((t) => [...t.slice(-2), { id, message, tone }]);
-    setTimeout(() => setToasts((t) => t.filter((x) => x.id !== id)), tone === "error" ? 6000 : 3600);
-  }, []);
+  const dismissToast = useCallback((id: number) => setToasts((t) => t.filter((x) => x.id !== id)), []);
+  const toast = useCallback(
+    (message: string, tone: Tone = "ok", action?: Toast["action"]) => {
+      const id = Date.now() + Math.random();
+      setToasts((t) => [...t.slice(-2), { id, message, tone, action }]);
+      setTimeout(() => dismissToast(id), tone === "error" || action ? 6500 : 3600);
+    },
+    [dismissToast],
+  );
 
   useEffect(() => {
     setReplyHandlers({
@@ -183,23 +194,32 @@ export function App() {
     [mergeNodes],
   );
 
-  /** (Re)load the browse tree: top level plus every expanded row. Pass
-   *  `open` when the expanded set is changing in the same update. */
-  const loadTree = useCallback(async (open?: Set<string>) => {
-    const q = queryRef.current.trim();
-    if (q) return runSearch(q);
-    const keys = ["", ...(open ?? expandedRef.current)];
-    const lists = await Promise.all(keys.map((key) => call<NodeList>("children", { key })));
-    // A single resource in scope opens straight away.
-    const only = lists[0].nodes.length === 1 ? lists[0].nodes[0] : null;
-    if (only?.hasKids && !keys.includes(only.key)) {
-      keys.push(only.key);
-      lists.push(await call<NodeList>("children", { key: only.key }));
-      setExpanded((e) => new Set(e).add(only.key));
-    }
-    mergeNodes(lists.flatMap((l) => l.nodes), false);
-    setKids(Object.fromEntries(keys.map((k, i) => [k, lists[i].nodes.map((n) => n.key)])));
-  }, [mergeNodes, runSearch]);
+  /** (Re)load the browse tree: top level plus every expanded row. Step
+   *  sections open by default (unless you closed them), and so does a lone
+   *  resource. Pass `open` when the expanded set is changing in the same
+   *  update. */
+  const loadTree = useCallback(
+    async (open?: Set<string>) => {
+      const q = queryRef.current.trim();
+      if (q) return runSearch(q);
+      const top = await call<NodeList>("children", { key: "" });
+      const want = new Set(open ?? expandedRef.current);
+      for (const n of top.nodes) {
+        const section = isGroup(n) && n.kind === "root";
+        const lone = top.nodes.length === 1 && n.hasKids;
+        if ((section || lone) && !collapsedRef.current.has(n.key)) want.add(n.key);
+      }
+      const keys = [...want];
+      const lists = await Promise.all(keys.map((key) => call<NodeList>("children", { key })));
+      mergeNodes([...top.nodes, ...lists.flatMap((l) => l.nodes)], false);
+      setKids({
+        "": top.nodes.map((n) => n.key),
+        ...Object.fromEntries(keys.map((k, i) => [k, lists[i].nodes.map((n) => n.key)])),
+      });
+      setExpanded(want);
+    },
+    [mergeNodes, runSearch],
+  );
 
   // --- boot & pushes -------------------------------------------------------
 
@@ -212,6 +232,7 @@ export function App() {
       const root = document.documentElement.style;
       root.setProperty("--q-raw", b.colors.queued);
       root.setProperty("--d-raw", b.colors.completed);
+      root.setProperty("--l-raw", b.colors.later);
       if (b.ready) {
         setReady(true);
         loadTree();
@@ -302,6 +323,7 @@ export function App() {
         return;
       }
       if (expandedRef.current.has(key)) {
+        collapsedRef.current.add(key);
         setExpanded((prev) => {
           const next = new Set(prev);
           next.delete(key);
@@ -309,6 +331,7 @@ export function App() {
         });
         return;
       }
+      collapsedRef.current.delete(key);
       const r = await call<NodeList>("children", { key });
       mergeNodes(r.nodes, false);
       setKids((k) => ({ ...k, [key]: r.nodes.map((n) => n.key) }));
@@ -317,11 +340,19 @@ export function App() {
     [search, mergeNodes],
   );
 
+  /** After queuing: if that went over the limit, offer to park those
+   *  topics in Later instead. */
   const warnIfOver = useCallback(
-    (b: Bundle) => {
-      if (b.side.over) toast(`${(b.side.count - b.side.limit).toLocaleString()} over your ${b.side.limit}-card limit`, "warn");
+    (b: Bundle, tags: string[]) => {
+      if (!b.side.over) return;
+      toast(`${(b.side.count - b.side.limit).toLocaleString()} over your ${b.side.limit}-card limit`, "warn", {
+        label: "Move to Later",
+        onClick: () => {
+          call<Bundle>("later", { ...ctx.current, tags }).then(applyBundle);
+        },
+      });
     },
-    [toast],
+    [toast, applyBundle],
   );
 
   const toggleQueue = useCallback(
@@ -333,10 +364,19 @@ export function App() {
       if (n.check === "on") {
         await act("unqueue", { tags: [n.tag] });
       } else {
-        warnIfOver(await act("queue", { tags: [n.tag] }));
+        warnIfOver(await act("queue", { tags: [n.tag] }), [n.tag]);
       }
     },
     [act, toast, warnIfOver],
+  );
+
+  const toggleLater = useCallback(
+    (n: TagNode) => {
+      if (n.status === "completed" || (n.status && n.inherited)) return;
+      if (n.status === "later") act("unlater", { tags: [n.tag] });
+      else act("later", { tags: [n.tag] });
+    },
+    [act],
   );
 
   const complete = useCallback((tags: string[]) => act("complete", { tags }), [act]);
@@ -364,9 +404,21 @@ export function App() {
         confirm: "Queue anyway",
         danger: true,
         onConfirm: go,
+        alt: summary.laterCandidates ? { label: "Save for later", onSelect: () => act("later_matches") } : undefined,
       });
     } else go();
   };
+
+  // What "Fill queue" would add, refreshed whenever the Later tab is open
+  // and the queue changes.
+  useEffect(() => {
+    if (tab !== "later" || !side?.later.length) return;
+    let live = true;
+    call<{ plan: LaterPlan }>("later_plan").then((r) => live && setLaterPlan(r.plan));
+    return () => {
+      live = false;
+    };
+  }, [tab, side]);
 
   const changeScope = async (value: string) => {
     const r = await call<{ scopes: ScopeOption[]; scope: string }>("set_scope", { value });
@@ -417,7 +469,17 @@ export function App() {
         icon: <ListPlus size={14} />,
         disabled: n.status === "queued",
         hint: "Space",
-        onSelect: async () => warnIfOver(await act("queue", { tags: [n.tag] })),
+        onSelect: async () => warnIfOver(await act("queue", { tags: [n.tag] }), [n.tag]),
+      });
+    if (own === "later")
+      entries.push({ label: "Remove from Later", icon: <BookmarkMinus size={14} />, hint: "L", onSelect: () => act("unlater", { tags: [n.tag] }) });
+    else if (own !== "completed")
+      entries.push({
+        label: own === "queued" ? "Move to Later" : "Save for later",
+        icon: <BookmarkPlus size={14} />,
+        hint: "L",
+        disabled: !!n.status && n.inherited,
+        onSelect: () => act("later", { tags: [n.tag] }),
       });
     if (own !== "completed")
       entries.push({ label: options?.unsuspendOnComplete ? "Mark completed & unsuspend" : "Mark completed", icon: <CircleCheck size={14} />, onSelect: () => complete([n.tag]) });
@@ -477,7 +539,9 @@ export function App() {
             <ScopePicker scopes={scopes} value={scope} onChange={changeScope} />
             <HideDoneSwitch checked={hideDone} onChange={(v) => setOption("hideCompleted", v)} />
           </div>
-          {search && summary && summary.count > 0 && <MatchBar summary={summary} onQueueAll={queueMatches} />}
+          {search && summary && summary.count > 0 && (
+            <MatchBar summary={summary} onQueueAll={queueMatches} onLaterAll={() => act("later_matches")} />
+          )}
           <Tree
             rows={rows}
             nodes={nodes}
@@ -489,6 +553,7 @@ export function App() {
             onSelect={setSelected}
             onToggleExpand={toggleExpand}
             onToggleQueue={toggleQueue}
+            onToggleLater={toggleLater}
             onContext={(key, x, y) => setMenu({ key, anchor: { x, y } })}
           />
           <DetailsBar details={details} searching={!!search} />
@@ -496,12 +561,18 @@ export function App() {
         {side && (
           <SidePanel
             side={side}
+            tab={tab}
+            onTab={setTab}
+            laterPlan={laterPlan}
             unsuspendOnComplete={options?.unsuspendOnComplete ?? true}
             onLimit={(value) => act("set_limit", { value })}
             onComplete={complete}
             onCompleteAll={completeAll}
             onUnqueue={(tag) => act("unqueue", { tags: [tag] })}
-            onRequeue={async (tag) => warnIfOver(await act("queue", { tags: [tag] }))}
+            onLater={(tag) => act("later", { tags: [tag] })}
+            onUnlater={(tag) => act("unlater", { tags: [tag] })}
+            onQueue={async (tag) => warnIfOver(await act("queue", { tags: [tag] }), [tag])}
+            onFill={() => act("fill_from_later")}
             onClear={(tag) => act("clear", { tags: [tag] })}
             onUnsuspend={() => act("unsuspend", { tags: [] })}
             onBrowse={() => call("browse", { tags: [] })}
@@ -513,7 +584,7 @@ export function App() {
       {menu && <Menu anchor={menu.anchor} entries={menuEntries(menu.key)} onClose={() => setMenu(null)} minWidth={230} />}
       {confirm && <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} />}
       {importing && <ImportDialog onClose={() => setImporting(false)} onImport={doImport} />}
-      <Toasts toasts={toasts} />
+      <Toasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   );
 }

@@ -1,36 +1,50 @@
 import {
+  Bookmark,
+  BookmarkPlus,
   Check,
   CircleCheckBig,
   ExternalLink,
   Inbox,
+  ListPlus,
   LockOpen,
   Minus,
   Plus,
   RotateCcw,
   TriangleExclamationPoint,
+  WandSparkles,
   X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import type { Side } from "../types";
+import type { LaterPlan, Side } from "../types";
+import { StepChip } from "./Tree";
 import { IconButton, fmt, plural } from "./ui";
+
+export type Tab = "queue" | "later" | "done";
 
 interface Props {
   side: Side;
+  tab: Tab;
+  onTab: (tab: Tab) => void;
+  laterPlan: LaterPlan | null;
   unsuspendOnComplete: boolean;
   onLimit: (value: number) => void;
   onComplete: (tags: string[]) => void;
   onCompleteAll: () => void;
   onUnqueue: (tag: string) => void;
-  onRequeue: (tag: string) => void;
+  onLater: (tag: string) => void;
+  onUnlater: (tag: string) => void;
+  onQueue: (tag: string) => void;
+  onFill: () => void;
   onClear: (tag: string) => void;
   onUnsuspend: () => void;
   onBrowse: () => void;
   onReveal: (key: string) => void;
 }
 
+const TABS: Tab[] = ["queue", "later", "done"];
+
 export function SidePanel(props: Props) {
-  const { side } = props;
-  const [tab, setTab] = useState<"queue" | "done">("queue");
+  const { side, tab } = props;
   const queued = side.queued.length;
   const pct = Math.min(100, side.limit ? (100 * side.count) / side.limit : 0);
   const left = side.limit - side.count;
@@ -62,18 +76,20 @@ export function SidePanel(props: Props) {
         </div>
       </section>
 
-      <div className="segmented" role="tablist">
-        <span className={`thumb${tab === "done" ? " right" : ""}`} />
-        <button type="button" role="tab" className={tab === "queue" ? "active" : ""} onClick={() => setTab("queue")}>
-          Queue <span className="count-pill">{queued}</span>
-        </button>
-        <button type="button" role="tab" className={tab === "done" ? "active" : ""} onClick={() => setTab("done")}>
-          Completed <span className="count-pill">{side.completed.length}</span>
-        </button>
+      <div className="segmented" role="tablist" style={{ ["--tabs" as string]: 3 }}>
+        <span className="thumb" style={{ ["--i" as string]: TABS.indexOf(tab) }} />
+        <TabButton active={tab === "queue"} onClick={() => props.onTab("queue")} label="Queue" count={queued} />
+        <TabButton active={tab === "later"} onClick={() => props.onTab("later")} label="Later" count={side.later.length} />
+        <TabButton
+          active={tab === "done"}
+          onClick={() => props.onTab("done")}
+          label="Done"
+          count={side.completed.length}
+        />
       </div>
 
       <div className="list">
-        {tab === "queue" ? (
+        {tab === "queue" && (
           queued ? (
             side.queued.map((row) => (
               <div
@@ -83,10 +99,7 @@ export function SidePanel(props: Props) {
                 title={row.tag}
               >
                 <span className="item-bullet" />
-                <div className="item-main">
-                  <div className="item-title">{row.title}</div>
-                  <div className="item-path">{row.path}</div>
-                </div>
+                <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
                 <div className="item-meta">
                   <b>{fmt(row.fresh)}</b> new
                 </div>
@@ -99,6 +112,9 @@ export function SidePanel(props: Props) {
                   >
                     <Check size={15} strokeWidth={2.4} />
                   </IconButton>
+                  <IconButton size="sm" label="Move to Later" onClick={() => props.onLater(row.tag)}>
+                    <BookmarkPlus size={14} />
+                  </IconButton>
                   <IconButton size="sm" tone="bad" label="Remove from queue" onClick={() => props.onUnqueue(row.tag)}>
                     <X size={15} />
                   </IconButton>
@@ -110,29 +126,64 @@ export function SidePanel(props: Props) {
               Tick topics on the left, or search and queue every match at once.
             </Empty>
           )
-        ) : side.completed.length ? (
-          side.completed.map((row) => (
-            <div key={row.tag} className="item done-item" title={row.tag} onDoubleClick={() => props.onReveal(row.key)}>
-              <span className="item-bullet" />
-              <div className="item-main">
-                <div className="item-title">{row.title}</div>
-                <div className="item-path">{row.path}</div>
+        )}
+
+        {tab === "later" && (
+          side.later.length ? (
+            <>
+              <FillBar plan={props.laterPlan} onFill={props.onFill} />
+              {side.later.map((row) => (
+                <div
+                  key={row.tag}
+                  className={`item later-item${row.missing ? " missing" : ""}`}
+                  title={row.tag}
+                  onDoubleClick={() => props.onReveal(row.key)}
+                >
+                  <span className="item-bullet" />
+                  <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
+                  <div className="item-meta">
+                    <b>{fmt(row.fresh)}</b> new
+                  </div>
+                  <div className="item-actions">
+                    <IconButton size="sm" label="Move to the queue" onClick={() => props.onQueue(row.tag)}>
+                      <ListPlus size={15} />
+                    </IconButton>
+                    <IconButton size="sm" tone="bad" label="Remove from Later" onClick={() => props.onUnlater(row.tag)}>
+                      <X size={15} />
+                    </IconButton>
+                  </div>
+                </div>
+              ))}
+            </>
+          ) : (
+            <Empty icon={<Bookmark size={18} />} title="Nothing saved for later">
+              Found a topic that won't fit this session? Hover it and click the bookmark (or press L) to park it here.
+            </Empty>
+          )
+        )}
+
+        {tab === "done" && (
+          side.completed.length ? (
+            side.completed.map((row) => (
+              <div key={row.tag} className="item done-item" title={row.tag} onDoubleClick={() => props.onReveal(row.key)}>
+                <span className="item-bullet" />
+                <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
+                <div className="item-meta">{row.date}</div>
+                <div className="item-actions">
+                  <IconButton size="sm" label="Move back to the queue" onClick={() => props.onQueue(row.tag)}>
+                    <RotateCcw size={14} />
+                  </IconButton>
+                  <IconButton size="sm" tone="bad" label="Clear status" onClick={() => props.onClear(row.tag)}>
+                    <X size={15} />
+                  </IconButton>
+                </div>
               </div>
-              <div className="item-meta">{row.date}</div>
-              <div className="item-actions">
-                <IconButton size="sm" label="Move back to the queue" onClick={() => props.onRequeue(row.tag)}>
-                  <RotateCcw size={14} />
-                </IconButton>
-                <IconButton size="sm" tone="bad" label="Clear status" onClick={() => props.onClear(row.tag)}>
-                  <X size={15} />
-                </IconButton>
-              </div>
-            </div>
-          ))
-        ) : (
-          <Empty icon={<CircleCheckBig size={18} />} title="Nothing completed yet">
-            Topics you finish land here with the date.
-          </Empty>
+            ))
+          ) : (
+            <Empty icon={<CircleCheckBig size={18} />} title="Nothing completed yet">
+              Topics you finish land here with the date.
+            </Empty>
+          )
         )}
       </div>
 
@@ -149,6 +200,52 @@ export function SidePanel(props: Props) {
         </button>
       </div>
     </aside>
+  );
+}
+
+function TabButton(props: { active: boolean; label: string; count: number; onClick: () => void }) {
+  return (
+    <button type="button" role="tab" aria-selected={props.active} className={props.active ? "active" : ""} onClick={props.onClick}>
+      {props.label} <span className="count-pill">{fmt(props.count)}</span>
+    </button>
+  );
+}
+
+function ItemText(props: { title: string; path: string; step: string | null; stepIndex: number | null }) {
+  return (
+    <div className="item-main">
+      <div className="item-title">{props.title}</div>
+      <div className="item-path">
+        <StepChip step={props.step} index={props.stepIndex} />
+        <span>{props.path}</span>
+      </div>
+    </div>
+  );
+}
+
+/** "Fill your queue from Later": queues the oldest Later topics that fit. */
+function FillBar({ plan, onFill }: { plan: LaterPlan | null; onFill: () => void }) {
+  let text: ReactNode = "Working out what fits…";
+  if (plan) {
+    if (!plan.picked) text = <>Nothing here fits under your limit right now.</>;
+    else
+      text = (
+        <>
+          <b>{plural(plan.picked, "topic")}</b> fit — adds <b>+{fmt(plan.add)}</b> →{" "}
+          <b>
+            {fmt(plan.after)} / {fmt(plan.limit ?? 0)}
+          </b>
+          {plan.skipped ? ` · ${plan.skipped} too big for now` : ""}
+        </>
+      );
+  }
+  return (
+    <div className="fillbar">
+      <div className="fillbar-text">{text}</div>
+      <button type="button" className="btn" disabled={!plan?.picked} onClick={onFill} title="Queue the oldest Later topics that fit under your limit">
+        <WandSparkles size={14} /> Fill queue
+      </button>
+    </div>
   );
 }
 
