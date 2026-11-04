@@ -15,7 +15,7 @@ from aqt.utils import tooltip
 
 from . import colorsync
 from .config import get_config
-from .counts import TagIndex, build_index, plan_fill, suspended_ids, tags_search
+from .counts import TagIndex, build_index, fresh_ids, plan_fill, suspended_ids, tags_search
 from .state import QueueState
 
 # --- state + listeners -------------------------------------------------------
@@ -56,9 +56,18 @@ def notify() -> None:
     refresh_main_screen()
 
 
-def refresh_main_screen() -> None:
-    if mw.state == "deckBrowser":
+def refresh_main_screen(full: bool = False) -> None:
+    """Update the deck screen's queue meter. Re-rendering the whole deck
+    list is slow (every add-on redraws its panel), so normally the meter is
+    patched in place; `full` is only for adding/removing the widget."""
+    if mw.state != "deckBrowser":
+        return
+    if full:
         mw.deckBrowser.refresh()
+        return
+    from .widget import update_in_place
+
+    update_in_place()
 
 
 def _plural(n: int, word: str) -> str:
@@ -116,8 +125,7 @@ def fill_from_later() -> tuple[list[str], int, list[str]]:
     limit. Returns (queued tags, cards added, tags that didn't fit)."""
     cfg = get_config()
     state = load_state()
-    picked, added, skipped = plan_fill(
-        mw.col, state.later(), state.queued(), cfg["count_mode"], cfg["card_limit"])
+    picked, added, skipped = plan_fill(fresh_cards, state.later(), state.queued(), cfg["card_limit"])
     if picked:
         queue(picked)
     return picked, added, skipped
@@ -137,7 +145,7 @@ def complete(tags: list[str], parent=None) -> None:
         return
     parent = parent or mw
     cfg = get_config()
-    cids = suspended_ids(mw.col, tags) if cfg["unsuspend_on_complete"] else []
+    cids = suspended_cards(tags) if cfg["unsuspend_on_complete"] else []
     state = load_state()
     commit(state, state.complete(tags))
     done = f"Marked {_plural(len(tags), 'topic')} completed"
@@ -153,7 +161,7 @@ def complete(tags: list[str], parent=None) -> None:
 
 def unsuspend(tags: list[str], parent=None) -> None:
     parent = parent or mw
-    cids = suspended_ids(mw.col, tags)
+    cids = suspended_cards(tags)
     if not cids:
         say("No suspended cards in these topics.", parent)
         return
@@ -169,47 +177,110 @@ def browse(tags: list[str]) -> None:
         aqt.dialogs.open("Browser", mw, search=(tags_search(mw.col, tags),))
 
 
+# --- card counts -------------------------------------------------------------
+# Counting through Anki's search is slow (a regex over every note per tag), so
+# these use the in-memory index and only fall back to searching before the
+# first index exists.
+
+
+def usable_index() -> TagIndex | None:
+    """The cached index if it counts the configured way. It may be a few
+    seconds stale after reviews; a rebuild is then already on its way."""
+    mode = get_config()["count_mode"]
+    return _index if _index is not None and _index.mode == mode else None
+
+
+def fresh_cards(tags: list[str]) -> set[int]:
+    """Ids of the unique cards under `tags` that count toward the limit."""
+    if not tags:
+        return set()
+    idx = usable_index()
+    if idx is not None:
+        return set(idx.ids(idx.fresh_under(tags)))
+    return set(fresh_ids(mw.col, tags, get_config()["count_mode"]))
+
+
+def suspended_cards(tags: list[str]) -> list[int]:
+    """Ids of the currently suspended cards under `tags`. Which cards sit
+    under a tag comes from the index (unless tags were edited since it was
+    built); whether they're suspended is checked live."""
+    if not tags:
+        return []
+    idx = _index
+    if idx is None or _membership_dirty:
+        return suspended_ids(mw.col, tags)
+    cids = idx.ids(idx.cards_under(tags))
+    if not cids:
+        return []
+    return mw.col.db.list(
+        f"select id from cards where queue = -1 and id in ({','.join(map(str, cids))})")
+
+
 # --- cached index ------------------------------------------------------------
 
 _index: TagIndex | None = None
 _index_dirty = True
+_membership_dirty = True  # tags edited since the index was built
 _building = False
 _waiters: list[Callable[[TagIndex], None]] = []
+_index_listeners: list[Callable[[TagIndex], None]] = []
 
 
-def mark_index_dirty() -> None:
-    global _index_dirty
+def mark_index_dirty(membership: bool = False) -> None:
+    global _index_dirty, _membership_dirty
     _index_dirty = True
+    if membership:
+        _membership_dirty = True
 
 
 def cached_index() -> TagIndex | None:
     return _index
 
 
-def request_index(callback: Callable[[TagIndex], None]) -> None:
-    """Call `callback(index)` with an up-to-date index, rebuilding it in the
-    background first if cards or tags have changed."""
-    global _building
+def on_index_built(fn: Callable[[TagIndex], None]) -> None:
+    if fn not in _index_listeners:
+        _index_listeners.append(fn)
+
+
+def off_index_built(fn: Callable[[TagIndex], None]) -> None:
+    if fn in _index_listeners:
+        _index_listeners.remove(fn)
+
+
+def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
+    """Make sure an up-to-date index exists, rebuilding it in the background
+    if cards or tags changed. `callback(index)` runs once it's current;
+    listeners from on_index_built() hear about every rebuild."""
+    global _building, _index_dirty
     mode = get_config()["count_mode"]
     if _index is not None and not _index_dirty and _index.mode == mode:
-        callback(_index)
+        if callback:
+            callback(_index)
         return
-    _waiters.append(callback)
+    if callback:
+        _waiters.append(callback)
     if _building:
         return
     _building = True
-    _set_clean()
+    _index_dirty = False
+    membership_was_dirty = _membership_dirty
 
     def on_done(index: TagIndex) -> None:
-        global _index, _building
+        global _index, _building, _membership_dirty
         _index, _building = index, False
-        waiters = list(_waiters)
-        _waiters.clear()
+        if membership_was_dirty and not _index_dirty:
+            _membership_dirty = False
+        for fn in list(_index_listeners):
+            try:
+                fn(index)
+            except RuntimeError:  # listener's Qt object is gone
+                off_index_built(fn)
         if _index_dirty:
             # Something changed while we were counting: count again.
-            for fn in waiters:
-                request_index(fn)
+            request_index()
             return
+        waiters = list(_waiters)
+        _waiters.clear()
         for fn in waiters:
             fn(index)
 
@@ -224,20 +295,14 @@ def request_index(callback: Callable[[TagIndex], None]) -> None:
     ).run_in_background()
 
 
-def _set_clean() -> None:
-    global _index_dirty
-    _index_dirty = False
-
-
 def reset() -> None:
     """Forget everything tied to the current collection (profile switch)."""
-    global _index, _index_dirty, _building
-    _index, _index_dirty, _building = None, True, False
+    global _index, _index_dirty, _membership_dirty, _building
+    _index, _index_dirty, _membership_dirty, _building = None, True, True, False
     _waiters.clear()
 
 
 def on_operation(changes, handler) -> None:
-    if getattr(changes, "card", False) or getattr(changes, "tag", False) or getattr(
-        changes, "note_text", False
-    ):
-        mark_index_dirty()
+    tags = getattr(changes, "tag", False) or getattr(changes, "note_text", False)
+    if tags or getattr(changes, "card", False):
+        mark_index_dirty(membership=bool(tags))

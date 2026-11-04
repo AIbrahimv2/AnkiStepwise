@@ -6,12 +6,12 @@ Tag Queue window."""
 from __future__ import annotations
 
 import html
+import json
 
 from aqt import mw
 
 from . import actions
 from .config import get_config
-from .counts import fresh_ids
 
 OPEN_CMD = "tagqueue:open"
 UNITS = {"new": "new cards", "suspended": "suspended cards", "all": "cards"}
@@ -53,16 +53,35 @@ PLACE_SCRIPT = """
 """
 
 
+UPDATE_SCRIPT = """
+<script>
+window.tqUpdate = function (d) {
+  var w = document.getElementById('tq-widget');
+  if (!w) { return; }
+  w.className = d.over ? 'tq-wrap tq-over' : 'tq-wrap';
+  w.querySelector('.tq-num b').textContent = d.count;
+  w.querySelector('.tq-unit').textContent = ' / ' + d.limit + ' ' + d.unit;
+  w.querySelector('.tq-fill').style.width = d.pct + '%';
+  w.querySelector('.tq-sub').textContent = d.sub;
+};
+</script>
+"""
+
+
 def _plural(n: int, word: str) -> str:
     return f"{n:,} {word}" + ("" if n == 1 else "s")
 
 
-def build_widget() -> str:
+def _data() -> dict | None:
+    """What the meter shows, or None while card counts aren't ready yet.
+    Counts come from the in-memory index: searching here would block the
+    deck screen for seconds on a large collection."""
     cfg = get_config()
     state = actions.load_state()
     queued, later = state.queued(), state.later()
-    mode = cfg["count_mode"]
-    n = len(fresh_ids(mw.col, queued, mode)) if queued else 0
+    if queued and actions.usable_index() is None:
+        return None
+    n = len(actions.fresh_cards(queued)) if queued else 0
     limit = cfg["card_limit"]
     over = n > limit
     if not queued:
@@ -73,17 +92,42 @@ def build_widget() -> str:
         sub = f"{_plural(len(queued), 'topic')} · {limit - n:,} left"
     if later:
         sub += f" · {len(later):,} saved for later"
-    pct = min(100, round(100 * n / limit)) if limit else 0
-    cls = "tq-wrap tq-over" if over else "tq-wrap"
+    return {
+        "count": f"{n:,}", "limit": f"{limit:,}", "unit": UNITS.get(cfg["count_mode"], "cards"),
+        "over": over, "pct": min(100, round(100 * n / limit)) if limit else 0, "sub": sub,
+    }
+
+
+def build_widget() -> str:
+    d = _data()
+    if d is None:
+        # Count in the background, then patch the numbers in place.
+        actions.request_index(lambda _index: update_in_place())
+        cfg = get_config()
+        d = {"count": "…", "limit": f"{cfg['card_limit']:,}",
+             "unit": UNITS.get(cfg["count_mode"], "cards"), "over": False, "pct": 0,
+             "sub": "Counting cards…"}
+    cls = "tq-wrap tq-over" if d["over"] else "tq-wrap"
     return (
         f'<div id="tq-widget" class="{cls}" onclick="pycmd(\'{OPEN_CMD}\')" title="Open Tag Queue">'
         '<div class="tq-head"><span class="tq-label">Tag queue</span>'
-        f'<span class="tq-num"><b>{n:,}</b><span class="tq-unit"> / {limit:,} '
-        f'{html.escape(UNITS.get(mode, "cards"))}</span></span></div>'
-        f'<div class="tq-bar"><div class="tq-fill" style="width:{pct}%"></div></div>'
-        f'<div class="tq-sub">{html.escape(sub)}</div>'
-        "</div>" + STYLE + PLACE_SCRIPT
+        f'<span class="tq-num"><b>{d["count"]}</b><span class="tq-unit"> / {d["limit"]} '
+        f'{html.escape(d["unit"])}</span></span></div>'
+        f'<div class="tq-bar"><div class="tq-fill" style="width:{d["pct"]}%"></div></div>'
+        f'<div class="tq-sub">{html.escape(d["sub"])}</div>'
+        "</div>" + STYLE + PLACE_SCRIPT + UPDATE_SCRIPT
     )
+
+
+def update_in_place() -> None:
+    """Refresh the meter's numbers without re-rendering the deck screen."""
+    if mw.state != "deckBrowser" or not get_config()["show_on_deck_screen"]:
+        return
+    d = _data()
+    if d is None:
+        actions.request_index(lambda _index: update_in_place())
+        return
+    mw.deckBrowser.web.eval(f"window.tqUpdate && window.tqUpdate({json.dumps(d)});")
 
 
 def on_deck_render(deck_browser, content) -> None:

@@ -236,7 +236,7 @@ class Bridge:
         if key:
             update_config(**{key: bool(msg.get("value"))})
             if key == "show_on_deck_screen":
-                actions.refresh_main_screen()
+                actions.refresh_main_screen(full=True)
         return self.bundle(msg)
 
     def cmd_toggle_pin(self, msg: dict) -> dict:

@@ -6,6 +6,12 @@ Counts are always *unique cards*: a card tagged with several queued topics
 (common in AnKing, where one card carries B&B, Bootcamp and Pixorize tags)
 is counted once. No Qt imports, so this runs against a collection outside
 Anki for testing.
+
+Performance note: Anki's `tag:` search runs a regex over every note per
+tag (~130 ms per tag on a full AnKing collection), so counting a 20-tag
+queue that way takes seconds. Interactive counts therefore come from the
+in-memory `TagIndex` (card lists per tag, built once in the background);
+the search helpers below are only fallbacks and for opening the Browser.
 """
 
 from __future__ import annotations
@@ -13,6 +19,7 @@ from __future__ import annotations
 import fnmatch
 import re
 from collections import Counter, defaultdict
+from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
 
 from .state import SEP
@@ -32,14 +39,6 @@ _FRESH_SEARCH = {
 
 def fresh_search(mode: str) -> str:
     return _FRESH_SEARCH.get(mode, _FRESH_SEARCH["new"])
-
-
-def _is_fresh(mode: str, queue: int, ctype: int) -> bool:
-    if mode == "all":
-        return True
-    if mode == "suspended":
-        return queue == -1
-    return queue == -1 or ctype == 0
 
 
 # --- searches ----------------------------------------------------------------
@@ -73,18 +72,19 @@ def suspended_ids(col, tags: list[str]) -> list[int]:
     return card_ids(col, tags, "is:suspended")
 
 
-def plan_fill(col, later: list[str], queued: list[str], mode: str, limit: int):
+def plan_fill(fresh_of: Callable[[list[str]], set], later: list[str], queued: list[str],
+              limit: int):
     """Which Later topics fit in the queue: walk them oldest first and take
     each one whose *new* unique cards still fit under `limit` (a big topic
     that doesn't fit is skipped, so smaller ones behind it can still go in).
+    `fresh_of(tags)` returns the set of fresh cards under those tags.
     Returns (picked tags, cards added, skipped tags)."""
-    have = set(fresh_ids(col, queued, mode)) if queued else set()
+    have = set(fresh_of(queued)) if queued else set()
     start = len(have)
     picked: list[str] = []
     skipped: list[str] = []
     for tag in later:
-        ids = set(fresh_ids(col, [tag], mode))
-        new = ids - have
+        new = fresh_of([tag]) - have
         if len(have) + len(new) <= limit:
             picked.append(tag)
             have |= new
@@ -124,11 +124,13 @@ def natural_key(s: str):
 
 @dataclass
 class TagIndex:
-    """The whole tag tree with per-tag unique card counts.
+    """The whole tag tree with per-tag unique card counts, plus which cards
+    sit under which tag so any set of tags can be counted in memory.
 
     Keys are lower-cased full tag names; `names` maps them back to the
     collection's spelling. Parents that exist only implicitly (because a
-    child tag exists) are included.
+    child tag exists) are included. Cards are referred to by their position
+    in `card_ids`.
     """
 
     mode: str
@@ -137,6 +139,10 @@ class TagIndex:
     total: Counter = field(default_factory=Counter)
     fresh: Counter = field(default_factory=Counter)
     leaves: dict[str, int] = field(default_factory=dict)
+    # tag actually on a note (lower-case) -> positions of that note's cards
+    tag_cards: dict[str, list[int]] = field(default_factory=dict)
+    card_ids: list[int] = field(default_factory=list)
+    fresh_mask: bytearray = field(default_factory=bytearray)
 
     def name(self, key: str) -> str:
         return self.names.get(key, key)
@@ -147,51 +153,104 @@ class TagIndex:
     def last(self, key: str) -> str:
         return self.name(key).rsplit(SEP, 1)[-1]
 
+    def subtree(self, key: str) -> Iterator[str]:
+        """`key` and every tag nested under it."""
+        stack = [key]
+        children = self.children
+        while stack:
+            k = stack.pop()
+            yield k
+            kids = children.get(k)
+            if kids:
+                stack.extend(kids)
+
+    def cards_under(self, tags: Iterable[str]) -> set[int]:
+        """Positions of every card under any of `tags` (unique)."""
+        out: set[int] = set()
+        tag_cards = self.tag_cards
+        for t in tags:
+            for k in self.subtree(t.lower()):
+                cards = tag_cards.get(k)
+                if cards:
+                    out.update(cards)
+        return out
+
+    def fresh_under(self, tags: Iterable[str]) -> set[int]:
+        """Positions of the cards under `tags` that count toward the limit."""
+        mask = self.fresh_mask
+        return {i for i in self.cards_under(tags) if mask[i]}
+
+    def ids(self, positions: Iterable[int]) -> list[int]:
+        card_ids = self.card_ids
+        return [card_ids[i] for i in positions]
+
 
 def build_index(col, mode: str) -> TagIndex:
-    """Build the tag tree and count cards under every tag in one pass over
-    the cards table (about a second for a full AnKing collection — run it in
-    the background)."""
+    """Build the tag tree, count cards under every tag, and record which
+    cards each tag holds, in one pass over the cards table (a few hundred
+    ms for a full AnKing collection; still run it in the background)."""
     idx = TagIndex(mode=mode)
+    names = idx.names
+    tag_cards: dict[str, list[int]] = {}
+    # raw tag string -> (its key and all parent keys, its card list). Built
+    # once per distinct tag; the hot loop below then only does lookups.
+    info: dict[str, tuple[tuple[str, ...], list[int]]] = {}
+
+    def learn(tag: str) -> tuple[tuple[str, ...], list[int]]:
+        low = tag.lower()
+        parts, orig = low.split(SEP), tag.split(SEP)
+        keys = []
+        for i in range(1, len(parts) + 1):
+            k = SEP.join(parts[:i])
+            keys.append(k)
+            if k not in names:
+                names[k] = SEP.join(orig[:i])
+        cards = tag_cards.setdefault(low, [])
+        found = info[tag] = (tuple(keys), cards)
+        return found
 
     for tag in col.tags.all():
-        parts = tag.split(SEP)
-        for i in range(1, len(parts) + 1):
-            full = SEP.join(parts[:i])
-            idx.names.setdefault(full.lower(), full)
+        learn(tag)
+
+    rows = col.db.all(
+        "select c.id, n.tags, c.queue, c.type from cards c join notes n on n.id = c.nid"
+        " order by c.nid"
+    )
+    total, fresh = idx.total, idx.fresh
+    card_ids = idx.card_ids
+    mask = idx.fresh_mask = bytearray(len(rows))
+    count_all, only_suspended = mode == "all", mode == "suspended"
+    get = info.get
+    last_tags = None
+    under: set[str] = set()
+    lists: list[list[int]] = []
+    for i, (cid, tags, queue, ctype) in enumerate(rows):
+        if tags != last_tags:  # cards of one note are adjacent
+            last_tags = tags
+            found = [get(t) or learn(t) for t in tags.split()]
+            under = set().union(*[f[0] for f in found])
+            lists = [f[1] for f in found]
+        card_ids.append(cid)
+        for cards in lists:
+            cards.append(i)
+        total.update(under)  # Counter.update counts in C
+        if count_all or queue == -1 or (not only_suspended and ctype == 0):
+            mask[i] = 1
+            fresh.update(under)
+    idx.tag_cards = {k: v for k, v in tag_cards.items() if v}
 
     children: dict[str, list[str]] = defaultdict(list)
-    for low in idx.names:
+    for low in names:
         cut = low.rfind(SEP)
         children[low[:cut] if cut >= 0 else ""].append(low)
     for kids in children.values():
-        kids.sort(key=lambda k: natural_key(idx.names[k].rsplit(SEP, 1)[-1]))
+        kids.sort(key=lambda k: natural_key(names[k].rsplit(SEP, 1)[-1]))
     idx.children = dict(children)
 
     # Leaf-topic counts, deepest tags first so children are done before parents.
-    for low in sorted(idx.names, key=lambda k: k.count(SEP), reverse=True):
+    for low in sorted(names, key=lambda k: k.count(SEP), reverse=True):
         kids = idx.children.get(low)
         idx.leaves[low] = sum(idx.leaves[c] for c in kids) if kids else 1
-
-    # Unique card counts: each card adds 1 to every tag it sits under, once.
-    total, fresh = idx.total, idx.fresh
-    last_tags, last_prefixes = None, ()
-    rows = col.db.all(
-        "select n.tags, c.queue, c.type from cards c join notes n on n.id = c.nid order by c.nid"
-    )
-    for tags, queue, ctype in rows:
-        if tags != last_tags:
-            prefixes = set()
-            for tag in tags.split():
-                parts = tag.lower().split(SEP)
-                for i in range(1, len(parts) + 1):
-                    prefixes.add(SEP.join(parts[:i]))
-            last_tags, last_prefixes = tags, prefixes
-        is_fresh = _is_fresh(mode, queue, ctype)
-        for p in last_prefixes:
-            total[p] += 1
-            if is_fresh:
-                fresh[p] += 1
     return idx
 
 

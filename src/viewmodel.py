@@ -16,13 +16,10 @@ from __future__ import annotations
 
 from datetime import datetime
 
-from aqt import mw
-
 from . import actions, colorsync
 from .config import get_config
 from .counts import (
     TagIndex,
-    fresh_ids,
     natural_key,
     plan_fill,
     prettify,
@@ -317,13 +314,12 @@ class View:
 
     def queue_ids(self) -> set[int]:
         if self._queue_ids is None:
-            q = self.state.queued()
-            self._queue_ids = set(fresh_ids(mw.col, q, self.mode)) if q else set()
+            self._queue_ids = actions.fresh_cards(self.state.queued())
         return self._queue_ids
 
     def projection(self, tags: list[str]) -> tuple[int, int, int]:
         """(cards added, cards already queued via other topics, queue size after)."""
-        ids = set(fresh_ids(mw.col, tags, self.mode)) if tags else set()
+        ids = actions.fresh_cards(tags)
         queued = self.queue_ids()
         add = len(ids - queued)
         return add, len(ids) - add, len(queued) + add
@@ -398,7 +394,7 @@ class View:
     def _fresh(self, tag: str) -> int:
         if self.index is not None and self.index.mode == self.mode:
             return self.index.fresh.get(tag.lower(), 0)
-        return len(fresh_ids(mw.col, [tag], self.mode))
+        return len(actions.fresh_cards([tag]))
 
     def side(self) -> dict:
         queued, later, done = self.state.queued(), self.state.later(), self.state.completed()
@@ -430,7 +426,7 @@ class View:
         if not later:
             return {"picked": 0, "add": 0, "after": len(self.queue_ids()), "skipped": 0}
         picked, add, skipped = plan_fill(
-            mw.col, later, self.state.queued(), self.mode, self.cfg["card_limit"])
+            actions.fresh_cards, later, self.state.queued(), self.cfg["card_limit"])
         return {"picked": len(picked), "add": add, "after": len(self.queue_ids()) + add,
                 "skipped": len(skipped), "limit": self.cfg["card_limit"]}
 

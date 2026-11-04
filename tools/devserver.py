@@ -97,7 +97,8 @@ def main() -> None:
     mw.col = col
     mw.addonManager = AddonManager()
     mw.state = "deckBrowser"
-    mw.deckBrowser = types.SimpleNamespace(refresh=lambda: None)
+    mw.deckBrowser = types.SimpleNamespace(
+        refresh=lambda: None, web=types.SimpleNamespace(eval=lambda js: None))
     mw.form = types.SimpleNamespace(menuTools=QMenu())
     aqt.mw = mw
 
