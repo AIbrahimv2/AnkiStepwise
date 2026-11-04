@@ -19,10 +19,8 @@ import json
 import time
 import traceback
 
-from aqt import mw
-
 from . import actions, colorsync
-from .config import get_config, update_config
+from .config import check_settings, get_config, update_config
 from .state import COMPLETED, LATER, QUEUED
 from .viewmodel import View
 
@@ -42,6 +40,10 @@ class Bridge:
     def __init__(self, host):
         self.host = host
         self._toasts: list[str] | None = None
+        # Anki's Config button can ask for Settings before the page has
+        # loaded; the page opens them when it boots.
+        self.booted = False
+        self.settings_on_boot = False
 
     # --- plumbing ----------------------------------------------------------
 
@@ -101,7 +103,10 @@ class Bridge:
         self.host.request_index()
         view = self.view()
         cfg = view.cfg
+        self.booted = True
+        open_settings, self.settings_on_boot = self.settings_on_boot, False
         return {
+            "openSettings": open_settings,
             "ready": view.index is not None,
             "side": view.side(),
             "scopes": view.scopes(),
@@ -270,11 +275,48 @@ class Bridge:
         self.host.reload_index(force=True)
         return {}
 
-    def cmd_edit_config(self, msg: dict) -> dict:
-        import aqt
+    # --- settings ----------------------------------------------------------
 
-        aqt.dialogs.open("AddonsDialog", mw)
-        return {}
+    def cmd_settings(self, msg: dict) -> dict:
+        return {"settings": self.view().settings()}
+
+    def cmd_root_matches(self, msg: dict) -> dict:
+        patterns = [str(p) for p in msg.get("patterns") or []]
+        return {"matches": self.view().root_matches(patterns)}
+
+    def cmd_save_settings(self, msg: dict) -> dict:
+        """Check and save the Settings dialog, then update whatever depends
+        on what changed. Problems come back by field and nothing is saved."""
+        old = get_config()
+        changes, problems = check_settings(msg.get("settings") or {}, old)
+        if problems:
+            return {"problems": problems}
+        changed = {k for k, v in changes.items() if old.get(k) != v}
+        cfg = update_config(**changes) if changed else old
+        recount = bool(changed & {"count_mode", "resource_roots"})
+        if recount:
+            self.host.reload_index(force=True)
+        if changed & {"card_limit", "count_mode", "show_on_deck_screen"}:
+            actions.refresh_main_screen(full="show_on_deck_screen" in changed)
+        colors = {"queued_color", "completed_color", "later_color"}
+        if cfg["colorful_tags_sync"] and (changed & colors or "colorful_tags_sync" in changed):
+            actions.recolor_all()
+        if "shortcut" in changed:
+            actions.set_shortcut(cfg["shortcut"])
+        if changed:
+            actions.notify()
+            self.toast("Settings saved")
+        view = self.view()
+        return {
+            "settings": view.settings(),
+            "options": view.options(),
+            "colors": {"queued": cfg["queued_color"], "completed": cfg["completed_color"],
+                       "later": cfg["later_color"]},
+            "side": view.side(),
+            "scopes": view.scopes(),
+            "scope": view.scope_value(),
+            "recount": recount,
+        }
 
     def cmd_dismiss_banner(self, msg: dict) -> dict:
         update_config(import_offered=True)

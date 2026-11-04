@@ -22,6 +22,7 @@ import {
   Toasts,
   type Tone,
 } from "./components/Overlays";
+import { SettingsDialog } from "./components/Settings";
 import { SidePanel, type Tab } from "./components/SidePanel";
 import { HideDoneSwitch, MatchBar, ScopePicker, SearchBox } from "./components/Toolbar";
 import { DetailsBar, type FlatRow, MORE, Tree } from "./components/Tree";
@@ -36,8 +37,10 @@ import {
   type PushEvent,
   type ScopeOption,
   type SearchResult,
+  type SettingsSaved,
   type Side,
   type Status,
+  type StatusColors,
   type Summary,
   type TagNode,
   isGroup,
@@ -58,6 +61,14 @@ type NodeList = { nodes: AnyNode[]; total?: number };
 
 /** Folders load this many children at a time (some hold thousands). */
 const PAGE = 300;
+
+/** The status colours (from settings) drive the UI's queued/done/later hues. */
+function applyColors(colors: StatusColors) {
+  const root = document.documentElement.style;
+  root.setProperty("--q-raw", colors.queued);
+  root.setProperty("--d-raw", colors.completed);
+  root.setProperty("--l-raw", colors.later);
+}
 
 export function App() {
   const [ready, setReady] = useState(false);
@@ -80,6 +91,7 @@ export function App() {
   const [menu, setMenu] = useState<{ anchor: Anchor; key: string } | null>(null);
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
   const [importing, setImporting] = useState(false);
+  const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<Tab>("queue");
   const [laterPlan, setLaterPlan] = useState<LaterPlan | null>(null);
@@ -253,10 +265,8 @@ export function App() {
       setOptions(b.options);
       setScopes(b.scopes);
       setScope(b.scope);
-      const root = document.documentElement.style;
-      root.setProperty("--q-raw", b.colors.queued);
-      root.setProperty("--d-raw", b.colors.completed);
-      root.setProperty("--l-raw", b.colors.later);
+      applyColors(b.colors);
+      if (b.openSettings) setSettingsOpen(true);
       if (b.ready) {
         setReady(true);
         loadTree();
@@ -269,6 +279,7 @@ export function App() {
       push: (e: PushEvent) => {
         if (e.type === "toast") toast(e.message);
         else if (e.type === "sync") sync();
+        else if (e.type === "settings") setSettingsOpen(true);
         else if (e.type === "index") {
           setReady(true);
           setRefreshing(false);
@@ -494,6 +505,18 @@ export function App() {
 
   const setOption = (key: keyof Options, value: boolean) => act("set_option", { key, value });
 
+  /** Settings were saved: take the new numbers, colours and resource list,
+   *  and redraw the tree (again once a recount lands, if one was needed). */
+  const settingsSaved = (r: SettingsSaved) => {
+    setOptions(r.options);
+    setSide(r.side);
+    setScopes(r.scopes);
+    setScope(r.scope);
+    applyColors(r.colors);
+    if (r.recount) setRefreshing(true);
+    loadTree().then(() => sync());
+  };
+
   const doImport = async (choices: Record<string, Status>, pins: boolean) => {
     const r = await call<{ scopes: ScopeOption[]; scope: string; options: Options }>("import_colors", { choices, pins });
     setScopes(r.scopes);
@@ -613,8 +636,7 @@ export function App() {
           call("refresh");
         }}
         onImport={() => setImporting(true)}
-        onOption={setOption}
-        onEditConfig={() => call("edit_config")}
+        onSettings={() => setSettingsOpen(true)}
       />
       <div>
         {options?.banner && (
@@ -692,6 +714,7 @@ export function App() {
       {menu && <Menu anchor={menu.anchor} entries={menuEntries(menu.key)} onClose={() => setMenu(null)} minWidth={230} />}
       {confirm && <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} />}
       {importing && <ImportDialog onClose={() => setImporting(false)} onImport={doImport} />}
+      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} onSaved={settingsSaved} />}
       <Toasts toasts={toasts} onDismiss={dismissToast} />
     </div>
   );

@@ -17,7 +17,7 @@ from __future__ import annotations
 from datetime import datetime
 
 from . import actions, colorsync
-from .config import get_config
+from .config import DEFAULTS, get_config
 from .counts import (
     TagIndex,
     natural_key,
@@ -528,6 +528,48 @@ class View:
             actions.fresh_cards, later, self.state.session_tags(), self.cfg["card_limit"])
         return {"picked": len(picked), "add": add, "after": len(self.queue_ids()) + add,
                 "skipped": len(skipped), "limit": self.cfg["card_limit"]}
+
+    def settings(self) -> dict:
+        """Everything the Settings dialog edits, plus its defaults."""
+        cfg = self.cfg
+
+        def shape(c: dict) -> dict:
+            return {
+                "cardLimit": c["card_limit"],
+                "countMode": c["count_mode"],
+                "unsuspendOnComplete": bool(c["unsuspend_on_complete"]),
+                "resourceRoots": [str(p) for p in c["resource_roots"]],
+                "showOnDeck": bool(c["show_on_deck_screen"]),
+                "colorSync": bool(c["colorful_tags_sync"]),
+                "colors": {"queued": c["queued_color"], "completed": c["completed_color"],
+                           "later": c["later_color"]},
+                "shortcut": c["shortcut"],
+            }
+
+        pinned = []
+        for tag in cfg["pinned_resources"]:
+            if not isinstance(tag, str):
+                continue
+            parts = tag.split(SEP)
+            root = parts[0] if len(parts) > 1 and self.is_root(parts[0]) else None
+            key = root.lower() if root else None
+            pinned.append({"tag": tag, "label": prettify(parts[-1]),
+                           "step": root_label(root) if root else None,
+                           "stepIndex": self.roots.index(key) if key in self.roots else None})
+        return {
+            **shape(cfg),
+            "pinned": pinned,
+            "defaults": shape(DEFAULTS),
+            "colorSyncAvailable": colorsync.find_user_data() is not None,
+        }
+
+    def root_matches(self, patterns: list[str]) -> list[list[str] | None]:
+        """For each resource-folder pattern, the top-level tags it matches
+        (None until cards are counted)."""
+        if self.index is None:
+            return [None for _ in patterns]
+        return [[self.index.name(k) for k in resource_roots(self.index, [p])] if p.strip() else []
+                for p in patterns]
 
     def options(self) -> dict:
         ud = colorsync.find_user_data()

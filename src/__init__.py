@@ -25,6 +25,7 @@ def _install() -> None:
         action.setShortcut(QKeySequence(shortcut))
     qconnect(action.triggered, ui.open_dialog)
     mw.form.menuTools.addAction(action)
+    actions.menu_action = action  # so Settings can change the shortcut live
 
 
 def _prebuild_index() -> None:
@@ -53,5 +54,7 @@ gui_hooks.deck_browser_will_render_content.append(widget.on_deck_render)
 gui_hooks.webview_did_receive_js_message.append(widget.on_js_message)
 gui_hooks.browser_sidebar_will_show_context_menu.append(browser_menu.on_sidebar_menu)
 mw.addonManager.setConfigUpdatedAction(ADDON, _on_config_saved)
+# Anki's Config button opens the in-window Settings instead of raw JSON.
+mw.addonManager.setConfigAction(ADDON, ui.open_settings)
 # Serve the built web UI (src/web/) to the Tag Queue window.
 mw.addonManager.setWebExports(ADDON, r"web/.*\.(js|css|svg|png|woff2?)")

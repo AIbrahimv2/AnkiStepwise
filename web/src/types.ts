@@ -185,13 +185,54 @@ export interface Options {
   banner: boolean;
 }
 
+export type StatusColors = { queued: string; completed: string; later: string };
+
+/** What the Settings dialog edits. */
+export interface SettingsValues {
+  cardLimit: number;
+  countMode: CountMode;
+  unsuspendOnComplete: boolean;
+  resourceRoots: string[];
+  showOnDeck: boolean;
+  colorSync: boolean;
+  colors: StatusColors;
+  /** Qt shortcut text, e.g. "Ctrl+Alt+Q" ("Ctrl" is ⌘ on a Mac); "" for none. */
+  shortcut: string;
+}
+
+export interface PinnedResource {
+  tag: string;
+  label: string;
+  step: string | null;
+  stepIndex: number | null;
+}
+
+export interface Settings extends SettingsValues {
+  pinned: PinnedResource[];
+  defaults: SettingsValues;
+  colorSyncAvailable: boolean;
+}
+
+export interface SettingsSaved {
+  settings: Settings;
+  options: Options;
+  colors: StatusColors;
+  side: Side;
+  scopes: ScopeOption[];
+  scope: string;
+  /** Cards are being recounted (count mode or resource folders changed). */
+  recount: boolean;
+}
+
 export interface Boot {
+  /** Anki's Config button asked for Settings before the page loaded. */
+  openSettings?: boolean;
   ready: boolean;
   side: Side;
   scopes: ScopeOption[];
   scope: string;
   options: Options;
-  colors: { queued: string; completed: string; later: string };
+  colors: StatusColors;
 }
 
 export interface Bundle {
@@ -221,4 +262,5 @@ export interface ImportGroup {
 export type PushEvent =
   | { type: "index" }
   | { type: "sync" }
+  | { type: "settings" }
   | { type: "toast"; message: string };

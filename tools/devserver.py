@@ -90,6 +90,9 @@ def main() -> None:
         def setConfigUpdatedAction(self, module, fn):
             pass
 
+        def setConfigAction(self, module, fn):
+            pass
+
         def setWebExports(self, module, pattern):
             pass
 

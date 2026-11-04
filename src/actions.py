@@ -11,6 +11,7 @@ import aqt
 from aqt import mw
 from aqt.operations import QueryOp
 from aqt.operations.scheduling import unsuspend_cards
+from aqt.qt import QKeySequence
 from aqt.utils import tooltip
 
 from . import colorsync, rollup
@@ -175,6 +176,26 @@ def refresh_main_screen(full: bool = False) -> None:
 
 def _plural(n: int, word: str) -> str:
     return f"{n:,} {word}" + ("" if n == 1 else "s")
+
+
+# The Tools menu entry (set by __init__), so a new shortcut works right away.
+menu_action = None
+
+
+def set_shortcut(shortcut: str) -> None:
+    if menu_action is not None:
+        menu_action.setShortcut(QKeySequence(shortcut) if shortcut else QKeySequence())
+
+
+def recolor_all() -> None:
+    """Re-apply sidebar colours to every tag with a status, after the
+    colours change or syncing is switched on."""
+    cfg = get_config()
+    state = load_state()
+    changes = {tag: entry["status"] for tag, entry in state.tags.items()}
+    if changes:
+        colorsync.apply(changes, cfg["queued_color"], cfg["completed_color"],
+                        later_color=cfg["later_color"])
 
 
 def say(message: str, parent=None) -> None:

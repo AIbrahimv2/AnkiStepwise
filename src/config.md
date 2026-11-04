@@ -1,9 +1,9 @@
 # Tag Queue
 
 Open the queue from **Tools → Tag Queue** (Cmd/Ctrl+Alt+Q), the meter on the deck
-screen, or by right-clicking a tag in the Browser sidebar. Most settings can be
-changed from the window itself (the limit box and the **⋯** menu); the rest live
-here.
+screen, or by right-clicking a tag in the Browser sidebar. Settings are edited in
+the window itself: **⋯ → Settings…** (Anki's Config button for this add-on opens
+it too). The keys below are what it saves, for reference.
 
 Your queued and completed topics are **not** stored here. They're saved in the
 collection itself, so each profile has its own queue and it syncs with your

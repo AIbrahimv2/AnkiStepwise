@@ -20,8 +20,7 @@ export function Header(props: {
   refreshing: boolean;
   onRefresh: () => void;
   onImport: () => void;
-  onOption: (key: keyof Options, value: boolean) => void;
-  onEditConfig: () => void;
+  onSettings: () => void;
 }) {
   const btn = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -63,24 +62,7 @@ export function Header(props: {
               disabled: !o.colorSyncAvailable,
             },
             { separator: true },
-            {
-              label: "Unsuspend cards when completing",
-              checked: o.unsuspendOnComplete,
-              onSelect: () => props.onOption("unsuspendOnComplete", !o.unsuspendOnComplete),
-            },
-            {
-              label: "Show the meter on the deck screen",
-              checked: o.showOnDeck,
-              onSelect: () => props.onOption("showOnDeck", !o.showOnDeck),
-            },
-            {
-              label: "Colour tags in Colorful Tags",
-              checked: o.colorSync,
-              disabled: !o.colorSyncAvailable,
-              onSelect: () => props.onOption("colorSync", !o.colorSync),
-            },
-            { separator: true },
-            { label: "Edit config…", icon: <Settings2 size={14} />, onSelect: props.onEditConfig },
+            { label: "Settings…", icon: <Settings2 size={14} />, onSelect: props.onSettings },
           ]}
         />
       )}

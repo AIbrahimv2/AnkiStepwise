@@ -75,6 +75,13 @@ class QueueDialog(QDialog):
         if self.isVisible():
             self.push({"type": "index"})
 
+    def open_settings(self) -> None:
+        """Show the Settings dialog in the page (now, or as soon as it loads)."""
+        if self.bridge.booted:
+            self.push({"type": "settings"})
+        else:
+            self.bridge.settings_on_boot = True
+
     def push(self, event: dict) -> None:
         if self._loaded:
             self.web.eval(f"window.tagQueue && window.tagQueue.push({json.dumps(event)});")
@@ -138,6 +145,14 @@ def open_dialog() -> None:
     _dialog.show()
     _dialog.raise_()
     _dialog.activateWindow()
+
+
+def open_settings() -> None:
+    """Anki's Config button for the add-on: open the window on Settings
+    rather than Anki's JSON editor."""
+    open_dialog()
+    if _dialog is not None:
+        _dialog.open_settings()
 
 
 def close_dialog() -> None:

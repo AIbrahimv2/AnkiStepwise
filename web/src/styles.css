@@ -1044,3 +1044,84 @@ body {
 :root.night-mode .toast.warn .t-icon { color: #b45309; }
 :root.night-mode .toast.error .t-icon { color: #dc2626; }
 :root.night-mode .toast.ok .t-icon { color: #15803d; }
+
+/* --- settings ------------------------------------------------------------------ */
+
+.settings { display: grid; gap: 18px; margin-top: 16px; }
+.set-section h3 {
+  margin: 0 0 6px 2px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.set-card { border: 1px solid var(--line); border-radius: 12px; }
+.set-row { display: flex; align-items: center; gap: 16px; padding: 11px 14px; }
+.set-row + .set-row { border-top: 1px solid var(--line); }
+.set-text { flex: 1; min-width: 0; }
+.set-label { font-weight: 600; color: var(--text); }
+.set-hint { margin-top: 2px; font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.set-problem { margin-top: 4px; font-size: 12px; font-weight: 550; color: var(--danger); }
+.set-control { flex: none; display: flex; align-items: center; gap: 10px; }
+.set-control .switch-row { padding: 0; }
+.set-empty { margin-top: 8px; font-size: 12px; color: var(--text-3); }
+
+#root .set-input {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+#root .set-input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+#root .set-input.bad { border-color: var(--danger); }
+#root .set-input.num { width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
+#root .set-input.mono, #root .set-input.hex { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; }
+#root .set-input.hex { width: 88px; }
+#root .btn.sm { height: 26px; padding: 0 8px; font-size: 12px; }
+
+.root-list { display: grid; gap: 8px; margin-top: 10px; }
+.root-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 4px; row-gap: 3px; align-items: center; }
+#root .root-item .set-input { width: 100%; }
+.root-matches { grid-column: 1 / -1; padding-left: 2px; font-size: 11.5px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.root-matches.none { color: var(--danger); }
+
+.pin-list { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 10px; }
+.pin-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+  padding: 0 2px 0 10px;
+  border-radius: 999px;
+  border: 1px solid var(--line);
+  background: var(--sunken);
+  font-size: 12px;
+  font-weight: 550;
+}
+.pin-chip .step-chip { margin: 0; height: 16px; font-size: 10px; padding: 0 6px; }
+
+.swatches { display: flex; gap: 6px; }
+#root .swatch-btn { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14); }
+#root .swatch-btn.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+.shortcut-field { display: flex; align-items: center; gap: 4px; }
+#root .keycap-btn {
+  min-width: 112px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--sunken);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+#root .keycap-btn.recording { border-color: var(--focus); color: var(--text-2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+
+.settings-actions { align-items: center; }
+.settings-actions .spacer { flex: 1; }
