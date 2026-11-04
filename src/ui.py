@@ -106,6 +106,7 @@ class QueueDialog(QDialog):
         super().showEvent(ev)
         actions.subscribe(self.on_state_changed)
         actions.on_index_built(self._on_index_built)
+        actions.set_announcer(self.show_toast)
         if not self._loaded:
             self.load()
         else:
@@ -115,6 +116,7 @@ class QueueDialog(QDialog):
     def hideEvent(self, ev) -> None:
         actions.unsubscribe(self.on_state_changed)
         actions.off_index_built(self._on_index_built)
+        actions.set_announcer(None)
         saveGeom(self, GEOM_KEY)
         super().hideEvent(ev)
 

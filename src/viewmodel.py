@@ -57,14 +57,18 @@ class View:
         self.pinned = [p.lower() for p in self.cfg["pinned_resources"] if isinstance(p, str)]
         self.queued_l = [q.lower() for q in self.state.queued()]
         self.later_l = [q.lower() for q in self.state.later()]
-        done = [c.lower() for c in self.state.completed()]
-        done_set = set(done)
-        # Completed tags with no completed ancestor, for leaf progress counts.
-        self.top_done = [
-            c for c in done
-            if not any(SEP.join(c.split(SEP)[:i]) in done_set for i in range(1, c.count(SEP) + 1))
-        ]
+        # Done = completed, or nothing left to unsuspend (see rollup.py).
+        self.done, self.done_leaves = actions.done_info() if index else (set(), {})
         self._queue_ids: set[int] | None = None
+
+    def status_of(self, key: str) -> tuple[str | None, str | None, bool]:
+        """(status, tag it comes from, automatic). A tag with no status of
+        its own (or inherited) is "completed" automatically when it's done:
+        all its cards are unsuspended."""
+        status, source = self.state.effective(self.index.name(key) if self.index else key)
+        if status is None and key in self.done:
+            return COMPLETED, None, True
+        return status, source, False
 
     # --- steps (resource roots) --------------------------------------------
 
@@ -80,7 +84,7 @@ class View:
     def root_header(self, root: str, count: int) -> dict:
         idx = self.index
         leaves = idx.leaves.get(root, 1)
-        done = sum(idx.leaves.get(c, 1) for c in self.top_done if c.startswith(root + SEP))
+        done = self.done_leaves.get(root, 0)
         return {
             "key": ROOT_PREFIX + root,
             "group": True,
@@ -176,8 +180,8 @@ class View:
     def node(self, key: str, label: str | None = None, top: bool = False) -> dict:
         idx = self.index
         name = idx.name(key)
-        status, source = self.state.effective(name)
-        inherited = status is not None and source.lower() != key
+        status, source, auto = self.status_of(key)
+        inherited = status is not None and not auto and source.lower() != key
         nested = sum(1 for q in self.queued_l if q.startswith(key + SEP))
         nested_later = sum(1 for q in self.later_l if q.startswith(key + SEP))
         if status == QUEUED:
@@ -187,8 +191,7 @@ class View:
         leaves = idx.leaves.get(key, 1)
         progress = None
         if leaves > 1:
-            done = leaves if status == COMPLETED else sum(
-                idx.leaves.get(c, 1) for c in self.top_done if c.startswith(key + SEP))
+            done = leaves if status == COMPLETED else self.done_leaves.get(key, 0)
             progress = {"done": done, "total": leaves}
         resource = self.is_resource(key)
         step, step_index = self.step_of(name) if resource else (None, None)
@@ -215,7 +218,9 @@ class View:
             "nestedQueued": nested,
             "nestedLater": nested_later,
             "progress": progress,
-            "since": fmt_day(self.state.since(source)) if status else None,
+            "since": fmt_day(self.state.since(source)) if status and not auto else None,
+            # Done only because nothing under it is suspended any more.
+            "auto": auto,
         }
 
     def nodes(self, keys: list[str]) -> list[dict]:
@@ -387,7 +392,7 @@ class View:
             if self.index is None or key not in self.index.names:
                 continue
             name = self.index.name(key)
-            status, _src = self.state.effective(name)
+            status, _src, _auto = self.status_of(key)
             if status in counts:
                 counts[status] += 1
             if status is None or (status == LATER and not for_later):
@@ -410,7 +415,7 @@ class View:
         if self.index is None or key not in self.index.names:
             return None
         tag = self.index.name(key)
-        status, source = self.state.effective(tag)
+        status, source, auto = self.status_of(key)
         step, step_index = self.step_of(tag)
         out = {
             "key": key,
@@ -429,10 +434,11 @@ class View:
             "via": None,
             "date": None,
             "limit": self.cfg["card_limit"],
+            "auto": auto,
         }
-        if status is not None and source.lower() != key:
+        if status is not None and not auto and source.lower() != key:
             out["via"] = prettify(source.rsplit(SEP, 1)[-1])
-        if status in (COMPLETED, LATER):
+        if status in (COMPLETED, LATER) and not auto:
             out["date"] = fmt_day(self.state.since(source))
         if status in (None, LATER):
             add, overlap, after = self.projection([tag])

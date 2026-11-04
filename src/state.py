@@ -162,6 +162,15 @@ class QueueState:
             changes.update(self._set(tag, COMPLETED, now))
         return changes
 
+    def complete_rollup(self, tag: str, at: int) -> dict:
+        """Mark `tag` completed in place of everything recorded under it
+        (those entries are covered by it now)."""
+        changes: dict = {}
+        for k in [k for k in self.tags if is_under(k, tag) and k.lower() != tag.lower()]:
+            changes.update(self._drop(k))
+        changes.update(self._set(tag, COMPLETED, at))
+        return changes
+
     def clear(self, tag: str) -> dict:
         return self._drop(tag)
 

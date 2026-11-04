@@ -32,6 +32,8 @@ export interface TagNode {
   progress: { done: number; total: number } | null;
   /** When the (own or inherited) status was set, e.g. "Nov 4". */
   since: string | null;
+  /** Done only because none of its cards are suspended any more. */
+  auto: boolean;
 }
 
 /** A section header in the tree: a step ("Step 1", holding its resources)
@@ -148,6 +150,7 @@ export interface Details {
   via: string | null;
   date: string | null;
   limit: number;
+  auto?: boolean;
   add?: number;
   overlap?: number;
   after?: number;

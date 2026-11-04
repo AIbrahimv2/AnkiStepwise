@@ -176,6 +176,7 @@ def main() -> None:
 
     host = Host()
     bridge = Bridge(host)
+    actions.set_announcer(bridge.toast)
 
     class Handler(BaseHTTPRequestHandler):
         def log_message(self, fmt, *a):

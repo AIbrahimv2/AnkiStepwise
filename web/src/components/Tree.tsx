@@ -411,6 +411,13 @@ function StatusCell({ node }: { node: TagNode }) {
       </span>
     );
   }
+  if (node.status === "completed" && node.auto) {
+    return (
+      <span className="badge d auto" title="Done: none of its cards are suspended any more">
+        Done
+      </span>
+    );
+  }
   if (node.status === "completed") {
     return (
       <span
@@ -492,6 +499,8 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
   let tail: ReactNode;
   if (d.status === "queued") {
     tail = d.via ? <>Queued as part of <span className="strong">{d.via}</span></> : <>In your queue</>;
+  } else if (d.status === "completed" && d.auto) {
+    tail = <>Done — all its cards are unsuspended</>;
   } else if (d.status === "completed") {
     tail = <>{d.date === "imported" ? "Completed (imported from Colorful Tags)" : `Completed ${d.date}`}</>;
   } else if (d.status === "later") {

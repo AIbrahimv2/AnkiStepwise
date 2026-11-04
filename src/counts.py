@@ -151,6 +151,9 @@ class TagIndex:
     tag_cards: dict[str, list[int]] = field(default_factory=dict)
     card_ids: list[int] = field(default_factory=list)
     fresh_mask: bytearray = field(default_factory=bytearray)
+    suspended_mask: bytearray = field(default_factory=bytearray)
+    # Every tag, deepest first: children always come before their parent.
+    post_order: list[str] = field(default_factory=list)
 
     def name(self, key: str) -> str:
         return self.names.get(key, key)
@@ -227,6 +230,7 @@ def build_index(col, mode: str) -> TagIndex:
     total, suspended, waiting, buried = idx.total, idx.suspended, idx.waiting, idx.buried
     card_ids = idx.card_ids
     mask = idx.fresh_mask = bytearray(len(rows))
+    smask = idx.suspended_mask = bytearray(len(rows))
     count_all, only_suspended = mode == "all", mode == "suspended"
     get = info.get
     last_tags = None
@@ -243,6 +247,7 @@ def build_index(col, mode: str) -> TagIndex:
             cards.append(i)
         total.update(under)  # Counter.update counts in C
         if queue == -1:
+            smask[i] = 1
             suspended.update(under)
         elif ctype == 0:
             waiting.update(under)
@@ -262,7 +267,8 @@ def build_index(col, mode: str) -> TagIndex:
     idx.children = dict(children)
 
     # Leaf-topic counts, deepest tags first so children are done before parents.
-    for low in sorted(names, key=lambda k: k.count(SEP), reverse=True):
+    idx.post_order = sorted(names, key=lambda k: k.count(SEP), reverse=True)
+    for low in idx.post_order:
         kids = idx.children.get(low)
         idx.leaves[low] = sum(idx.leaves[c] for c in kids) if kids else 1
     return idx

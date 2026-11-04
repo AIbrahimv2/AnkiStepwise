@@ -13,10 +13,19 @@ from aqt.operations import QueryOp
 from aqt.operations.scheduling import unsuspend_cards
 from aqt.utils import tooltip
 
-from . import colorsync
+from . import colorsync, rollup
 from .config import get_config
-from .counts import TagIndex, build_index, fresh_ids, plan_fill, suspended_ids, tags_search
-from .state import QueueState
+from .counts import (
+    TagIndex,
+    build_index,
+    fresh_ids,
+    plan_fill,
+    prettify,
+    resource_roots,
+    suspended_ids,
+    tags_search,
+)
+from .state import COMPLETED, QueueState
 
 # --- state + listeners -------------------------------------------------------
 
@@ -37,13 +46,94 @@ def load_state() -> QueueState:
     return QueueState.load(mw.col)
 
 
-def commit(state: QueueState, changes: dict) -> None:
+def commit(state: QueueState, changes: dict, tidy: bool = True) -> None:
     state.save(mw.col)
+    if tidy:
+        changes = dict(changes)
+        changes.update(_consolidate(state))
     cfg = get_config()
     if changes and cfg["colorful_tags_sync"]:
         colorsync.apply(changes, cfg["queued_color"], cfg["completed_color"],
                         later_color=cfg["later_color"])
     notify()
+
+
+# --- automatic "done" ---------------------------------------------------------
+
+_announcer: Callable[[str], None] | None = None
+
+
+def set_announcer(fn: Callable[[str], None] | None) -> None:
+    """Where automatic changes are reported (the Tag Queue window's toasts)."""
+    global _announcer
+    _announcer = fn
+
+
+def _announce(message: str) -> None:
+    if _announcer is not None:
+        _announcer(message)
+
+
+_done_cache: tuple | None = None
+
+
+def done_info() -> tuple[set[str], dict[str, int]]:
+    """Done tags and done-leaf counts for the current index and completions
+    (see rollup.py), cached until either changes."""
+    global _done_cache
+    idx = _index
+    if idx is None:
+        return set(), {}
+    completed = frozenset(t.lower() for t in load_state().completed())
+    if _done_cache is None or _done_cache[0] is not idx or _done_cache[1] != completed:
+        _done_cache = (idx, completed, rollup.done_tags(idx, completed))
+    return _done_cache[2]
+
+
+def _consolidate(state: QueueState) -> dict:
+    """Tidy statuses against the cards' actual state, saving if anything
+    changed. Queued/Later topics with nothing left to unsuspend count as
+    done; completions roll up to the highest parent that's fully done."""
+    idx = _index
+    if idx is None:
+        return {}
+    changes: dict = {}
+    nothing_left = [t for t in state.queued() + state.later()
+                    if idx.total.get(t.lower(), 0) and not idx.suspended.get(t.lower(), 0)]
+    if nothing_left:
+        changes.update(state.complete(nothing_left))
+    done, _leaves = rollup.done_tags(idx, state.completed())
+    roots = set(resource_roots(idx, get_config()["resource_roots"]))
+    tops = rollup.roll_up(state.completed(), done, roots)
+    # Parents that weren't complete yet (vs. just tidying entries under one).
+    newly = [t for t in tops if state.status(idx.name(t)) != COMPLETED]
+    for top, covered in tops.items():
+        at = max(state.since(t) for t in covered) if covered else 0
+        changes.update(state.complete_rollup(idx.name(top), at))
+    if not changes:
+        return {}
+    state.save(mw.col)
+    if len(nothing_left) == 1:
+        _announce(f"{prettify(nothing_left[0].rsplit('::', 1)[-1])} has nothing left to "
+                  "unsuspend — moved to Done")
+    elif nothing_left:
+        _announce(f"{_plural(len(nothing_left), 'topic')} had nothing left to unsuspend — "
+                  "moved to Done")
+    if 0 < len(newly) <= 2:
+        for top in newly:
+            _announce(f"Everything in {prettify(idx.last(top))} is done — marked it complete")
+    elif newly:
+        _announce(f"Marked {_plural(len(newly), 'parent topic')} complete — everything under "
+                  "them is done")
+    return changes
+
+
+def consolidate() -> None:
+    """Run the automatic tidy-up now (e.g. after card counts were rebuilt)."""
+    state = load_state()
+    changes = _consolidate(state)
+    if changes:
+        commit(state, changes, tidy=False)
 
 
 def notify() -> None:
@@ -270,6 +360,7 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
         _index, _building = index, False
         if membership_was_dirty and not _index_dirty:
             _membership_dirty = False
+        consolidate()  # card states changed: re-check what's done
         for fn in list(_index_listeners):
             try:
                 fn(index)
