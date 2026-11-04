@@ -29,6 +29,14 @@ Anki's light and dark themes, with keyboard navigation throughout.
   doesn't count toward your limit. Going over the limit offers **Move to
   Later** right in the warning, and **Fill queue** later queues the oldest
   Later topics that fit under your limit.
+- **Suspended vs waiting.** The tree shows **Suspended** (cards you still have
+  to unsuspend — what counts toward your limit) separately from **Waiting**
+  (already unsuspended but not studied yet; a ☾ marks ones buried by sibling
+  settings, which come back by themselves), so a topic whose cards are only
+  buried no longer looks unfinished.
+- **Click to find it.** Click any row in Queue, Later or Done to jump to that
+  tag in the tree: it opens the step, resource and folders, scrolls there and
+  highlights it.
 - **Unique-card meter.** The queue counts each card once, even when it's tagged
   under several queued topics (common in AnKing, where one card carries B&B,
   Bootcamp and Pixorize tags). Select a topic to see how many cards it *would

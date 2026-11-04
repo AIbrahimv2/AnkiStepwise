@@ -5,6 +5,18 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Changed
+
+- The limit now counts **suspended** cards (what you add by unsuspending).
+  Cards already unsuspended but not studied yet, including ones buried by
+  sibling settings, show in a separate **Waiting** column with a ☾ for buried
+  ones, instead of inflating the "new" count. Existing setups using the old
+  default switch over once; `count_mode: "new"` brings the old count back.
+- Clicking a row in Queue, Later or Done reveals that tag in the tree (opens
+  its folders, loads enough of a big folder, clears search or a narrower
+  resource filter, shows done topics if hidden) instead of needing a
+  double-click that searched for it.
+
 ### Performance
 
 - Card counts (the meter, "queuing it adds…", search summaries, Fill queue,
