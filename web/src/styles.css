@@ -1,12 +1,13 @@
 /* Tag Queue — built on Anki's own theme variables (--canvas, --fg, ...) so it
-   follows Anki's light/dark mode, with fallbacks for the dev server. */
+   follows Anki's light/dark mode. The fallbacks (for the dev server) are
+   Anki's own values, so the preview matches the real thing. */
 
 :root {
   --bg: var(--canvas, #f5f5f5);
   --surface: var(--canvas-elevated, #ffffff);
-  --text: var(--fg, #0a0a0a);
-  --text-2: var(--fg-subtle, #6b6b6b);
-  --text-3: var(--fg-faint, #a3a3a3);
+  --text: var(--fg, #020202);
+  --text-2: var(--fg-subtle, #737373);
+  --text-3: var(--fg-faint, #afafaf);
   --ink: var(--fg, #0a0a0a);
   --q-raw: #ff9300;
   --d-raw: #00f900;
@@ -47,11 +48,17 @@
 }
 
 :root.night-mode {
-  --bg: var(--canvas, #1f1f1f);
-  --surface: var(--canvas-elevated, #2a2a2a);
-  --text: var(--fg, #f2f2f2);
-  --text-2: var(--fg-subtle, #9a9a9a);
-  --text-3: var(--fg-faint, #6a6a6a);
+  --bg: var(--canvas, #2c2c2c);
+  --surface: var(--canvas-elevated, #363636);
+  --text: var(--fg, #fcfcfc);
+  /* Anki's dark --fg-subtle / --fg-faint are too dim for small text on its
+     panels (3.3:1 and 1.6:1), so the greys are mixed from the text and
+     panel colours instead: about 8:1 and 6:1 on the panel, and 4.5:1 or
+     better on a hovered, selected row. */
+  --text-2: color-mix(in srgb, var(--text) 80%, var(--surface));
+  --text-3: color-mix(in srgb, var(--text) 66%, var(--surface));
+  /* A lighter red, so warnings read on dark panels (5.7:1). */
+  --danger: #ff9592;
   --ink: #ffffff;
   --line: rgb(255 255 255 / 0.08);
   --line-strong: rgb(255 255 255 / 0.13);
@@ -59,6 +66,7 @@
   --press: rgb(255 255 255 / 0.09);
   --sunken: rgb(0 0 0 / 0.16);
   --focus: #60a5fa;
+  --q: color-mix(in srgb, var(--q-raw) 66%, var(--text));
   --d: color-mix(in srgb, var(--d-raw) 70%, var(--text));
   --l: color-mix(in srgb, var(--l-raw) 62%, var(--text));
   --s0: #60a5fa;
@@ -1014,3 +1022,25 @@ body {
 .list .item-meta { line-height: 18px; }
 .list .item-meta .item-sub { line-height: 16px; }
 .list .item-actions { margin-top: -3px; }
+
+/* Dark mode: resting row buttons need more than half opacity to stay
+   visible (3:1) against the dark panel. */
+:root.night-mode .list .item-actions,
+:root.night-mode .group-head .item-actions { opacity: 0.65; }
+:root.night-mode .item:hover .item-actions,
+:root.night-mode .group-head:hover .item-actions { opacity: 1; }
+
+/* Dark mode: a dark tick reads on the orange box (white was 2.2:1), and
+   empty boxes get an outline you can actually see (3:1). */
+:root.night-mode #root .cb { color: #1a1a1a; }
+:root.night-mode #root .cb:not(.on):not(.partial) { border-color: color-mix(in srgb, var(--text) 38%, var(--surface)); }
+:root.night-mode #root .cb:not(.on):not(.partial):hover { border-color: var(--q-raw); }
+/* The lighter warning red is for text; filled red buttons keep a deep red
+   under their white label. */
+:root.night-mode #root .btn.danger { background: #c62f35; }
+:root.night-mode .step-chip { color: color-mix(in srgb, var(--step) 62%, var(--text)); }
+/* Dark mode flips toasts to a light card, so their icons take the deeper
+   shades that read on light (the bright ones were 1.5:1). */
+:root.night-mode .toast.warn .t-icon { color: #b45309; }
+:root.night-mode .toast.error .t-icon { color: #dc2626; }
+:root.night-mode .toast.ok .t-icon { color: #15803d; }
