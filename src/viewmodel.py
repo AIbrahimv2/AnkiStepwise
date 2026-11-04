@@ -6,6 +6,10 @@ A `View` snapshots the tag index, queue state and config for one bridge
 request and turns them into plain dicts: tree nodes with their status and
 progress, search results, the queue side panel, and card-count previews.
 All the queue logic stays in Python; the web UI only renders it.
+
+Resources are grouped under their root (AnKing's Step 1 / Step 2 / Step 3
+decks): the tree and search results show a header per step, and every row
+carries the step's label and index so the UI can colour-code it.
 """
 
 from __future__ import annotations
@@ -20,15 +24,17 @@ from .counts import (
     TagIndex,
     fresh_ids,
     natural_key,
+    plan_fill,
     prettify,
     resource_roots,
     root_label,
     root_matcher,
     short_path,
 )
-from .state import COMPLETED, QUEUED, SEP
+from .state import COMPLETED, LATER, QUEUED, SEP
 
 GROUP_KEY = "__group__"
+ROOT_PREFIX = "__root__:"
 MAX_MATCHES = 200
 SCOPE_ALL = "all"
 SCOPE_PINNED = "pinned"
@@ -49,9 +55,11 @@ class View:
         self.cfg = get_config()
         self.state = actions.load_state()
         self.mode = self.cfg["count_mode"]
+        self.is_root = root_matcher(self.cfg["resource_roots"])
         self.roots = resource_roots(index, self.cfg["resource_roots"]) if index else []
         self.pinned = [p.lower() for p in self.cfg["pinned_resources"] if isinstance(p, str)]
         self.queued_l = [q.lower() for q in self.state.queued()]
+        self.later_l = [q.lower() for q in self.state.later()]
         done = [c.lower() for c in self.state.completed()]
         done_set = set(done)
         # Completed tags with no completed ancestor, for leaf progress counts.
@@ -60,6 +68,35 @@ class View:
             if not any(SEP.join(c.split(SEP)[:i]) in done_set for i in range(1, c.count(SEP) + 1))
         ]
         self._queue_ids: set[int] | None = None
+
+    # --- steps (resource roots) --------------------------------------------
+
+    def step_of(self, tag: str) -> tuple[str | None, int | None]:
+        """("Step 1", 0) for any tag under a resource root, else (None, None)."""
+        first = tag.split(SEP, 1)[0]
+        if SEP not in tag or not self.is_root(first):
+            return None, None
+        key = first.lower()
+        i = self.roots.index(key) if key in self.roots else 0
+        return root_label(first), i
+
+    def root_header(self, root: str, count: int) -> dict:
+        idx = self.index
+        leaves = idx.leaves.get(root, 1)
+        done = sum(idx.leaves.get(c, 1) for c in self.top_done if c.startswith(root + SEP))
+        return {
+            "key": ROOT_PREFIX + root,
+            "group": True,
+            "kind": "root",
+            "label": root_label(idx.name(root)),
+            "sub": idx.name(root),
+            "count": count,
+            "hasKids": True,
+            "fresh": idx.fresh.get(root, 0),
+            "total": idx.total.get(root, 0),
+            "progress": {"done": done, "total": leaves} if leaves > 1 and done else None,
+            "stepIndex": self.roots.index(root),
+        }
 
     # --- resources & scope -------------------------------------------------
 
@@ -80,8 +117,7 @@ class View:
             return (key not in pinned, pinned.index(key) if key in pinned else 0,
                     natural_key(idx.last(key)))
 
-        resources = sorted(((c, r) for r in self.roots for c in idx.kids(r)),
-                           key=lambda kr: (order(kr[0]), kr[1]))
+        resources = [(c, r) for r in self.roots for c in sorted(idx.kids(r), key=order)]
         others = sorted((k for k in idx.kids("") if k not in self.roots), key=order)
         return resources, others
 
@@ -95,6 +131,8 @@ class View:
         v = v.lower() if isinstance(v, str) else SCOPE_ALL
         if v == SCOPE_PINNED:
             return v if self.pinned_resources() else SCOPE_ALL
+        if v in self.roots:
+            return v
         if v != SCOPE_ALL and self.index is not None and v in self.index.names and self.is_resource(v):
             return v
         return SCOPE_ALL
@@ -118,12 +156,19 @@ class View:
         if self.pinned_resources():
             out.append({"value": SCOPE_PINNED, "label": "Pinned resources", "kind": "pinned"})
         resources, others = self.browse_entries()
-        for key, root in resources:
-            out.append({"value": key, "label": self.resource_label(key, root), "kind": "resource",
-                        "pinned": key in self.pinned})
+        for i, root in enumerate(self.roots):
+            step = root_label(self.index.name(root))
+            out.append({"value": root, "label": f"All of {step}", "short": f"All of {step}",
+                        "kind": "root", "group": step, "stepIndex": i})
+            for key, r in resources:
+                if r == root:
+                    out.append({"value": key, "label": self.resource_label(key, root),
+                                "short": prettify(self.index.last(key)), "kind": "resource",
+                                "group": step, "stepIndex": i, "pinned": key in self.pinned})
         for key in others:
-            out.append({"value": key, "label": prettify(self.index.last(key)), "kind": "other",
-                        "pinned": key in self.pinned})
+            name = prettify(self.index.last(key))
+            out.append({"value": key, "label": name, "short": name, "kind": "other",
+                        "group": "Other tags", "pinned": key in self.pinned})
         return out
 
     # --- tree nodes --------------------------------------------------------
@@ -134,6 +179,7 @@ class View:
         status, source = self.state.effective(name)
         inherited = status is not None and source.lower() != key
         nested = sum(1 for q in self.queued_l if q.startswith(key + SEP))
+        nested_later = sum(1 for q in self.later_l if q.startswith(key + SEP))
         if status == QUEUED:
             check, locked = "on", inherited
         else:
@@ -144,6 +190,8 @@ class View:
             done = leaves if status == COMPLETED else sum(
                 idx.leaves.get(c, 1) for c in self.top_done if c.startswith(key + SEP))
             progress = {"done": done, "total": leaves}
+        resource = self.is_resource(key)
+        step, step_index = self.step_of(name) if resource else (None, None)
         return {
             "key": key,
             "tag": name,
@@ -153,15 +201,18 @@ class View:
             "hasKids": bool(idx.kids(key)),
             "top": top,
             "pinned": top and key in self.pinned,
-            "resource": self.is_resource(key),
+            "resource": resource,
+            "step": step,
+            "stepIndex": step_index,
             "check": check,
             "locked": locked,
             "status": status,
             "inherited": inherited,
             "source": prettify(source.rsplit(SEP, 1)[-1]) if inherited else None,
             "nestedQueued": nested,
+            "nestedLater": nested_later,
             "progress": progress,
-            "doneAt": fmt_day(self.state.completed_at(source)) if status == COMPLETED else None,
+            "since": fmt_day(self.state.since(source)) if status else None,
         }
 
     def nodes(self, keys: list[str]) -> list[dict]:
@@ -172,24 +223,38 @@ class View:
     def children(self, key: str) -> list[dict]:
         if self.index is None:
             return []
-        if key in ("", GROUP_KEY):
-            return self.top_level(group_only=key == GROUP_KEY)
-        return [self.node(c) for c in self.index.kids(key)]
-
-    def top_level(self, group_only: bool = False) -> list[dict]:
+        if key == "":
+            return self.top_level()
         scope = self.scope_keys()
         resources, others = self.browse_entries()
-        tops = [self.node(k, self.resource_label(k, r), top=True)
-                for k, r in resources if self.in_scope(k, scope)]
+        if key.startswith(ROOT_PREFIX):
+            root = key[len(ROOT_PREFIX):]
+            return [self.node(k, top=True) for k, r in resources
+                    if r == root and self.in_scope(k, scope)]
+        if key == GROUP_KEY:
+            return [self.node(k, top=True) for k in others if self.in_scope(k, scope)]
+        return [self.node(c) for c in self.index.kids(key)]
+
+    def top_level(self) -> list[dict]:
+        """One header per step (Step 1, Step 2, ...) holding its resources,
+        then "Other tags". A single resource in scope is shown directly."""
+        scope = self.scope_keys()
+        resources, others = self.browse_entries()
+        res = [(k, r) for k, r in resources if self.in_scope(k, scope)]
         others = [k for k in others if self.in_scope(k, scope)]
-        if group_only:
-            return [self.node(k, top=True) for k in others]
+        if len(res) + len(others) == 1:
+            return [self.node(res[0][0] if res else others[0], top=True)]
+        out = []
+        for root in self.roots:
+            n = sum(1 for _k, r in res if r == root)
+            if n:
+                out.append(self.root_header(root, n))
         if others and self.roots and scope is None:
-            tops.append({"key": GROUP_KEY, "label": "Other tags", "group": True,
-                         "count": len(others), "hasKids": True})
+            out.append({"key": GROUP_KEY, "group": True, "kind": "other", "label": "Other tags",
+                        "count": len(others), "hasKids": True})
         else:
-            tops += [self.node(k, top=True) for k in others]
-        return tops
+            out += [self.node(k, top=True) for k in others]
+        return out
 
     def search(self, query: str) -> dict:
         idx = self.index
@@ -215,26 +280,34 @@ class View:
 
         nodes: dict[str, dict] = {}
         children: dict[str, list[str]] = {}
-        roots_out: list[str] = []
+        by_root: dict[str, list[str]] = {}
+        other_tops: list[str] = []
         for key in top:
             parts = key.split(SEP)
-            start = 2 if parts[0] in roots else 1
-            root = parts[0] if start == 2 else None
+            root = parts[0] if parts[0] in roots else None
+            start = 2 if root else 1
             parent = ""
             for i in range(start, len(parts) + 1):
                 k = SEP.join(parts[:i])
                 if k not in nodes:
-                    label = self.resource_label(k, root) if i == start else None
-                    nodes[k] = self.node(k, label, top=(i == start))
+                    nodes[k] = self.node(k, top=(i == start))
                     if parent:
                         children.setdefault(parent, []).append(k)
+                    elif root:
+                        by_root.setdefault(root, []).append(k)
                     else:
-                        roots_out.append(k)
+                        other_tops.append(k)
                 parent = k
+        headers = []
+        for root in self.roots:
+            if root in by_root:
+                h = self.root_header(root, len(by_root[root]))
+                headers.append(h)
+                children[h["key"]] = by_root[root]
         return {
-            "nodes": list(nodes.values()),
+            "nodes": headers + list(nodes.values()),
             "children": children,
-            "roots": roots_out,
+            "roots": [h["key"] for h in headers] + other_tops,
             "matches": top,
             "truncated": truncated,
             "summary": self.match_summary(top, truncated),
@@ -255,27 +328,31 @@ class View:
         add = len(ids - queued)
         return add, len(ids) - add, len(queued) + add
 
-    def match_candidates(self, keys: list[str]) -> tuple[list[str], int, int]:
-        cands, queued, done = [], 0, 0
+    def match_candidates(self, keys: list[str], for_later: bool = False) -> tuple[list[str], dict]:
+        """Tags a bulk action applies to, plus counts by status. Queuing
+        takes untouched and Later matches; saving for later takes only
+        untouched ones. Completed and queued matches are never changed."""
+        counts = {QUEUED: 0, COMPLETED: 0, LATER: 0}
+        cands = []
         for key in keys:
             if self.index is None or key not in self.index.names:
                 continue
             name = self.index.name(key)
             status, _src = self.state.effective(name)
-            if status == COMPLETED:
-                done += 1
-            elif status == QUEUED:
-                queued += 1
-            else:
+            if status in counts:
+                counts[status] += 1
+            if status is None or (status == LATER and not for_later):
                 cands.append(name)
-        return cands, queued, done
+        return cands, counts
 
     def match_summary(self, keys: list[str], truncated: bool) -> dict:
-        cands, queued, done = self.match_candidates(keys)
+        cands, counts = self.match_candidates(keys)
+        later_cands, _ = self.match_candidates(keys, for_later=True)
         add, _overlap, after = self.projection(cands) if cands and not truncated else (0, 0, 0)
         limit = self.cfg["card_limit"]
         return {
-            "count": len(keys), "queued": queued, "done": done, "candidates": len(cands),
+            "count": len(keys), "queued": counts[QUEUED], "done": counts[COMPLETED],
+            "later": counts[LATER], "candidates": len(cands), "laterCandidates": len(later_cands),
             "add": add, "after": after, "limit": limit, "over": after > limit,
             "truncated": truncated,
         }
@@ -285,10 +362,14 @@ class View:
             return None
         tag = self.index.name(key)
         status, source = self.state.effective(tag)
+        step, step_index = self.step_of(tag)
         out = {
             "key": key,
+            "tag": tag,
             "title": prettify(self.index.last(key)),
-            "path": short_path(tag, root_matcher(self.cfg["resource_roots"]), True),
+            "path": short_path(tag, self.is_root, False),
+            "step": step,
+            "stepIndex": step_index,
             "fresh": self.index.fresh.get(key, 0),
             "total": self.index.total.get(key, 0),
             "status": status,
@@ -296,48 +377,62 @@ class View:
             "date": None,
             "limit": self.cfg["card_limit"],
         }
-        if status == QUEUED and source.lower() != key:
+        if status is not None and source.lower() != key:
             out["via"] = prettify(source.rsplit(SEP, 1)[-1])
-        elif status == COMPLETED:
-            out["date"] = fmt_day(self.state.completed_at(source))
-        if status is None:
+        if status in (COMPLETED, LATER):
+            out["date"] = fmt_day(self.state.since(source))
+        if status in (None, LATER):
             add, overlap, after = self.projection([tag])
             out.update(add=add, overlap=overlap, after=after, over=after > self.cfg["card_limit"])
         return out
 
     # --- queue side panel --------------------------------------------------
 
+    def _row(self, tag: str) -> dict:
+        step, step_index = self.step_of(tag)
+        return {
+            "tag": tag, "key": tag.lower(), "title": prettify(tag.rsplit(SEP, 1)[-1]),
+            "path": short_path(tag, self.is_root, False), "step": step, "stepIndex": step_index,
+        }
+
+    def _fresh(self, tag: str) -> int:
+        if self.index is not None and self.index.mode == self.mode:
+            return self.index.fresh.get(tag.lower(), 0)
+        return len(fresh_ids(mw.col, [tag], self.mode))
+
     def side(self) -> dict:
-        queued, done = self.state.queued(), self.state.completed()
+        queued, later, done = self.state.queued(), self.state.later(), self.state.completed()
         n, limit = len(self.queue_ids()), self.cfg["card_limit"]
-        is_root = root_matcher(self.cfg["resource_roots"])
-        with_root = len(self.roots) != 1
         names = self.index.names if self.index is not None else None
 
-        def fresh(tag: str) -> int:
-            if self.index is not None and self.index.mode == self.mode:
-                return self.index.fresh.get(tag.lower(), 0)
-            return len(fresh_ids(mw.col, [tag], self.mode))
+        def missing(tag: str) -> bool:
+            return names is not None and tag.lower() not in names
 
-        queue_rows = []
-        for tag in queued:
-            missing = names is not None and tag.lower() not in names
-            queue_rows.append({
-                "tag": tag, "key": tag.lower(), "title": prettify(tag.rsplit(SEP, 1)[-1]),
-                "path": "Tag not found in this collection" if missing
-                else short_path(tag, is_root, with_root),
-                "fresh": fresh(tag), "missing": missing,
-            })
-        done_rows = [{
-            "tag": tag, "key": tag.lower(), "title": prettify(tag.rsplit(SEP, 1)[-1]),
-            "path": short_path(tag, is_root, with_root),
-            "date": fmt_day(self.state.completed_at(tag)),
-        } for tag in done]
+        def live(tag: str) -> dict:
+            row = self._row(tag)
+            row.update(fresh=self._fresh(tag), missing=missing(tag))
+            if row["missing"]:
+                row["path"] = "Tag not found in this collection"
+            return row
+
+        queue_rows = [live(t) for t in queued]
+        later_rows = [dict(live(t), date=fmt_day(self.state.since(t))) for t in later]
+        done_rows = [dict(self._row(t), date=fmt_day(self.state.since(t))) for t in done]
         return {
             "count": n, "limit": limit, "over": n > limit,
             "unit": UNITS.get(self.mode, "cards"),
-            "queued": queue_rows, "completed": done_rows,
+            "queued": queue_rows, "later": later_rows, "completed": done_rows,
         }
+
+    def later_plan(self) -> dict:
+        """What "Fill queue from Later" would do right now."""
+        later = self.state.later()
+        if not later:
+            return {"picked": 0, "add": 0, "after": len(self.queue_ids()), "skipped": 0}
+        picked, add, skipped = plan_fill(
+            mw.col, later, self.state.queued(), self.mode, self.cfg["card_limit"])
+        return {"picked": len(picked), "add": add, "after": len(self.queue_ids()) + add,
+                "skipped": len(skipped), "limit": self.cfg["card_limit"]}
 
     def options(self) -> dict:
         ud = colorsync.find_user_data()

@@ -23,7 +23,7 @@ from aqt import mw
 
 from . import actions, colorsync
 from .config import get_config, update_config
-from .state import COMPLETED, QUEUED
+from .state import COMPLETED, LATER, QUEUED
 from .viewmodel import View
 
 OPTION_KEYS = {
@@ -32,6 +32,10 @@ OPTION_KEYS = {
     "colorSync": "colorful_tags_sync",
     "hideCompleted": "hide_completed",
 }
+
+
+def _plural(n: int, word: str) -> str:
+    return f"{n:,} {word}" + ("" if n == 1 else "s")
 
 
 class Bridge:
@@ -101,7 +105,8 @@ class Bridge:
             "scopes": view.scopes(),
             "scope": view.scope_value(),
             "options": view.options(),
-            "colors": {"queued": cfg["queued_color"], "completed": cfg["completed_color"]},
+            "colors": {"queued": cfg["queued_color"], "completed": cfg["completed_color"],
+                       "later": cfg["later_color"]},
         }
 
     def cmd_scopes(self, msg: dict) -> dict:
@@ -169,12 +174,45 @@ class Bridge:
 
     def cmd_queue_matches(self, msg: dict) -> dict:
         view = self.view()
-        cands, _q, _d = view.match_candidates(msg.get("matches") or [])
+        cands, _counts = view.match_candidates(msg.get("matches") or [])
         if cands and not msg.get("truncated"):
             add, _overlap, _after = view.projection(cands)
             actions.queue(cands)
-            n = len(cands)
-            self.toast(f"Queued {n:,} topic{'s' if n != 1 else ''} · +{add:,} new cards")
+            self.toast(f"Queued {_plural(len(cands), 'topic')} · +{add:,} new cards")
+        return self.bundle(msg)
+
+    # --- later ---------------------------------------------------------------
+
+    def cmd_later(self, msg: dict) -> dict:
+        tags = self._tags(msg)
+        actions.save_later(tags)
+        if msg.get("announce", True):
+            self.toast(f"Saved {_plural(len(tags), 'topic')} for later")
+        return self.bundle(msg)
+
+    def cmd_unlater(self, msg: dict) -> dict:
+        actions.unlater(self._tags(msg))
+        return self.bundle(msg)
+
+    def cmd_later_matches(self, msg: dict) -> dict:
+        cands, _counts = self.view().match_candidates(msg.get("matches") or [], for_later=True)
+        if cands and not msg.get("truncated"):
+            actions.save_later(cands)
+            self.toast(f"Saved {_plural(len(cands), 'topic')} for later")
+        return self.bundle(msg)
+
+    def cmd_later_plan(self, msg: dict) -> dict:
+        return {"plan": self.view().later_plan()}
+
+    def cmd_fill_from_later(self, msg: dict) -> dict:
+        picked, added, skipped = actions.fill_from_later()
+        if picked:
+            text = f"Queued {_plural(len(picked), 'topic')} from Later · +{added:,} new cards"
+            if skipped:
+                text += f" · {len(skipped):,} didn't fit"
+            self.toast(text)
+        elif skipped:
+            self.toast("Nothing from Later fits under your limit right now")
         return self.bundle(msg)
 
     # --- settings ----------------------------------------------------------
@@ -235,11 +273,11 @@ class Bridge:
         state = actions.load_state()
         now = int(time.time())
         changes: dict = {}
-        counts = {QUEUED: 0, COMPLETED: 0}
+        counts = {QUEUED: 0, COMPLETED: 0, LATER: 0}
         skipped = 0
         for color, tags in colorsync.color_groups(ud).items():
             status = choices.get(color)
-            if status not in (QUEUED, COMPLETED):
+            if status not in (QUEUED, COMPLETED, LATER):
                 continue
             for tag in tags:
                 if names is not None:
@@ -256,7 +294,8 @@ class Bridge:
             update_config(pinned_resources=pins)
         update_config(import_offered=True)
         actions.commit(state, changes)
-        text = (f"Imported {counts[QUEUED]:,} queued and {counts[COMPLETED]:,} completed topics")
+        parts = [f"{counts[k]:,} {k}" for k in (QUEUED, LATER, COMPLETED) if counts[k]]
+        text = "Imported " + (", ".join(parts) if parts else "nothing")
         if skipped:
             text += f" · skipped {skipped:,} tags that no longer exist"
         self.toast(text)
