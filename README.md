@@ -110,7 +110,16 @@ The tag tree uses vim keys (arrow keys, Home and End work too):
 | `o` or `Enter` | Open or close a folder |
 | `Space` | Queue or unqueue the topic |
 | `s` | Save the topic for later (or take it back off Later) |
+| `u` or `Cmd/Ctrl+Z` | Undo the last change |
+| `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
+
+Undo covers what you do in the Tag Queue window (queue, unqueue, Later,
+check off, clear, Fill queue, queue or save all search matches, imports),
+up to 50 steps back. Undoing a check-off puts the topic back in the queue
+and suspends the cards it unsuspended again, if you haven't studied them
+yet. Changes made elsewhere since (the Browser sidebar, automatic Done)
+are left alone.
 
 ### Settings
 

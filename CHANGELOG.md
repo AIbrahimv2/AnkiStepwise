@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
+- **Undo and redo** for changes made in the Tag Queue window: `u` or
+  Cmd/Ctrl+Z undoes, `Ctrl-r` or Cmd/Ctrl+Shift+Z redoes, up to 50 steps.
+  Undoing a check-off also re-suspends the cards it unsuspended (if still
+  unstudied), and only what that action changed is put back.
+
 - **Settings** inside the Tag Queue window (⋯ → Settings…), replacing the
   JSON config editor: daily limit, count mode, unsuspend on check-off,
   resource-folder patterns with a live preview of what they match, pinned
