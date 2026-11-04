@@ -7,6 +7,23 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- The queue is a daily plan. ✓ marks a topic watched (unsuspending its cards)
+  but keeps it in the queue, and the meter counts new cards (never studied,
+  suspended or not) across queued and watched topics, so checking off doesn't
+  shrink it; studying does. Topics leave by themselves once every card is
+  studied, and unfinished ones carry over. "Complete all" is replaced by
+  **Clear watched**, and watched rows can be un-checked.
+- `count_mode` defaults to `"new"` (setups that were switched to
+  `"suspended"` automatically are moved back once).
+- Queue and Later show one number per topic and per resource group, in one
+  column labelled **New cards** at the top (the breakdown is in each row's
+  tooltip), lined up with the topic's name rather than midway down the row.
+- Separate facts are laid out apart instead of strung together with "·": the
+  meter, details bar, search bar, Later fill bar, status badges, resource
+  picker and toasts (a headline with details underneath).
+- Dark mode meets WCAG AA contrast against Anki's real dark theme: faint
+  text was 1.6:1 there; text and icons now pass everywhere, including
+  hovered and selected rows and toasts.
 - Course-order numbers are dropped from tag names everywhere except the main
   tree (`03_Pharmacology` shows as "Pharmacology" in the side panel,
   breadcrumbs, folder labels and toasts). Names that are only a number, like
@@ -15,18 +32,17 @@ All notable changes to this project are documented here. The format is based on
   folder clustered under it, a unique card count per group, and group buttons
   (complete all / move to Later / move to queue). "Order added" shows the flat
   list.
-- Topics with nothing left to unsuspend count as done: they show "Done" in the
+- Topics whose every card is studied count as done: they show "Done" in the
   tree and progress, and leave Queue/Later automatically (with a note why).
-- Done rolls up: when everything under a folder is done (completed, or all
-  cards unsuspended), the folder is marked complete in place of its children's
+  Topics whose cards are only unsuspended stay in the plan.
+- Done rolls up: when everything under a folder is done (completed, or every
+  card studied), the folder is marked complete in place of its children's
   entries. It never climbs past a resource. On the author's collection this
   turned 179 Done entries into 117.
-
-- The limit now counts **suspended** cards (what you add by unsuspending).
-  Cards already unsuspended but not studied yet, including ones buried by
-  sibling settings, show in a separate **Waiting** column with a ☾ for buried
-  ones, instead of inflating the "new" count. Existing setups using the old
-  default switch over once; `count_mode: "new"` brings the old count back.
+- Cards already unsuspended but not studied yet, including ones buried by
+  sibling settings, show in a separate **Waiting** column (a ☾ marks buried
+  ones) next to **Suspended**, so a topic whose cards are only buried no
+  longer looks like it has cards left to unsuspend.
 - Clicking a row in Queue, Later or Done reveals that tag in the tree (opens
   its folders, loads enough of a big folder, clears search or a narrower
   resource filter, shows done topics if hidden) instead of needing a

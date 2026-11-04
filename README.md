@@ -35,13 +35,15 @@ Anki's light and dark themes, with keyboard navigation throughout.
   settings, which come back by themselves), so a topic whose cards are only
   buried no longer looks unfinished.
 - **Grouped by resource.** Queue and Later group topics under their resource
-  (Pixorize, Bootcamp, …) with each group's unique card count, and cluster
-  topics that share a parent folder. Group buttons complete a whole resource or
+  (Pixorize, Bootcamp, …) with each group's unique new-card count in the same
+  column as the topics' counts (labelled once, at the top), and cluster topics
+  that share a parent folder. Group buttons complete a whole resource or
   move it to/from Later. Switch to "Order added" any time.
-- **Done takes care of itself.** A topic with nothing left to unsuspend counts
-  as done (and leaves Queue/Later automatically), and once everything in a
-  folder is done the folder itself is marked complete, so Done shows
-  "16 Neuro" rather than each of its videos.
+- **Done takes care of itself.** A topic whose every card has been studied
+  counts as done and leaves Queue/Later on its own (cards that are only
+  unsuspended keep it open). Once everything in a folder is done the folder
+  itself is marked complete, so Done shows "16 Neuro" rather than each of its
+  videos.
 - **Click to find it.** Click any row in Queue, Later or Done to jump to that
   tag in the tree: it opens the step, resource and folders, scrolls there and
   highlights it.
@@ -49,11 +51,14 @@ Anki's light and dark themes, with keyboard navigation throughout.
   under several queued topics (common in AnKing, where one card carries B&B,
   Bootcamp and Pixorize tags). Select a topic to see how many cards it *would
   add* before you queue it.
-- **Session limit.** 150 cards by default. The meter and count turn red when the
-  queue goes over.
-- **Complete in one click.** ✓ on a queued topic (or **Complete all**) marks it
-  done and unsuspends its cards. Completed topics move to the **Completed** tab
-  with the date, and you can send them back to the queue.
+- **Daily plan.** The queue is your plan for the day's new cards (150 by
+  default). The meter counts every new card in it, still suspended or already
+  unsuspended, so checking a watched topic off doesn't change it; studying the
+  cards does. It turns red when the plan goes over.
+- **Check off as you watch.** ✓ on a queued topic unsuspends its cards and
+  marks it watched: it stays in the queue (with an undo) until every card in it
+  is studied, then moves to Done by itself. Anything unfinished carries over to
+  the next day. **Clear watched** takes watched topics off early.
 - **Deck-screen meter.** A compact meter under the deck list; click it to open
   the queue.
 - **Browser sidebar.** Right-click any tag (or several) → **Tag Queue** → Add to
@@ -73,8 +78,12 @@ Anki's light and dark themes, with keyboard navigation throughout.
    queues everything under it. Or search for a keyword, pick the resource you're
    watching from the dropdown, and click **Queue N** to queue every match. Keep
    the meter under your limit.
-3. Watch the videos, then click **✓** on each topic, or **Complete all**. Their
-   cards are unsuspended and the topics are marked completed.
+3. Watch the videos one by one and click **✓** after each. Its cards are
+   unsuspended and it's checked off, but it stays in the plan, so the meter
+   keeps showing the day's new cards.
+4. Study. As you finish a topic's cards it leaves the queue by itself; whatever
+   you didn't get to stays queued for tomorrow, still counted against the
+   limit.
 
 Hit your limit but found more to do? Press **L** on a topic (or click its
 bookmark) to save it for later. Next session, open the **Later** tab and click
