@@ -351,16 +351,28 @@ body {
   column-gap: 6px;
   padding-right: 12px;
 }
+/* The column titles sit inside the scrolling tree, stuck to the top, with
+   the same box as a step row (full width, 18px on the right = the rows'
+   12px plus the tree's 6px padding), so they line up with the cells
+   whether or not there's a scrollbar. */
 .tree-head {
+  position: sticky;
+  top: -4px;
+  z-index: 3;
   height: 30px;
+  margin: -4px -6px 0;
+  padding-left: 14px;
+  padding-right: 18px;
+  background: var(--surface);
   font-size: 11px;
   font-weight: 600;
   letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--text-3);
   border-bottom: 1px solid var(--line);
-  padding-left: 14px;
 }
+/* Status content stops short of the hover bookmark's slot; so does its title. */
+.tree-head .status-head { padding-right: 24px; }
 .tree-head .r, .row .r { text-align: right; }
 
 .tree {
@@ -370,6 +382,9 @@ body {
   outline: none;
   padding: 4px 6px 8px;
   scrollbar-width: thin;
+  /* Keep a row moved to with the keyboard clear of the sticky column
+     titles and step header above it. */
+  scroll-padding-top: 72px;
 }
 
 .row {
@@ -825,7 +840,7 @@ body {
 /* A step's header row: sticks to the top while you scroll its resources. */
 .row.section {
   position: sticky;
-  top: -4px;
+  top: 26px; /* just under the column titles */
   z-index: 2;
   height: 38px;
   margin: 4px -6px 0;
@@ -834,7 +849,7 @@ body {
   background: var(--surface);
   box-shadow: 0 1px 0 var(--line);
 }
-.row.section:first-child { margin-top: -4px; }
+.tree-head + .row.section { margin-top: 0; }
 .row.section .cell-name { padding-left: 14px !important; }
 .row.section:hover { background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
 .row.section.selected { background: color-mix(in srgb, var(--focus) 9%, var(--surface)); }

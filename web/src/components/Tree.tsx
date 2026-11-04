@@ -148,7 +148,10 @@ export function Tree(props: TreeProps) {
 
   return (
     <>
-      <div className="tree-head">
+      <div className="tree" ref={box} tabIndex={0} onKeyDown={onKeyDown} role="tree">
+      {/* Inside the scroller (and sticky) so it always has the rows' width,
+          whether or not a scrollbar takes room. */}
+      <div className="tree-head" role="presentation">
         <span>Topic</span>
         <span className="r" title="Still suspended: the cards you add to your reviews by unsuspending them">
           Suspended
@@ -160,9 +163,8 @@ export function Tree(props: TreeProps) {
           Waiting
         </span>
         <span className="r" title="Every card under this tag">Total</span>
-        <span className="r">Status</span>
+        <span className="r status-head">Status</span>
       </div>
-      <div className="tree" ref={box} tabIndex={0} onKeyDown={onKeyDown} role="tree">
         {props.loading ? (
           <Skeleton />
         ) : props.emptyText ? (
