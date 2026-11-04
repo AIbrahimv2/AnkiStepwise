@@ -302,7 +302,7 @@ const TreeRow = memo(function TreeRow(props: {
       <span className="cell-num">{fmt(node.total)}</span>
       <span className="cell-status">
         <StatusCell node={node} />
-        {canLater && (
+        {canLater ? (
           <button
             type="button"
             className={`row-later${ownLater ? " on" : ""}`}
@@ -316,6 +316,9 @@ const TreeRow = memo(function TreeRow(props: {
           >
             {ownLater ? <BookmarkMinus size={14} /> : <BookmarkPlus size={14} />}
           </button>
+        ) : (
+          // Same room as the button, so every row's status ends at one edge.
+          <span className="row-later-slot" aria-hidden="true" />
         )}
       </span>
     </div>
@@ -355,7 +358,10 @@ function GroupRow(props: {
         <span className="cell-num fresh">{fmt(node.suspended ?? 0)}</span>
         <WaitingCell waiting={node.waiting ?? 0} buried={node.buried ?? 0} />
         <span className="cell-num">{fmt(node.total ?? 0)}</span>
-        <span className="cell-status">{p && <Progress done={p.done} total={p.total} />}</span>
+        <span className="cell-status">
+          {p && <Progress done={p.done} total={p.total} />}
+          <span className="row-later-slot" aria-hidden="true" />
+        </span>
       </div>
     );
   }

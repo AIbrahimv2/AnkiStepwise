@@ -858,6 +858,7 @@ body {
   transition: opacity 0.12s, background 0.12s, color 0.12s;
 }
 #root .row:hover .row-later, #root .row.selected .row-later { opacity: 1; }
+.row-later-slot { width: 24px; margin-right: -6px; flex: none; }
 #root .row-later:hover { background: var(--l-soft); color: var(--l); }
 
 .fillbar {
