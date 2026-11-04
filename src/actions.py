@@ -15,7 +15,7 @@ from aqt.utils import tooltip
 
 from . import colorsync
 from .config import get_config
-from .counts import TagIndex, build_index, suspended_ids, tags_search
+from .counts import TagIndex, build_index, plan_fill, suspended_ids, tags_search
 from .state import QueueState
 
 # --- state + listeners -------------------------------------------------------
@@ -41,7 +41,8 @@ def commit(state: QueueState, changes: dict) -> None:
     state.save(mw.col)
     cfg = get_config()
     if changes and cfg["colorful_tags_sync"]:
-        colorsync.apply(changes, cfg["queued_color"], cfg["completed_color"])
+        colorsync.apply(changes, cfg["queued_color"], cfg["completed_color"],
+                        later_color=cfg["later_color"])
     notify()
 
 
@@ -91,6 +92,35 @@ def unqueue(tags: list[str]) -> None:
     for tag in tags:
         changes.update(state.unqueue(tag))
     commit(state, changes)
+
+
+def save_later(tags: list[str]) -> None:
+    """Park tags for a later session (taking them out of the queue)."""
+    state = load_state()
+    changes: dict = {}
+    for tag in tags:
+        changes.update(state.save_later(tag))
+    commit(state, changes)
+
+
+def unlater(tags: list[str]) -> None:
+    state = load_state()
+    changes: dict = {}
+    for tag in tags:
+        changes.update(state.unlater(tag))
+    commit(state, changes)
+
+
+def fill_from_later() -> tuple[list[str], int, list[str]]:
+    """Queue Later topics, oldest first, as long as they fit under the card
+    limit. Returns (queued tags, cards added, tags that didn't fit)."""
+    cfg = get_config()
+    state = load_state()
+    picked, added, skipped = plan_fill(
+        mw.col, state.later(), state.queued(), cfg["count_mode"], cfg["card_limit"])
+    if picked:
+        queue(picked)
+    return picked, added, skipped
 
 
 def clear(tags: list[str]) -> None:

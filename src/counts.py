@@ -73,6 +73,26 @@ def suspended_ids(col, tags: list[str]) -> list[int]:
     return card_ids(col, tags, "is:suspended")
 
 
+def plan_fill(col, later: list[str], queued: list[str], mode: str, limit: int):
+    """Which Later topics fit in the queue: walk them oldest first and take
+    each one whose *new* unique cards still fit under `limit` (a big topic
+    that doesn't fit is skipped, so smaller ones behind it can still go in).
+    Returns (picked tags, cards added, skipped tags)."""
+    have = set(fresh_ids(col, queued, mode)) if queued else set()
+    start = len(have)
+    picked: list[str] = []
+    skipped: list[str] = []
+    for tag in later:
+        ids = set(fresh_ids(col, [tag], mode))
+        new = ids - have
+        if len(have) + len(new) <= limit:
+            picked.append(tag)
+            have |= new
+        else:
+            skipped.append(tag)
+    return picked, len(have) - start, skipped
+
+
 # --- labels ------------------------------------------------------------------
 
 
