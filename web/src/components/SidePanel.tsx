@@ -17,9 +17,13 @@ import {
   X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import type { LaterPlan, QueueRow, RowGroup, Side } from "../types";
+import { call } from "../bridge";
+import type { DoneRow, LaterPlan, QueueRow, RowGroup, Side } from "../types";
 import { StepChip } from "./Tree";
 import { IconButton, fmt, plural } from "./ui";
+
+/** Done rows loaded per "Show more". */
+const DONE_STEP = 200;
 
 export type Tab = "queue" | "later" | "done";
 
@@ -67,6 +71,15 @@ export function SidePanel(props: Props) {
       return next;
     });
   const queued = side.queued.length;
+  // Done rows past the first page, loaded on demand (reset when Done changes).
+  const [doneMore, setDoneMore] = useState<DoneRow[]>([]);
+  const doneHead = side.completed[0]?.key;
+  useEffect(() => setDoneMore([]), [side.doneTotal, doneHead]);
+  const doneRows = doneMore.length ? [...side.completed, ...doneMore] : side.completed;
+  const loadMoreDone = () =>
+    call<{ rows: DoneRow[] }>("done_page", { offset: doneRows.length, limit: DONE_STEP }).then((r) =>
+      setDoneMore((m) => [...m, ...r.rows]),
+    );
   const pct = Math.min(100, side.limit ? (100 * side.count) / side.limit : 0);
   const left = side.limit - side.count;
 
@@ -106,7 +119,7 @@ export function SidePanel(props: Props) {
           active={tab === "done"}
           onClick={() => props.onTab("done")}
           label="Done"
-          count={side.completed.length}
+          count={side.doneTotal}
         />
       </div>
 
@@ -245,8 +258,9 @@ export function SidePanel(props: Props) {
           ))}
 
         {tab === "done" && (
-          side.completed.length ? (
-            side.completed.map((row) => (
+          doneRows.length ? (
+            <>
+            {doneRows.map((row) => (
               <div
                 key={row.tag}
                 className={`item done-item${props.activeKey === row.key ? " active" : ""}`}
@@ -265,7 +279,14 @@ export function SidePanel(props: Props) {
                 </div>
                 <div className="item-meta">{row.date}</div>
               </div>
-            ))
+            ))}
+            {doneRows.length < side.doneTotal && (
+              <button type="button" className="btn ghost sm show-more-done" onClick={loadMoreDone}>
+                Show {Math.min(DONE_STEP, side.doneTotal - doneRows.length).toLocaleString()} more of{" "}
+                {(side.doneTotal - doneRows.length).toLocaleString()}
+              </button>
+            )}
+            </>
           ) : (
             <Empty icon={<CircleCheckBig size={18} />} title="Nothing completed yet">
               Topics you finish land here with the date.

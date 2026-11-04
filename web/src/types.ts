@@ -113,7 +113,9 @@ export interface Side {
   unit: string;
   queued: QueueRow[];
   later: LaterRow[];
+  /** The newest Done rows; the tab pages in the rest. */
   completed: DoneRow[];
+  doneTotal: number;
   queueGroups: RowGroup<QueueRow>[];
   laterGroups: RowGroup<LaterRow>[];
 }

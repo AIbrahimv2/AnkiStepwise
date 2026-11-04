@@ -116,6 +116,12 @@ class Bridge:
                        "later": cfg["later_color"]},
         }
 
+    def cmd_done_page(self, msg: dict) -> dict:
+        view = self.view()
+        offset = max(0, int(msg.get("offset") or 0))
+        limit = max(1, min(1000, int(msg.get("limit") or 200)))
+        return {"rows": view.done_rows(offset, limit), "total": len(view.state.completed())}
+
     def cmd_scopes(self, msg: dict) -> dict:
         view = self.view()
         return {"scopes": view.scopes(), "scope": view.scope_value()}

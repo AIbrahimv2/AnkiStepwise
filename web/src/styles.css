@@ -1135,3 +1135,6 @@ body {
 
 .settings-actions { align-items: center; }
 .settings-actions .spacer { flex: 1; }
+
+/* --- Done paging -------------------------------------------------------------- */
+#root .show-more-done { display: flex; width: calc(100% - 12px); margin: 8px 6px 4px; justify-content: center; }

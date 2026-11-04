@@ -47,6 +47,9 @@ def fmt_day(ts: int) -> str:
     return s if dt.year == datetime.now().year else f"{s}, {dt.year}"
 
 
+DONE_PAGE = 100  # Done rows sent with every reply; the tab pages in the rest
+
+
 class View:
     def __init__(self, index: TagIndex | None):
         self.index = index
@@ -488,8 +491,13 @@ class View:
         return sorted(groups.values(), key=lambda g: (
             g["stepIndex"] if g["stepIndex"] is not None else 99, natural_key(g["label"])))
 
+    def done_rows(self, offset: int = 0, limit: int = DONE_PAGE) -> list[dict]:
+        """A page of the Done list, newest first."""
+        done = self.state.completed()[offset:offset + limit]
+        return [dict(self._row(t), date=fmt_day(self.state.since(t))) for t in done]
+
     def side(self) -> dict:
-        queued, later, done = self.state.queued(), self.state.later(), self.state.completed()
+        queued, later = self.state.queued(), self.state.later()
         n, limit = len(self.queue_ids()), self.cfg["card_limit"]
         names = self.index.names if self.index is not None else None
 
@@ -510,12 +518,14 @@ class View:
         watched = [t for t in self.state.watched() if t.lower() not in {q.lower() for q in queued}]
         queue_rows = [live(t) for t in queued] + [live(t, watched=True) for t in watched]
         later_rows = [dict(live(t), date=fmt_day(self.state.since(t))) for t in later]
-        done_rows = [dict(self._row(t), date=fmt_day(self.state.since(t))) for t in done]
         return {
             "count": n, "limit": limit, "over": n > limit, "mode": self.mode,
             "watched": len(watched), "toWatch": len(queued),
             "unit": UNITS.get(self.mode, "cards"),
-            "queued": queue_rows, "later": later_rows, "completed": done_rows,
+            # Done can hold thousands of topics once fully studied ones are
+            # swept in; replies carry the newest page and the tab loads more.
+            "queued": queue_rows, "later": later_rows, "completed": self.done_rows(),
+            "doneTotal": len(self.state.completed()),
             "queueGroups": self.grouped(queue_rows), "laterGroups": self.grouped(later_rows),
         }
 
