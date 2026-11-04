@@ -12,9 +12,11 @@ Anki's light and dark themes, with keyboard navigation throughout.
 
 ## Features
 
-- **Tag tree by resource.** Every tag is listed under its resource, with
-  checkboxes to queue topics and columns for new cards, total cards and progress
-  (e.g. `43/51 done`).
+- **Tag tree by resource, split by step.** Resources sit under colour-coded
+  **Step 1 / Step 2 / Step 3** sections that stay pinned to the top while you
+  scroll, with checkboxes to queue topics and columns for new cards, total cards
+  and progress (e.g. `43/51 done`). Queue, Later and Done rows carry a matching
+  step chip.
 - **Keyword search.** Type `brainstem` or `b&b cardio` to see matching topics
   from every resource, nested under the resource they belong to. A dropdown next
   to the search box limits the tree and the search to **all resources**, your
@@ -22,6 +24,11 @@ Anki's light and dark themes, with keyboard navigation throughout.
 - **Queue all matches.** One click queues every topic the search found that
   isn't already queued or completed. Before you click, it shows how many new
   cards that adds, and it asks first if the total would go over your limit.
+- **Save for later.** Found a topic that won't fit this session? Hover it and
+  click the bookmark (or press **L**) to park it in the **Later** tab, where it
+  doesn't count toward your limit. Going over the limit offers **Move to
+  Later** right in the warning, and **Fill queue** later queues the oldest
+  Later topics that fit under your limit.
 - **Unique-card meter.** The queue counts each card once, even when it's tagged
   under several queued topics (common in AnKing, where one card carries B&B,
   Bootcamp and Pixorize tags). Select a topic to see how many cards it *would
@@ -53,8 +60,12 @@ Anki's light and dark themes, with keyboard navigation throughout.
 3. Watch the videos, then click **✓** on each topic, or **Complete all**. Their
    cards are unsuspended and the topics are marked completed.
 
-Right-click a topic for more: browse its cards, unsuspend without completing,
-clear its status, or pin a resource to the top.
+Hit your limit but found more to do? Press **L** on a topic (or click its
+bookmark) to save it for later. Next session, open the **Later** tab and click
+**Fill queue**.
+
+Right-click a topic for more: save it for later, browse its cards, unsuspend
+without completing, clear its status, or pin a resource to the top.
 
 ## Installation
 

@@ -14,8 +14,17 @@ All notable changes to this project are documented here. The format is based on
   per-resource progress bars, search with highlighted matches, a right-click
   menu, toasts, and keyboard navigation (↑/↓, ←/→, Space to queue, / to
   search).
+- **Later** status for topics that don't fit this session: save from the tree
+  (bookmark button or **L**), the right-click menu, the Browser sidebar, the
+  over-limit warning (**Move to Later**) or a search (**Later** saves every
+  match). Later topics don't count toward the limit; **Fill queue** queues the
+  oldest ones that fit. They get their own sidebar colour (`later_color`).
+- **Step sections**: the tree and search results group resources under
+  colour-coded Step 1 / Step 2 / Step 3 headers that stick while scrolling, and
+  queue rows show a step chip.
 - **Resource filter** next to the search box: show and search all resources,
-  only pinned resources, or a single resource. The choice is remembered.
+  your pinned resources, a whole step, or a single resource, grouped by step.
+  The choice is remembered.
 - **Queue all matches**: one click queues every search match that isn't already
   queued or completed. It previews the new cards that adds, asks for
   confirmation if the total would go over the limit, and is disabled when the
