@@ -36,8 +36,7 @@ def _on_config_saved(_cfg) -> None:
     """Config edited by hand (count mode, roots, colours...): recount."""
     actions.mark_index_dirty()
     actions.notify()
-    if ui._dialog is not None and ui._dialog.isVisible():
-        ui._dialog.refresh_all()
+    ui.refresh_open_dialog()
 
 
 gui_hooks.main_window_did_init.append(_install)
@@ -47,3 +46,5 @@ gui_hooks.deck_browser_will_render_content.append(widget.on_deck_render)
 gui_hooks.webview_did_receive_js_message.append(widget.on_js_message)
 gui_hooks.browser_sidebar_will_show_context_menu.append(browser_menu.on_sidebar_menu)
 mw.addonManager.setConfigUpdatedAction(ADDON, _on_config_saved)
+# Serve the built web UI (src/web/) to the Tag Queue window.
+mw.addonManager.setWebExports(ADDON, r"web/.*\.(js|css|svg|png|woff2?)")
