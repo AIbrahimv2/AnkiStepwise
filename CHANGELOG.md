@@ -17,6 +17,15 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- Done now covers topics you never queued or coloured: any tag whose every
+  card is studied is marked completed (and turns green with Colorful Tags),
+  dated the day its last card was first studied. It applies in resources
+  you use (any queued, Later or completed topic), no deeper than the deepest
+  one you have there, and only the highest finished tag in each branch. On
+  the author's collection that's about 1,950 topics; sweeping every tag
+  would have been 17,400, mostly UWorld/AMBOSS question IDs.
+- The Done tab loads 100 topics at a time ("Show more"), so replies stay
+  small: with 2,000 topics done, each click sent 700 KB before.
 - The tag tree uses vim keys: `j`/`k` move, `h`/`l` close or go up / open
   or go in, `gg`/`G` top and bottom, `Ctrl-d`/`Ctrl-u` half a page, `o` opens
   or closes. Save for later moved from `L` to `s`. Arrow keys still work.

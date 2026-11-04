@@ -41,7 +41,11 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   move it to/from Later. Switch to "Order added" any time.
 - **Done takes care of itself.** A topic whose every card has been studied
   counts as done and leaves Queue/Later on its own (cards that are only
-  unsuspended keep it open). Once everything in a folder is done the folder
+  unsuspended keep it open). Topics you studied without ever queuing or
+  colouring them are marked done too, dated the day you finished them:
+  in every resource you use, down to the deepest level you've queued at
+  there (so stray question IDs and sub-headings that other resources' cards
+  happen to finish don't bury the Done list). Once everything in a folder is done the folder
   itself is marked complete, so Done shows "16 Neuro" rather than each of its
   videos.
 - **Click to find it.** Click any row in Queue, Later or Done to jump to that
