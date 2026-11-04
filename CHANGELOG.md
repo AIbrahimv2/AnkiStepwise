@@ -17,16 +17,26 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- The tag tree uses vim keys: `j`/`k` move, `h`/`l` close or go up / open
+  or go in, `gg`/`G` top and bottom, `Ctrl-d`/`Ctrl-u` half a page, `o` opens
+  or closes. Save for later moved from `L` to `s`. Arrow keys still work.
+- "Watched" is now "checked off" (the meter reads "3/9 checked off", the
+  button **Clear checked**), since not every resource is a video.
+- Queue and Later show their card counts at the right edge, with each row's
+  buttons just left of them.
+- The details bar under the tree drops the counts the row already shows
+  (suspended, waiting, total) and keeps the clean name, its step and path,
+  what queuing it would add, and its status badge.
 - The ⋯ menu's option toggles moved into Settings; "Edit config…" is gone
   (it opened the Add-ons window with the main window instead of the add-on
   manager and failed with `'AnkiQt' object has no attribute 'mw'`).
 
-- The queue is a daily plan. ✓ marks a topic watched (unsuspending its cards)
+- The queue is a daily plan. ✓ checks a topic off (unsuspending its cards)
   but keeps it in the queue, and the meter counts new cards (never studied,
-  suspended or not) across queued and watched topics, so checking off doesn't
+  suspended or not) across queued and checked-off topics, so checking off doesn't
   shrink it; studying does. Topics leave by themselves once every card is
   studied, and unfinished ones carry over. "Complete all" is replaced by
-  **Clear watched**, and watched rows can be un-checked.
+  **Clear checked**, and checked-off rows can be unchecked.
 - `count_mode` defaults to `"new"` (setups that were switched to
   `"suspended"` automatically are moved back once).
 - Queue and Later show one number per topic and per resource group, in one
@@ -86,10 +96,10 @@ All notable changes to this project are documented here. The format is based on
   that follows Anki's light and dark themes. It has a tag tree grouped by
   resource with checkboxes to queue topics, new and total card counts,
   per-resource progress bars, search with highlighted matches, a right-click
-  menu, toasts, and keyboard navigation (↑/↓, ←/→, Space to queue, / to
+  menu, toasts, and keyboard navigation (vim keys, Space to queue, / to
   search).
 - **Later** status for topics that don't fit this session: save from the tree
-  (bookmark button or **L**), the right-click menu, the Browser sidebar, the
+  (bookmark button or **s**), the right-click menu, the Browser sidebar, the
   over-limit warning (**Move to Later**) or a search (**Later** saves every
   match). Later topics don't count toward the limit; **Fill queue** queues the
   oldest ones that fit. They get their own sidebar colour (`later_color`).

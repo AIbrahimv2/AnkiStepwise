@@ -3,12 +3,12 @@
 An [Anki](https://apps.ankiweb.net/) add-on for planning study sessions by tag.
 Tick the topics you'll cover today, grouped by resource (B&B, Bootcamp,
 Pixorize, Sketchy, …). A live meter shows how many **new cards** that adds
-against your session limit. When you've watched the videos, mark the topics
-completed, which also unsuspends their cards.
+against your session limit. When you've covered a topic (a video, a chapter,
+a set of notes), check it off, which also unsuspends its cards.
 
-It's built for the AnKing workflow of "watch the video, unsuspend its cards",
+It's built for the AnKing workflow of "cover the resource, unsuspend its cards",
 and works with any hierarchical tags. The window is a web UI (React) that follows
-Anki's light and dark themes, with keyboard navigation throughout.
+Anki's light and dark themes, with vim-style keyboard navigation.
 
 ## Features
 
@@ -25,7 +25,7 @@ Anki's light and dark themes, with keyboard navigation throughout.
   isn't already queued or completed. Before you click, it shows how many new
   cards that adds, and it asks first if the total would go over your limit.
 - **Save for later.** Found a topic that won't fit this session? Hover it and
-  click the bookmark (or press **L**) to park it in the **Later** tab, where it
+  click the bookmark (or press **s**) to park it in the **Later** tab, where it
   doesn't count toward your limit. Going over the limit offers **Move to
   Later** right in the warning, and **Fill queue** later queues the oldest
   Later topics that fit under your limit.
@@ -53,12 +53,12 @@ Anki's light and dark themes, with keyboard navigation throughout.
   add* before you queue it.
 - **Daily plan.** The queue is your plan for the day's new cards (150 by
   default). The meter counts every new card in it, still suspended or already
-  unsuspended, so checking a watched topic off doesn't change it; studying the
+  unsuspended, so checking a topic off doesn't change it; studying the
   cards does. It turns red when the plan goes over.
-- **Check off as you watch.** ✓ on a queued topic unsuspends its cards and
-  marks it watched: it stays in the queue (with an undo) until every card in it
+- **Check off as you go.** ✓ on a queued topic unsuspends its cards and
+  checks it off: it stays in the queue (with an undo) until every card in it
   is studied, then moves to Done by itself. Anything unfinished carries over to
-  the next day. **Clear watched** takes watched topics off early.
+  the next day. **Clear checked** takes checked-off topics off early.
 - **Deck-screen meter.** A compact meter under the deck list; click it to open
   the queue.
 - **Browser sidebar.** Right-click any tag (or several) → **Tag Queue** → Add to
@@ -74,23 +74,38 @@ Anki's light and dark themes, with keyboard navigation throughout.
 
 1. Open **Tools → Tag Queue** (Cmd/Ctrl+Alt+Q) or click the meter on the deck
    screen.
-2. Expand a resource and tick the topics you plan to watch. Ticking a parent
+2. Expand a resource and tick the topics you plan to cover. Ticking a parent
    queues everything under it. Or search for a keyword, pick the resource you're
-   watching from the dropdown, and click **Queue N** to queue every match. Keep
+   using from the dropdown, and click **Queue N** to queue every match. Keep
    the meter under your limit.
-3. Watch the videos one by one and click **✓** after each. Its cards are
-   unsuspended and it's checked off, but it stays in the plan, so the meter
+3. Work through the topics one by one (watch the video, read the chapter) and
+   click **✓** after each. Its cards are unsuspended and it's checked off, but it stays in the plan, so the meter
    keeps showing the day's new cards.
 4. Study. As you finish a topic's cards it leaves the queue by itself; whatever
    you didn't get to stays queued for tomorrow, still counted against the
    limit.
 
-Hit your limit but found more to do? Press **L** on a topic (or click its
+Hit your limit but found more to do? Press **s** on a topic (or click its
 bookmark) to save it for later. Next session, open the **Later** tab and click
 **Fill queue**.
 
 Right-click a topic for more: save it for later, browse its cards, unsuspend
 without completing, clear its status, or pin a resource to the top.
+
+### Keyboard
+
+The tag tree uses vim keys (arrow keys, Home and End work too):
+
+| Keys | Does |
+| --- | --- |
+| `j` / `k` | Move down / up |
+| `l` / `h` | Open a folder or step into it / close it or go to its parent |
+| `gg` / `G` | Jump to the top / bottom |
+| `Ctrl-d` / `Ctrl-u` | Move half a page down / up |
+| `o` or `Enter` | Open or close a folder |
+| `Space` | Queue or unqueue the topic |
+| `s` | Save the topic for later (or take it back off Later) |
+| `/` | Search |
 
 ### Settings
 
