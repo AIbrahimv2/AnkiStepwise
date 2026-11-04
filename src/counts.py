@@ -104,6 +104,17 @@ def prettify(component: str) -> str:
     return s or component
 
 
+_ORDER_PREFIX = re.compile(r"^\d+\s+(?=\S)")
+
+
+def short_name(component: str) -> str:
+    """Name for compact places (side panel, breadcrumbs, toasts): prettified
+    and without the course-order number, `03_Pharmacology` ->
+    `Pharmacology`. A name that is only a number (a UWorld question ID) is
+    kept. The main tree uses prettify() and keeps the numbers."""
+    return _ORDER_PREFIX.sub("", prettify(component))
+
+
 def root_label(root: str) -> str:
     """Short name for a resource root: `#AK_Step1_v12` -> `Step 1`."""
     s = root.lstrip("#")
@@ -299,7 +310,7 @@ def display_parts(tag: str, is_root) -> tuple[str | None, list[str]]:
 def short_path(tag: str, is_root, with_root: bool) -> str:
     """Breadcrumb for a tag's *parents*, e.g. `Step 1 · B&B › 16 Neuro`."""
     root, parts = display_parts(tag, is_root)
-    crumbs = " › ".join(prettify(p) for p in parts[:-1])
+    crumbs = " › ".join(short_name(p) for p in parts[:-1])
     if root and with_root:
         return f"{root_label(root)} · {crumbs}" if crumbs else root_label(root)
     return crumbs

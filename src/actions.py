@@ -20,8 +20,8 @@ from .counts import (
     build_index,
     fresh_ids,
     plan_fill,
-    prettify,
     resource_roots,
+    short_name,
     suspended_ids,
     tags_search,
 )
@@ -114,14 +114,14 @@ def _consolidate(state: QueueState) -> dict:
         return {}
     state.save(mw.col)
     if len(nothing_left) == 1:
-        _announce(f"{prettify(nothing_left[0].rsplit('::', 1)[-1])} has nothing left to "
+        _announce(f"{short_name(nothing_left[0].rsplit('::', 1)[-1])} has nothing left to "
                   "unsuspend — moved to Done")
     elif nothing_left:
         _announce(f"{_plural(len(nothing_left), 'topic')} had nothing left to unsuspend — "
                   "moved to Done")
     if 0 < len(newly) <= 2:
         for top in newly:
-            _announce(f"Everything in {prettify(idx.last(top))} is done — marked it complete")
+            _announce(f"Everything in {short_name(idx.last(top))} is done — marked it complete")
     elif newly:
         _announce(f"Marked {_plural(len(newly), 'parent topic')} complete — everything under "
                   "them is done")

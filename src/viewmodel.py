@@ -26,6 +26,7 @@ from .counts import (
     resource_roots,
     root_label,
     root_matcher,
+    short_name,
     short_path,
 )
 from .state import COMPLETED, LATER, QUEUED, SEP
@@ -214,7 +215,7 @@ class View:
             "locked": locked,
             "status": status,
             "inherited": inherited,
-            "source": prettify(source.rsplit(SEP, 1)[-1]) if inherited else None,
+            "source": short_name(source.rsplit(SEP, 1)[-1]) if inherited else None,
             "nestedQueued": nested,
             "nestedLater": nested_later,
             "progress": progress,
@@ -437,7 +438,7 @@ class View:
             "auto": auto,
         }
         if status is not None and not auto and source.lower() != key:
-            out["via"] = prettify(source.rsplit(SEP, 1)[-1])
+            out["via"] = short_name(source.rsplit(SEP, 1)[-1])
         if status in (COMPLETED, LATER) and not auto:
             out["date"] = fmt_day(self.state.since(source))
         if status in (None, LATER):
@@ -450,7 +451,7 @@ class View:
     def _row(self, tag: str) -> dict:
         step, step_index = self.step_of(tag)
         return {
-            "tag": tag, "key": tag.lower(), "title": prettify(tag.rsplit(SEP, 1)[-1]),
+            "tag": tag, "key": tag.lower(), "title": short_name(tag.rsplit(SEP, 1)[-1]),
             "path": short_path(tag, self.is_root, False), "step": step, "stepIndex": step_index,
         }
 
@@ -474,12 +475,12 @@ class View:
             if group is None:
                 step, step_index = self.step_of(tag) if n == 2 else (None, None)
                 group = groups[resource.lower()] = {
-                    "key": resource.lower(), "tag": resource, "label": prettify(parts[n - 1]),
+                    "key": resource.lower(), "tag": resource, "label": short_name(parts[n - 1]),
                     "step": step, "stepIndex": step_index, "rows": [],
                 }
             group["rows"].append(dict(
                 row, parent=SEP.join(parts[:-1]).lower(),
-                sub=" › ".join(prettify(p) for p in parts[n:-1])))
+                sub=" › ".join(short_name(p) for p in parts[n:-1])))
         for group in groups.values():
             group["rows"].sort(key=lambda r: natural_key(r["tag"]))
             tags = [r["tag"] for r in group["rows"]]

@@ -140,11 +140,11 @@ class Bridge:
         ud = colorsync.find_user_data()
         if ud is None:
             return {"groups": [], "pins": 0}
-        from .counts import prettify
+        from .counts import short_name
 
         groups = []
         for color, tags in colorsync.color_groups(ud).items():
-            sample = ", ".join(prettify(t.rsplit("::", 1)[-1]) for t in tags[:3])
+            sample = ", ".join(short_name(t.rsplit("::", 1)[-1]) for t in tags[:3])
             groups.append({
                 "color": color, "count": len(tags),
                 "sample": sample + (", …" if len(tags) > 3 else ""),
