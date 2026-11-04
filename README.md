@@ -92,6 +92,16 @@ bookmark) to save it for later. Next session, open the **Later** tab and click
 Right-click a topic for more: save it for later, browse its cards, unsuspend
 without completing, clear its status, or pin a resource to the top.
 
+### Settings
+
+**⋯ → Settings…** in the Tag Queue window (Anki's **Config** button for the
+add-on opens the same thing) covers the daily limit and what counts toward
+it, unsuspending on check-off, which top-level tags hold your resources
+(with a live list of what each pattern matches), pinned resources, the
+deck-screen meter, the keyboard shortcut (press the keys to record it), and
+the queued/done/later colours used here and in the Browser sidebar. Changes
+apply when you save; there's no JSON to edit.
+
 ## Installation
 
 ### From AnkiWeb

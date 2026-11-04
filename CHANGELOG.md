@@ -5,7 +5,21 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Settings** inside the Tag Queue window (⋯ → Settings…), replacing the
+  JSON config editor: daily limit, count mode, unsuspend on check-off,
+  resource-folder patterns with a live preview of what they match, pinned
+  resources, the deck-screen meter, a recorded keyboard shortcut, and the
+  status colours (swatches or hex). Anki's Config button for the add-on opens
+  it too. Saving applies right away: a recount when the count mode or folders
+  change, a new shortcut on the Tools menu, and recoloured sidebar tags.
+
 ### Changed
+
+- The ⋯ menu's option toggles moved into Settings; "Edit config…" is gone
+  (it opened the Add-ons window with the main window instead of the add-on
+  manager and failed with `'AnkiQt' object has no attribute 'mw'`).
 
 - The queue is a daily plan. ✓ marks a topic watched (unsuspending its cards)
   but keeps it in the queue, and the meter counts new cards (never studied,
