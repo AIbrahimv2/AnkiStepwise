@@ -27,8 +27,6 @@ export interface TagNode {
   status: Status;
   inherited: boolean;
   source: string | null;
-  nestedQueued: number;
-  nestedLater: number;
   progress: { done: number; total: number } | null;
   /** When the (own or inherited) status was set, e.g. "Nov 4". */
   since: string | null;

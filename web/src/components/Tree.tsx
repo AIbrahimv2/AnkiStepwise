@@ -411,13 +411,14 @@ function WaitingCell({ waiting, buried }: { waiting: number; buried: number }) {
   );
 }
 
+/** Progress as a bar alone; the numbers are in its tooltip. */
 function Progress({ done, total }: { done: number; total: number }) {
+  const pct = Math.round((100 * done) / total);
   return (
-    <span className="mini" title={`${done} of ${total} topics completed`}>
+    <span className="mini" title={`${fmt(done)} of ${fmt(total)} topics done (${pct}%)`}>
       <span className="mini-track">
         <span className="mini-fill" style={{ display: "block", width: `${(100 * done) / total}%` }} />
       </span>
-      <span className="num">{total >= 1000 ? `${Math.round((100 * done) / total)}%` : `${done}/${total}`}</span>
     </span>
   );
 }
@@ -427,59 +428,34 @@ function Progress({ done, total }: { done: number; total: number }) {
 const sinceText = (since: string | null) =>
   since && since !== "imported" ? <span className="since">{since}</span> : null;
 
+/** One thing per cell: "Later" or "Done" as a word (dates in the tooltip),
+ *  otherwise the progress bar. Queued needs no word: the ticked box says
+ *  it, and the queue panel already lists what's queued inside each
+ *  resource. */
 function StatusCell({ node }: { node: TagNode }) {
   const via = node.inherited ? ` as part of ${node.source}` : "";
-  if (node.status === "queued") {
-    return (
-      <span className={`badge q${node.inherited ? " inherited" : ""}`} title={`In your queue${via}`}>
-        <span className="dot" />
-        {node.inherited ? "Included" : "Queued"}
-      </span>
-    );
-  }
+  const when = node.since && node.since !== "imported" ? ` ${node.since}` : "";
   if (node.status === "later") {
     return (
-      <span className={`badge l${node.inherited ? " inherited" : ""}`} title={`Saved for later${via}`}>
-        <Bookmark size={11} strokeWidth={2.6} />
-        Later{node.inherited ? "" : sinceText(node.since)}
-      </span>
-    );
-  }
-  if (node.status === "completed" && node.auto) {
-    return (
-      <span className="badge d auto" title="Done: every card is studied">
-        Done
+      <span className={`status-word l${node.inherited ? " inherited" : ""}`} title={`Saved for later${via || when}`}>
+        Later
       </span>
     );
   }
   if (node.status === "completed") {
+    const title = node.auto
+      ? "Done: every card is studied"
+      : node.since === "imported"
+        ? `Completed (imported from Colorful Tags)${via}`
+        : `Completed${via || when}`;
     return (
-      <span
-        className={`badge d${node.inherited ? " inherited" : ""}`}
-        title={`${node.since === "imported" ? "Completed (imported)" : `Completed ${node.since ?? ""}`}${via}`}
-      >
-        Done{node.inherited ? "" : sinceText(node.since)}
+      <span className={`status-word d${node.inherited ? " inherited" : ""}`} title={title}>
+        Done
       </span>
     );
   }
   const p = node.progress;
-  return (
-    <>
-      {node.nestedQueued > 0 && (
-        <span className="nested q" title={`${node.nestedQueued} topics inside are queued`}>
-          <span className="dot" />
-          {node.nestedQueued}
-        </span>
-      )}
-      {node.nestedLater > 0 && (
-        <span className="nested l" title={`${node.nestedLater} topics inside are saved for later`}>
-          <Bookmark size={10} strokeWidth={2.8} />
-          {node.nestedLater}
-        </span>
-      )}
-      {p && p.done > 0 && <Progress done={p.done} total={p.total} />}
-    </>
-  );
+  return p && p.done > 0 ? <Progress done={p.done} total={p.total} /> : null;
 }
 
 function Skeleton() {

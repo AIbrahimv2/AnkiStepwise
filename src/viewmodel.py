@@ -182,8 +182,7 @@ class View:
         name = idx.name(key)
         status, source, auto = self.status_of(key)
         inherited = status is not None and not auto and source.lower() != key
-        nested = sum(1 for q in self.queued_l if q.startswith(key + SEP))
-        nested_later = sum(1 for q in self.later_l if q.startswith(key + SEP))
+        nested = any(q.startswith(key + SEP) for q in self.queued_l)
         if status == QUEUED:
             check, locked = "on", inherited
         else:
@@ -215,8 +214,6 @@ class View:
             "status": status,
             "inherited": inherited,
             "source": short_name(source.rsplit(SEP, 1)[-1]) if inherited else None,
-            "nestedQueued": nested,
-            "nestedLater": nested_later,
             "progress": progress,
             "since": fmt_day(self.state.since(source)) if status and not auto else None,
             # Done only because nothing under it is suspended any more.
