@@ -338,7 +338,7 @@ body {
 .tree-head,
 .row {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) 62px 70px 172px;
+  grid-template-columns: minmax(0, 1fr) 74px 58px 62px 172px;
   align-items: center;
   column-gap: 6px;
   padding-right: 12px;
@@ -770,7 +770,7 @@ body {
 @media (max-width: 1060px) {
   .hint-keys { display: none; }
   .main { grid-template-columns: minmax(0, 1fr) clamp(290px, 31vw, 380px); }
-  .tree-head, .row { grid-template-columns: minmax(0, 1fr) 54px 62px 146px; }
+  .tree-head, .row { grid-template-columns: minmax(0, 1fr) 66px 52px 56px 146px; }
   .subtitle { display: none; }
 }
 /* Very narrow (only outside Anki, which keeps the window ≥ 860px): stack. */
@@ -901,3 +901,12 @@ body {
   0%, 30% { background: color-mix(in srgb, var(--q-raw) 30%, transparent); }
   100% { background: var(--select); }
 }
+
+/* --- suspended vs waiting ---------------------------------------------------- */
+
+.cell-num.waiting { color: var(--text-3); display: inline-flex; align-items: center; justify-content: flex-end; gap: 3px; }
+.buried-icon { opacity: 0.8; }
+.item-meta { text-align: right; }
+.item-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
+.item-meta b { font-size: 13px; }
+.item-meta .item-sub { white-space: nowrap; }

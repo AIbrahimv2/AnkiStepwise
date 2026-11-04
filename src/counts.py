@@ -24,9 +24,10 @@ from dataclasses import dataclass, field
 
 from .state import SEP
 
-# How the "new cards" number is counted (config: count_mode).
-#   new        cards you haven't started: still suspended, or never studied
-#   suspended  only cards that are still suspended
+# What counts toward the session limit (config: count_mode).
+#   suspended  cards still suspended: what you add by unsuspending (default)
+#   new        also cards already unsuspended but never studied, including
+#              ones buried by sibling settings (the old default)
 #   all        every card under the tag
 COUNT_MODES = ("new", "suspended", "all")
 
@@ -137,7 +138,14 @@ class TagIndex:
     names: dict[str, str] = field(default_factory=dict)
     children: dict[str, list[str]] = field(default_factory=dict)
     total: Counter = field(default_factory=Counter)
+    # Per tag: what counts toward the limit in `mode`, and the breakdown.
     fresh: Counter = field(default_factory=Counter)
+    suspended: Counter = field(default_factory=Counter)
+    # Unsuspended but never studied (new cards in Anki's queue, or buried).
+    waiting: Counter = field(default_factory=Counter)
+    # The buried part of `waiting` (sibling burying or buried by hand); these
+    # come back by themselves, there's nothing to unsuspend.
+    buried: Counter = field(default_factory=Counter)
     leaves: dict[str, int] = field(default_factory=dict)
     # tag actually on a note (lower-case) -> positions of that note's cards
     tag_cards: dict[str, list[int]] = field(default_factory=dict)
@@ -216,7 +224,7 @@ def build_index(col, mode: str) -> TagIndex:
         "select c.id, n.tags, c.queue, c.type from cards c join notes n on n.id = c.nid"
         " order by c.nid"
     )
-    total, fresh = idx.total, idx.fresh
+    total, suspended, waiting, buried = idx.total, idx.suspended, idx.waiting, idx.buried
     card_ids = idx.card_ids
     mask = idx.fresh_mask = bytearray(len(rows))
     count_all, only_suspended = mode == "all", mode == "suspended"
@@ -234,10 +242,16 @@ def build_index(col, mode: str) -> TagIndex:
         for cards in lists:
             cards.append(i)
         total.update(under)  # Counter.update counts in C
+        if queue == -1:
+            suspended.update(under)
+        elif ctype == 0:
+            waiting.update(under)
+            if queue in (-2, -3):
+                buried.update(under)
         if count_all or queue == -1 or (not only_suspended and ctype == 0):
             mask[i] = 1
-            fresh.update(under)
     idx.tag_cards = {k: v for k, v in tag_cards.items() if v}
+    idx.fresh = total if count_all else suspended if only_suspended else suspended + waiting
 
     children: dict[str, list[str]] = defaultdict(list)
     for low in names:

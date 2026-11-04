@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CornerDownLeft, Folder, SearchX, Star } from "lucide-react";
+import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CornerDownLeft, Folder, Moon, SearchX, Star } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
@@ -117,7 +117,15 @@ export function Tree(props: TreeProps) {
     <>
       <div className="tree-head">
         <span>Topic</span>
-        <span className="r" title="Cards you haven't started yet (suspended or never studied)">New</span>
+        <span className="r" title="Still suspended: the cards you add to your reviews by unsuspending them">
+          Suspended
+        </span>
+        <span
+          className="r"
+          title="Already unsuspended but not studied yet: new cards waiting in Anki, plus any buried (☾) by sibling settings, which come back by themselves. Nothing to unsuspend."
+        >
+          Waiting
+        </span>
         <span className="r" title="Every card under this tag">Total</span>
         <span className="r">Status</span>
       </div>
@@ -256,7 +264,8 @@ const TreeRow = memo(function TreeRow(props: {
         {/* Under a step header the chip would just repeat it. */}
         {node.top && depth === 0 && <StepChip step={node.step} index={node.stepIndex} />}
       </div>
-      <span className={`cell-num${node.fresh ? " fresh" : " zero"}`}>{fmt(node.fresh)}</span>
+      <span className={`cell-num${node.suspended ? " fresh" : " zero"}`}>{fmt(node.suspended)}</span>
+      <WaitingCell waiting={node.waiting} buried={node.buried} />
       <span className="cell-num">{fmt(node.total)}</span>
       <span className="cell-status">
         <StatusCell node={node} />
@@ -310,7 +319,8 @@ function GroupRow(props: {
             {fmt(node.count)} {node.count === 1 ? "resource" : "resources"}
           </span>
         </div>
-        <span className="cell-num fresh">{fmt(node.fresh ?? 0)}</span>
+        <span className="cell-num fresh">{fmt(node.suspended ?? 0)}</span>
+        <WaitingCell waiting={node.waiting ?? 0} buried={node.buried ?? 0} />
         <span className="cell-num">{fmt(node.total ?? 0)}</span>
         <span className="cell-status">{p && <Progress done={p.done} total={p.total} />}</span>
       </div>
@@ -334,6 +344,7 @@ function GroupRow(props: {
       </div>
       <span />
       <span />
+      <span />
       <span className="cell-num">{fmt(node.count)} tags</span>
     </div>
   );
@@ -349,6 +360,21 @@ function MoreRow(props: { depth: number; hidden: number; selected: boolean; onLo
         <span className="more-left">{fmt(props.hidden)} not shown</span>
       </div>
     </div>
+  );
+}
+
+/** Unsuspended-but-unstudied cards, dimmed: nothing to do here. A moon
+ *  marks the ones buried by sibling settings (back on their own). */
+function WaitingCell({ waiting, buried }: { waiting: number; buried: number }) {
+  if (!waiting) return <span className="cell-num zero">–</span>;
+  const tip =
+    `${waiting} already unsuspended, not studied yet` +
+    (buried ? ` — ${buried} buried (they come back by themselves)` : "");
+  return (
+    <span className="cell-num waiting" title={tip}>
+      {buried > 0 && <Moon size={10} className="buried-icon" />}
+      {fmt(waiting)}
+    </span>
   );
 }
 
@@ -439,7 +465,7 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
         <div className="details-main">
           {searching
             ? "Tick matches to queue them, or queue them all from the bar above."
-            : "Select a topic to see how many new cards it would add."}
+            : "Select a topic to see how many cards it would add."}
         </div>
         <div className="hint-keys">
           <span>↑↓ move</span>
@@ -487,7 +513,16 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
           {d.path && <span className="details-path">{d.path}</span>}
         </div>
         <div className="details-sub">
-          {fmt(d.fresh)} new of {fmt(d.total)} cards · {tail}
+          <span className={d.suspended ? "strong" : undefined}>{fmt(d.suspended)} suspended</span>
+          {d.waiting > 0 && (
+            <>
+              {" · "}
+              {fmt(d.waiting)} waiting
+              {d.buried > 0 && <> ({fmt(d.buried)} buried, back on their own)</>}
+            </>
+          )}
+          {" · "}
+          {fmt(d.total)} total · {tail}
         </div>
       </div>
     </div>

@@ -186,7 +186,7 @@ class Bridge:
         if cands and not msg.get("truncated"):
             add, _overlap, _after = view.projection(cands)
             actions.queue(cands)
-            self.toast(f"Queued {_plural(len(cands), 'topic')} · +{add:,} new cards")
+            self.toast(f"Queued {_plural(len(cands), 'topic')} · +{add:,} cards")
         return self.bundle(msg)
 
     # --- later ---------------------------------------------------------------
@@ -215,7 +215,7 @@ class Bridge:
     def cmd_fill_from_later(self, msg: dict) -> dict:
         picked, added, skipped = actions.fill_from_later()
         if picked:
-            text = f"Queued {_plural(len(picked), 'topic')} from Later · +{added:,} new cards"
+            text = f"Queued {_plural(len(picked), 'topic')} from Later · +{added:,} cards"
             if skipped:
                 text += f" · {len(skipped):,} didn't fit"
             self.toast(text)

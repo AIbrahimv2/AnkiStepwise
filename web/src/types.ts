@@ -7,7 +7,13 @@ export interface TagNode {
   key: string;
   tag: string;
   label: string;
+  /** What counts toward the limit (suspended cards by default). */
   fresh: number;
+  suspended: number;
+  /** Unsuspended but never studied: new in Anki's queue, or buried. */
+  waiting: number;
+  /** The buried part of `waiting`; comes back by itself. */
+  buried: number;
   total: number;
   hasKids: boolean;
   top: boolean;
@@ -39,6 +45,9 @@ export interface GroupNode {
   count: number;
   hasKids: true;
   fresh?: number;
+  suspended?: number;
+  waiting?: number;
+  buried?: number;
   total?: number;
   progress?: { done: number; total: number } | null;
   stepIndex?: number;
@@ -58,6 +67,8 @@ interface RowBase {
 
 export interface QueueRow extends RowBase {
   fresh: number;
+  waiting: number;
+  buried: number;
   missing: boolean;
 }
 
@@ -69,10 +80,13 @@ export interface DoneRow extends RowBase {
   date: string;
 }
 
+export type CountMode = "suspended" | "new" | "all";
+
 export interface Side {
   count: number;
   limit: number;
   over: boolean;
+  mode: CountMode;
   unit: string;
   queued: QueueRow[];
   later: LaterRow[];
@@ -109,7 +123,11 @@ export interface Details {
   step: string | null;
   stepIndex: number | null;
   fresh: number;
+  suspended: number;
+  waiting: number;
+  buried: number;
   total: number;
+  mode: CountMode;
   status: Status;
   via: string | null;
   date: string | null;

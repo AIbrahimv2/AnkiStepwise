@@ -35,7 +35,7 @@ ROOT_PREFIX = "__root__:"
 MAX_MATCHES = 200
 SCOPE_ALL = "all"
 SCOPE_PINNED = "pinned"
-UNITS = {"new": "new cards", "suspended": "suspended cards", "all": "cards"}
+UNITS = {"new": "new cards", "suspended": "to unsuspend", "all": "cards"}
 
 
 def fmt_day(ts: int) -> str:
@@ -90,6 +90,9 @@ class View:
             "count": count,
             "hasKids": True,
             "fresh": idx.fresh.get(root, 0),
+            "suspended": idx.suspended.get(root, 0),
+            "waiting": idx.waiting.get(root, 0),
+            "buried": idx.buried.get(root, 0),
             "total": idx.total.get(root, 0),
             "progress": {"done": done, "total": leaves} if leaves > 1 and done else None,
             "stepIndex": self.roots.index(root),
@@ -194,6 +197,9 @@ class View:
             "tag": name,
             "label": label or prettify(idx.last(key)),
             "fresh": idx.fresh.get(key, 0),
+            "suspended": idx.suspended.get(key, 0),
+            "waiting": idx.waiting.get(key, 0),
+            "buried": idx.buried.get(key, 0),
             "total": idx.total.get(key, 0),
             "hasKids": bool(idx.kids(key)),
             "top": top,
@@ -414,7 +420,11 @@ class View:
             "step": step,
             "stepIndex": step_index,
             "fresh": self.index.fresh.get(key, 0),
+            "suspended": self.index.suspended.get(key, 0),
+            "waiting": self.index.waiting.get(key, 0),
+            "buried": self.index.buried.get(key, 0),
             "total": self.index.total.get(key, 0),
+            "mode": self.mode,
             "status": status,
             "via": None,
             "date": None,
@@ -453,7 +463,10 @@ class View:
 
         def live(tag: str) -> dict:
             row = self._row(tag)
-            row.update(fresh=self._fresh(tag), missing=missing(tag))
+            idx, low = self.index, tag.lower()
+            row.update(fresh=self._fresh(tag), missing=missing(tag),
+                       waiting=idx.waiting.get(low, 0) if idx else 0,
+                       buried=idx.buried.get(low, 0) if idx else 0)
             if row["missing"]:
                 row["path"] = "Tag not found in this collection"
             return row
@@ -462,7 +475,7 @@ class View:
         later_rows = [dict(live(t), date=fmt_day(self.state.since(t))) for t in later]
         done_rows = [dict(self._row(t), date=fmt_day(self.state.since(t))) for t in done]
         return {
-            "count": n, "limit": limit, "over": n > limit,
+            "count": n, "limit": limit, "over": n > limit, "mode": self.mode,
             "unit": UNITS.get(self.mode, "cards"),
             "queued": queue_rows, "later": later_rows, "completed": done_rows,
         }

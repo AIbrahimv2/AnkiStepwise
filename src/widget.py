@@ -14,7 +14,7 @@ from . import actions
 from .config import get_config
 
 OPEN_CMD = "tagqueue:open"
-UNITS = {"new": "new cards", "suspended": "suspended cards", "all": "cards"}
+UNITS = {"new": "new cards", "suspended": "to unsuspend", "all": "cards"}
 
 STYLE = """
 <style>

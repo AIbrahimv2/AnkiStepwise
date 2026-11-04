@@ -102,9 +102,7 @@ export function SidePanel(props: Props) {
               >
                 <span className="item-bullet" />
                 <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
-                <div className="item-meta">
-                  <b>{fmt(row.fresh)}</b> new
-                </div>
+                <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
                 <div className="item-actions">
                   <IconButton
                     size="sm"
@@ -143,9 +141,7 @@ export function SidePanel(props: Props) {
                 >
                   <span className="item-bullet" />
                   <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
-                  <div className="item-meta">
-                    <b>{fmt(row.fresh)}</b> new
-                  </div>
+                  <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
                   <div className="item-actions">
                     <IconButton size="sm" label="Move to the queue" onClick={() => props.onQueue(row.tag)}>
                       <ListPlus size={15} />
@@ -207,6 +203,26 @@ export function SidePanel(props: Props) {
         </button>
       </div>
     </aside>
+  );
+}
+
+/** "12 to unsuspend" plus, dimmed, cards already unsuspended but unstudied. */
+function RowCounts(props: { fresh: number; waiting: number; buried: number; mode: Side["mode"] }) {
+  const word = props.mode === "suspended" ? "to unsuspend" : props.mode === "new" ? "new" : "cards";
+  const extra = props.mode === "suspended" && props.waiting > 0;
+  return (
+    <div
+      className="item-meta"
+      title={
+        extra
+          ? `${props.waiting} already unsuspended, not studied yet` +
+            (props.buried ? ` (${props.buried} buried — back on their own)` : "")
+          : undefined
+      }
+    >
+      <b>{fmt(props.fresh)}</b>
+      <div className="item-sub">{extra ? `+${fmt(props.waiting)} waiting` : word}</div>
+    </div>
   );
 }
 

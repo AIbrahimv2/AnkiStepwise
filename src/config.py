@@ -10,7 +10,7 @@ ADDON = __name__.split(".")[0]
 
 DEFAULTS: dict = {
     "card_limit": 150,
-    "count_mode": "new",
+    "count_mode": "suspended",
     "unsuspend_on_complete": True,
     "resource_roots": ["#AK_Step*"],
     "pinned_resources": [],
@@ -23,11 +23,23 @@ DEFAULTS: dict = {
     "later_color": "#af52de",
     "shortcut": "Ctrl+Alt+Q",
     "import_offered": False,
+    "config_version": 2,
 }
 
 
+def _migrate(cfg: dict) -> dict:
+    """v2: the limit counts suspended cards. "new" was only ever the old
+    default, so move it over once; choosing "new" again afterwards sticks."""
+    if cfg.get("config_version", 1) < 2:
+        if cfg.get("count_mode") == "new":
+            cfg["count_mode"] = "suspended"
+        cfg["config_version"] = 2
+        mw.addonManager.writeConfig(ADDON, cfg)
+    return cfg
+
+
 def get_config() -> dict:
-    cfg = dict(mw.addonManager.getConfig(ADDON) or {})
+    cfg = _migrate(dict(mw.addonManager.getConfig(ADDON) or {}))
     for key, value in DEFAULTS.items():
         if not isinstance(cfg.get(key), type(value)):
             cfg[key] = list(value) if isinstance(value, list) else value

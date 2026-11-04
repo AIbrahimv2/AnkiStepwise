@@ -454,7 +454,7 @@ export function App() {
     if (summary.over) {
       setConfirm({
         title: `Queue ${plural(summary.candidates, "topic")}?`,
-        body: `That adds ${summary.add.toLocaleString()} new cards and brings your queue to ${summary.after.toLocaleString()} — ${(summary.after - summary.limit).toLocaleString()} over your ${summary.limit}-card limit.`,
+        body: `That adds ${summary.add.toLocaleString()} cards and brings your queue to ${summary.after.toLocaleString()} — ${(summary.after - summary.limit).toLocaleString()} over your ${summary.limit}-card limit.`,
         confirm: "Queue anyway",
         danger: true,
         onConfirm: go,

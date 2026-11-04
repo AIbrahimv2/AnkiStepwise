@@ -3,7 +3,7 @@
 """Tag Queue — queue tagged topics for a study session and track them to done.
 
 Pick topics by resource (B&B, Bootcamp, Pixorize, ...) from a tag tree, see a
-live count of the *unique* new cards they add against your session limit
+live count of the *unique* suspended cards they add against your session limit
 (150 by default), then mark them completed — which also unsuspends their
 cards. Open it from Tools -> Tag Queue, the deck-screen meter, or by
 right-clicking a tag in the Browser sidebar.
