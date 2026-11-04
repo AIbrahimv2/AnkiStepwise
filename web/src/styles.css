@@ -503,8 +503,9 @@ body {
   font-size: 12.5px;
   color: var(--text-2);
 }
-.details-main { flex: 1; min-width: 0; }
-.details-title { color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+/* Name, then its step and path, on one line; the path gives way first. */
+.details-main { flex: 1; min-width: 0; display: flex; align-items: center; gap: 10px; }
+.details-title { flex: 0 1 auto; max-width: 60%; color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .details .over { color: var(--danger); font-weight: 600; }
 .details .strong { color: var(--text); font-weight: 600; }
 .hint-keys { color: var(--text-3); display: flex; gap: 14px; white-space: nowrap; }
@@ -877,7 +878,7 @@ body {
 .item-path > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 /* Details bar: name and where it sits on the left; what queuing it would
    add and its status on the right. */
-.details-path { display: flex; align-items: center; min-width: 0; margin-top: 2px; color: var(--text-3); font-size: 12px; }
+.details-path { flex: 1 1 0; display: flex; align-items: center; min-width: 0; color: var(--text-3); font-size: 12px; }
 .details-path > span:last-child { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .details-empty { color: var(--text-2); }
 .details-side { flex: none; display: flex; align-items: center; gap: 14px; white-space: nowrap; }
