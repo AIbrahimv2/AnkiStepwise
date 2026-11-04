@@ -981,15 +981,19 @@ body {
 .cell-status > * { flex-shrink: 0; }
 .cell-status .mini { flex-shrink: 1; min-width: 0; }
 .group-head .item-actions { margin-left: auto; }
-.group-meta + .item-actions { margin-left: 0; }
 
-/* Numbers line up in one column: every row and header reserves the same
-   room for its buttons (three icons), whatever buttons it actually has. */
+/* Numbers sit in one column at the right edge, and buttons in one column
+   just left of it: every number slot is the same width, and every row and
+   header reserves room for three buttons whatever it actually has. */
 .list .item-actions, .group-head .item-actions { min-width: 76px; justify-content: flex-end; }
+.list .item-meta, .group-head .group-meta { min-width: 40px; text-align: right; }
+.list .item-meta { position: relative; }
+/* The caption under a number hangs below it without widening the column. */
+.list .item-meta .item-sub { position: absolute; right: 0; top: 100%; }
 .group-meta b { font-size: 13px; }
 
-/* The number column's one label. Its right edge sits where the numbers
-   end: rows keep 6px padding + 76px of buttons + a 10px gap to the right. */
+/* The number column's one label, over the numbers at the rows' right
+   edge (rows keep 6px of padding there). */
 .col-head {
   position: sticky;
   top: -6px;
@@ -998,7 +1002,7 @@ body {
   justify-content: space-between;
   align-items: center;
   height: 26px;
-  padding: 0 92px 0 10px;
+  padding: 0 6px 0 10px;
   background: var(--surface);
   font-size: 10.5px;
   font-weight: 600;
@@ -1010,9 +1014,10 @@ body {
 .col-head ~ .group .group-head { top: 20px; }
 .group-meta { color: var(--text); }
 
-/* Same right inset as rows, so header counts line up with row counts. */
+/* Same right inset as rows (8px less the header's -2px margin), so
+   header totals line up with row counts. */
 .group-head { padding-right: 8px; }
-.group-meta { margin-right: 4px; } /* rows have a 10px gap before their buttons, headers 6px */
+.group-head .group-meta { margin-left: 4px; } /* rows have a 10px gap, headers 6px */
 
 /* Numbers, bullets and buttons sit on the topic name's line rather than
    midway down a two-line row (the path or caption takes the second line). */

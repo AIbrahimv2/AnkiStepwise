@@ -165,7 +165,6 @@ export function SidePanel(props: Props) {
                     <span className="item-bullet" />
                   )}
                   <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
-                  <RowCounts row={row} mode={side.mode} />
                   {row.watched ? (
                     <div className="item-actions">
                       <IconButton size="sm" label="Not watched yet — back to the queue" onClick={() => props.onUnwatch(row.tag)}>
@@ -190,6 +189,7 @@ export function SidePanel(props: Props) {
                     </IconButton>
                   </div>
                   )}
+                  <RowCounts row={row} mode={side.mode} />
                 </div>
               )}
             />
@@ -225,7 +225,6 @@ export function SidePanel(props: Props) {
                   >
                     <span className="item-bullet" />
                     <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
-                    <RowCounts row={row} mode={side.mode} />
                     <div className="item-actions">
                       <IconButton size="sm" label="Move to the queue" onClick={() => props.onQueue(row.tag)}>
                         <ListPlus size={15} />
@@ -234,6 +233,7 @@ export function SidePanel(props: Props) {
                         <X size={15} />
                       </IconButton>
                     </div>
+                    <RowCounts row={row} mode={side.mode} />
                   </div>
                 )}
               />
@@ -255,7 +255,6 @@ export function SidePanel(props: Props) {
               >
                 <span className="item-bullet" />
                 <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
-                <div className="item-meta">{row.date}</div>
                 <div className="item-actions">
                   <IconButton size="sm" label="Move back to the queue" onClick={() => props.onQueue(row.tag)}>
                     <RotateCcw size={14} />
@@ -264,6 +263,7 @@ export function SidePanel(props: Props) {
                     <X size={15} />
                   </IconButton>
                 </div>
+                <div className="item-meta">{row.date}</div>
               </div>
             ))
           ) : (
@@ -386,15 +386,13 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
               <span className="section-mark" />
               <span className="group-title">{g.label}</span>
               {mixedSteps && <StepChip step={g.step} index={g.stepIndex} />}
-              {g.count > 1 && (
-                <span
-                  className="group-meta"
-                  title={`${fmt(g.fresh)} new cards across ${g.count} topics` + (g.watched ? `, ${g.watched} watched` : "")}
-                >
-                  <b>{fmt(g.fresh)}</b>
-                </span>
-              )}
               <div className="item-actions">{props.groupActions(g)}</div>
+              <span
+                className="group-meta"
+                title={g.count > 1 ? `${fmt(g.fresh)} new cards across ${g.count} topics` + (g.watched ? `, ${g.watched} checked off` : "") : undefined}
+              >
+                {g.count > 1 && <b>{fmt(g.fresh)}</b>}
+              </span>
             </div>
             {open && <Clusters rows={g.rows} renderRow={props.renderRow} />}
           </section>
