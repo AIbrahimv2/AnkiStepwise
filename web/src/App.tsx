@@ -450,12 +450,12 @@ export function App() {
     if (!side?.watched) return;
     const left = side.toWatch;
     setConfirm({
-      title: `Clear ${plural(side.watched, "watched topic")}?`,
+      title: `Clear ${plural(side.watched, "checked-off topic")}?`,
       body:
         "They leave the queue now and stay in Done, so their unstudied new cards stop counting toward your daily limit. " +
-        "(Watched topics leave on their own once every card is studied.)" +
-        (left ? ` ${plural(left, "unwatched topic")} stay queued.` : ""),
-      confirm: "Clear watched",
+        "(Checked-off topics leave on their own once every card is studied.)" +
+        (left ? ` ${plural(left, "unchecked topic")} stay queued.` : ""),
+      confirm: "Clear checked",
       onConfirm: () => act("finish_session"),
     });
   };
@@ -693,11 +693,11 @@ export function App() {
             onLaterMany={(tags) => act("later", { tags })}
             onCompleteGroup={(tags, label) =>
               setConfirm({
-                title: `Mark ${plural(tags.length, `${label} topic`)} watched?`,
+                title: `Check off ${plural(tags.length, `${label} topic`)}?`,
                 body: options?.unsuspendOnComplete
                   ? "Their suspended cards will be unsuspended so you can start reviewing them."
-                  : "They'll move to your Done list.",
-                confirm: "Complete",
+                  : "They'll stay in the queue as checked off until their cards are studied.",
+                confirm: "Check off",
                 onConfirm: () => act("complete", { tags }),
               })
             }

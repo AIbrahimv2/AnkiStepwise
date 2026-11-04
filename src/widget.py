@@ -95,7 +95,7 @@ def _data() -> dict | None:
     else:
         left = f"{n - limit:,} over your limit" if over else f"{limit - n:,} left"
         sub = _sub(left, f"{len(later):,} saved for later" if later else None,
-                   end=f"{watched}/{len(session)} watched")
+                   end=f"{watched}/{len(session)} checked off")
     return {
         "count": f"{n:,}", "limit": f"{limit:,}", "unit": UNITS.get(cfg["count_mode"], "cards"),
         "over": over, "pct": min(100, round(100 * n / limit)) if limit else 0, "sub": sub,

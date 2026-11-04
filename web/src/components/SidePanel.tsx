@@ -91,7 +91,7 @@ export function SidePanel(props: Props) {
                 {side.over ? `${fmt(-left)} over your limit` : `${fmt(left)} left`}
               </span>
               <span className="meter-watched">
-                {side.watched}/{queued} watched
+                {side.watched}/{queued} checked off
               </span>
             </>
           )}
@@ -140,7 +140,7 @@ export function SidePanel(props: Props) {
                   <IconButton
                     size="sm"
                     tone="good"
-                    label={`Mark all ${g.label} topics watched`}
+                    label={`Check off all ${g.label} topics`}
                     onClick={() => props.onCompleteGroup(g.rows.map((r) => r.tag), g.label)}
                   >
                     <CheckCheck size={15} strokeWidth={2.4} />
@@ -158,7 +158,7 @@ export function SidePanel(props: Props) {
                   title={`${row.tag}\nClick to show it in the tree`}
                 >
                   {row.watched ? (
-                    <span className="item-check" title="Watched">
+                    <span className="item-check" title="Checked off">
                       <Check size={11} strokeWidth={3} />
                     </span>
                   ) : (
@@ -167,7 +167,7 @@ export function SidePanel(props: Props) {
                   <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
                   {row.watched ? (
                     <div className="item-actions">
-                      <IconButton size="sm" label="Not watched yet — back to the queue" onClick={() => props.onUnwatch(row.tag)}>
+                      <IconButton size="sm" label="Uncheck: back to the queue" onClick={() => props.onUnwatch(row.tag)}>
                         <RotateCcw size={14} />
                       </IconButton>
                     </div>
@@ -176,7 +176,7 @@ export function SidePanel(props: Props) {
                     <IconButton
                       size="sm"
                       tone="good"
-                      label={props.unsuspendOnComplete ? "Watched — unsuspend its cards and check it off" : "Watched — check it off"}
+                      label={props.unsuspendOnComplete ? "Check off and unsuspend its cards" : "Check off"}
                       onClick={() => props.onComplete([row.tag])}
                     >
                       <Check size={15} strokeWidth={2.4} />
@@ -287,9 +287,9 @@ export function SidePanel(props: Props) {
           className="btn primary"
           disabled={!side.watched}
           onClick={props.onFinishSession}
-          title="Take watched topics off the queue now (they stay in Done). They also leave on their own once every card is studied."
+          title="Take checked-off topics off the queue now (they stay in Done). They also leave on their own once every card is studied."
         >
-          <Check size={14} strokeWidth={2.6} /> Clear watched
+          <Check size={14} strokeWidth={2.6} /> Clear checked
         </button>
       </div>
     </aside>
@@ -300,7 +300,7 @@ export function SidePanel(props: Props) {
  *  unsuspending (or that none do). */
 /** The row's counted cards. The breakdown is in the tooltip; a caption
  *  only appears when it says something the number and check don't: an
- *  unwatched topic whose cards are all unsuspended already. */
+ *  unchecked topic whose cards are all unsuspended already. */
 function RowCounts(props: { row: QueueRow; mode: Side["mode"] }) {
   const { row, mode } = props;
   const suspended = row.suspended ?? 0;

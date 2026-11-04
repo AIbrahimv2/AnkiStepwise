@@ -13,7 +13,7 @@ collection.
   `150`). The meter turns red when the queue goes over it.
 - `count_mode` — which cards count toward the daily limit:
   - `"new"` (default): new cards, i.e. never studied, whether still
-    suspended, already unsuspended or buried. Checking a watched topic off
+    suspended, already unsuspended or buried. Checking a topic off
     (which unsuspends it) doesn't change this number; studying does.
   - `"suspended"`: only cards still suspended (what's left to unsuspend).
   - `"all"`: every card under the tag.

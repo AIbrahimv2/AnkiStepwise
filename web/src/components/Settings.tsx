@@ -150,7 +150,7 @@ export function SettingsDialog(props: { onClose: () => void; onSaved: (r: Settin
               ))}
             </div>
           </Row>
-          <Row label="Unsuspend when you check a topic off" hint="Checking off a watched topic unsuspends its cards.">
+          <Row label="Unsuspend when you check a topic off" hint="Checking a topic off in the queue unsuspends its cards.">
             <Switch checked={v.unsuspendOnComplete} label="" onChange={(x) => set("unsuspendOnComplete", x)} />
           </Row>
         </Section>
