@@ -16,8 +16,14 @@ import sys
 from .state import COMPLETED, LATER, QUEUED
 
 
+_user_data = None
+
+
 def find_user_data():
     """Colorful Tags' `user_data` object, or None if it isn't loaded."""
+    global _user_data
+    if _user_data is not None:
+        return _user_data
     for name, mod in list(sys.modules.items()):
         if mod is None or not name.endswith(".data"):
             continue
@@ -28,6 +34,7 @@ def find_user_data():
             and isinstance(getattr(ud, "tags", None), dict)
             and callable(getattr(ud, "save", None))
         ):
+            _user_data = ud
             return ud
     return None
 
@@ -68,15 +75,45 @@ def apply(changes: dict, queued_color: str, completed_color: str, ud=None,
     return True
 
 
-def refresh_browser_sidebar() -> None:
+def _browser():
     try:
         import aqt
 
-        browser = aqt.DialogManager._dialogs.get("Browser", [None, None])[1]
-        if browser is not None:
-            browser.sidebar.refresh()
+        return aqt.DialogManager._dialogs.get("Browser", [None, None])[1]
     except Exception:
-        pass
+        return None
+
+
+_activation_watch = None
+
+
+def refresh_browser_sidebar() -> None:
+    """Redraw the Browser sidebar so new colours show. Rebuilding it is slow
+    with tens of thousands of tags, so if the Browser isn't the window
+    you're using, wait until you switch to it (one refresh, however many
+    changes were made meanwhile)."""
+    global _activation_watch
+    browser = _browser()
+    if browser is None:
+        return
+    if browser.isActiveWindow():
+        browser.sidebar.refresh()
+        return
+    if _activation_watch is not None:
+        return
+    from aqt.qt import QEvent, QObject, QTimer
+
+    class RefreshOnActivate(QObject):
+        def eventFilter(self, obj, ev):  # noqa: N802 (Qt API)
+            global _activation_watch
+            if ev.type() == QEvent.Type.WindowActivate:
+                obj.removeEventFilter(self)
+                _activation_watch = None
+                QTimer.singleShot(0, lambda: _browser() and _browser().sidebar.refresh())
+            return False
+
+    _activation_watch = RefreshOnActivate(browser)
+    browser.installEventFilter(_activation_watch)
 
 
 # --- one-time import ---------------------------------------------------------
