@@ -665,6 +665,18 @@ export function App() {
             onLater={(tag) => act("later", { tags: [tag] })}
             onUnlater={(tag) => act("unlater", { tags: [tag] })}
             onQueue={async (tag) => warnIfOver(await act("queue", { tags: [tag] }), [tag])}
+            onQueueMany={async (tags) => warnIfOver(await act("queue", { tags }), tags)}
+            onLaterMany={(tags) => act("later", { tags })}
+            onCompleteGroup={(tags, label) =>
+              setConfirm({
+                title: `Mark ${plural(tags.length, `${label} topic`)} completed?`,
+                body: options?.unsuspendOnComplete
+                  ? "Their suspended cards will be unsuspended so you can start reviewing them."
+                  : "They'll move to your Done list.",
+                confirm: "Complete",
+                onConfirm: () => act("complete", { tags }),
+              })
+            }
             onFill={() => act("fill_from_later")}
             onClear={(tag) => act("clear", { tags: [tag] })}
             onUnsuspend={() => act("unsuspend", { tags: [] })}

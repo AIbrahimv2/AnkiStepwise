@@ -2,6 +2,8 @@ import {
   Bookmark,
   BookmarkPlus,
   Check,
+  CheckCheck,
+  ChevronRight,
   CircleCheckBig,
   ExternalLink,
   Inbox,
@@ -15,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import type { LaterPlan, Side } from "../types";
+import type { LaterPlan, RowGroup, Side } from "../types";
 import { StepChip } from "./Tree";
 import { IconButton, fmt, plural } from "./ui";
 
@@ -39,6 +41,9 @@ interface Props {
   onUnsuspend: () => void;
   onBrowse: () => void;
   onReveal: (key: string) => void;
+  onCompleteGroup: (tags: string[], label: string) => void;
+  onLaterMany: (tags: string[]) => void;
+  onQueueMany: (tags: string[]) => void;
   /** The tree's selected tag, highlighted here too. */
   activeKey: string | null;
 }
@@ -47,6 +52,19 @@ const TABS: Tab[] = ["queue", "later", "done"];
 
 export function SidePanel(props: Props) {
   const { side, tab } = props;
+  const [byResource, setByResourceState] = useState(() => readPref("tq.groupBy", "resource") === "resource");
+  const setByResource = (v: boolean) => {
+    setByResourceState(v);
+    writePref("tq.groupBy", v ? "resource" : "added");
+  };
+  const [collapsed, setCollapsed] = useState<Set<string>>(new Set());
+  const toggleGroup = (key: string) =>
+    setCollapsed((c) => {
+      const next = new Set(c);
+      if (next.has(key)) next.delete(key);
+      else next.add(key);
+      return next;
+    });
   const queued = side.queued.length;
   const pct = Math.min(100, side.limit ? (100 * side.count) / side.limit : 0);
   const left = side.limit - side.count;
@@ -91,74 +109,120 @@ export function SidePanel(props: Props) {
       </div>
 
       <div className="list">
-        {tab === "queue" && (
-          queued ? (
-            side.queued.map((row) => (
-              <div
-                key={row.tag}
-                className={`item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
-                onClick={() => props.onReveal(row.key)}
-                title={`${row.tag}\nClick to show it in the tree`}
-              >
-                <span className="item-bullet" />
-                <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
-                <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
-                <div className="item-actions">
+        {(tab === "queue" || tab === "later") && (side.queued.length || side.later.length) ? (
+          <div className="list-tools">
+            <span>{tab === "later" ? "Fill takes oldest first" : ""}</span>
+            <div className="mini-seg">
+              <button type="button" className={byResource ? "active" : ""} onClick={() => setByResource(true)}>
+                By resource
+              </button>
+              <button type="button" className={!byResource ? "active" : ""} onClick={() => setByResource(false)}>
+                Order added
+              </button>
+            </div>
+          </div>
+        ) : null}
+
+        {tab === "queue" &&
+          (queued ? (
+            <RowList
+              rows={side.queued}
+              groups={byResource ? side.queueGroups : null}
+              collapsed={collapsed}
+              onCollapse={toggleGroup}
+              onReveal={props.onReveal}
+              groupActions={(g) => (
+                <>
                   <IconButton
                     size="sm"
                     tone="good"
-                    label={props.unsuspendOnComplete ? "Mark completed and unsuspend its cards" : "Mark completed"}
-                    onClick={() => props.onComplete([row.tag])}
+                    label={`Mark all ${g.count} ${g.label} topics completed`}
+                    onClick={() => props.onCompleteGroup(g.rows.map((r) => r.tag), g.label)}
                   >
-                    <Check size={15} strokeWidth={2.4} />
+                    <CheckCheck size={15} strokeWidth={2.4} />
                   </IconButton>
-                  <IconButton size="sm" label="Move to Later" onClick={() => props.onLater(row.tag)}>
+                  <IconButton size="sm" label={`Move all ${g.label} topics to Later`} onClick={() => props.onLaterMany(g.rows.map((r) => r.tag))}>
                     <BookmarkPlus size={14} />
                   </IconButton>
-                  <IconButton size="sm" tone="bad" label="Remove from queue" onClick={() => props.onUnqueue(row.tag)}>
-                    <X size={15} />
-                  </IconButton>
-                </div>
-              </div>
-            ))
-          ) : (
-            <Empty icon={<Inbox size={18} />} title="Your queue is empty">
-              Tick topics on the left, or search and queue every match at once.
-            </Empty>
-          )
-        )}
-
-        {tab === "later" && (
-          side.later.length ? (
-            <>
-              <FillBar plan={props.laterPlan} onFill={props.onFill} />
-              {side.later.map((row) => (
+                </>
+              )}
+              renderRow={(row, path, chip) => (
                 <div
                   key={row.tag}
-                  className={`item later-item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
-                  title={`${row.tag}\nClick to show it in the tree`}
+                  className={`item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
                   onClick={() => props.onReveal(row.key)}
+                  title={`${row.tag}\nClick to show it in the tree`}
                 >
                   <span className="item-bullet" />
-                  <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
+                  <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
                   <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
                   <div className="item-actions">
-                    <IconButton size="sm" label="Move to the queue" onClick={() => props.onQueue(row.tag)}>
-                      <ListPlus size={15} />
+                    <IconButton
+                      size="sm"
+                      tone="good"
+                      label={props.unsuspendOnComplete ? "Mark completed and unsuspend its cards" : "Mark completed"}
+                      onClick={() => props.onComplete([row.tag])}
+                    >
+                      <Check size={15} strokeWidth={2.4} />
                     </IconButton>
-                    <IconButton size="sm" tone="bad" label="Remove from Later" onClick={() => props.onUnlater(row.tag)}>
+                    <IconButton size="sm" label="Move to Later" onClick={() => props.onLater(row.tag)}>
+                      <BookmarkPlus size={14} />
+                    </IconButton>
+                    <IconButton size="sm" tone="bad" label="Remove from queue" onClick={() => props.onUnqueue(row.tag)}>
                       <X size={15} />
                     </IconButton>
                   </div>
                 </div>
-              ))}
+              )}
+            />
+          ) : (
+            <Empty icon={<Inbox size={18} />} title="Your queue is empty">
+              Tick topics on the left, or search and queue every match at once.
+            </Empty>
+          ))}
+
+        {tab === "later" &&
+          (side.later.length ? (
+            <>
+              <FillBar plan={props.laterPlan} onFill={props.onFill} />
+              <RowList
+                rows={side.later}
+                groups={byResource ? side.laterGroups : null}
+                collapsed={collapsed}
+                onCollapse={toggleGroup}
+                onReveal={props.onReveal}
+                groupActions={(g) => (
+                  <IconButton size="sm" label={`Move all ${g.label} topics to the queue`} onClick={() => props.onQueueMany(g.rows.map((r) => r.tag))}>
+                    <ListPlus size={15} />
+                  </IconButton>
+                )}
+                renderRow={(row, path, chip) => (
+                  <div
+                    key={row.tag}
+                    className={`item later-item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
+                    title={`${row.tag}\nClick to show it in the tree`}
+                    onClick={() => props.onReveal(row.key)}
+                  >
+                    <span className="item-bullet" />
+                    <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
+                    <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
+                    <div className="item-actions">
+                      <IconButton size="sm" label="Move to the queue" onClick={() => props.onQueue(row.tag)}>
+                        <ListPlus size={15} />
+                      </IconButton>
+                      <IconButton size="sm" tone="bad" label="Remove from Later" onClick={() => props.onUnlater(row.tag)}>
+                        <X size={15} />
+                      </IconButton>
+                    </div>
+                  </div>
+                )}
+              />
             </>
           ) : (
             <Empty icon={<Bookmark size={18} />} title="Nothing saved for later">
               Found a topic that won't fit this session? Hover it and click the bookmark (or press L) to park it here.
             </Empty>
-          )
-        )}
+          ))}
 
         {tab === "done" && (
           side.completed.length ? (
@@ -226,6 +290,98 @@ function RowCounts(props: { fresh: number; waiting: number; buried: number; mode
   );
 }
 
+function readPref(key: string, fallback: string): string {
+  try {
+    return localStorage.getItem(key) ?? fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function writePref(key: string, value: string): void {
+  try {
+    localStorage.setItem(key, value);
+  } catch {
+    /* storage unavailable: keep it for this session only */
+  }
+}
+
+type GroupedRow<R> = R & { parent: string; sub: string };
+
+/** Rows either flat (order added, with step chip and full path) or grouped
+ *  by resource: a header per resource, and topics sharing a parent folder
+ *  clustered under that folder's name. */
+function RowList<R extends { tag: string; key: string; path: string }>(props: {
+  rows: R[];
+  groups: RowGroup<R>[] | null;
+  collapsed: Set<string>;
+  onCollapse: (key: string) => void;
+  onReveal: (key: string) => void;
+  groupActions: (group: RowGroup<R>) => ReactNode;
+  renderRow: (row: R, path: string, chip: boolean) => ReactNode;
+}) {
+  if (!props.groups) return <>{props.rows.map((r) => props.renderRow(r, r.path, true))}</>;
+  return (
+    <>
+      {props.groups.map((g) => {
+        const open = !props.collapsed.has(g.key);
+        return (
+          <section key={g.key} className={`group step-${(g.stepIndex ?? 0) % 4}`}>
+            <div className="group-head" onClick={() => props.onReveal(g.key)} title={`${g.tag}\nClick to show it in the tree`}>
+              <button
+                type="button"
+                className={`chev${open ? " open" : ""}`}
+                aria-label={open ? "Collapse" : "Expand"}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  props.onCollapse(g.key);
+                }}
+              >
+                <ChevronRight size={14} strokeWidth={2.4} />
+              </button>
+              <span className="section-mark" />
+              <span className="group-title">{g.label}</span>
+              <StepChip step={g.step} index={g.stepIndex} />
+              <span className="group-meta">
+                {plural(g.count, "topic")} · <b>{fmt(g.fresh)}</b>
+              </span>
+              <div className="item-actions">{props.groupActions(g)}</div>
+            </div>
+            {open && <Clusters rows={g.rows} renderRow={props.renderRow} />}
+          </section>
+        );
+      })}
+    </>
+  );
+}
+
+/** Consecutive rows with the same parent folder: if two or more, show the
+ *  folder once as a label and the rows without a path underneath. */
+function Clusters<R>(props: {
+  rows: GroupedRow<R>[];
+  renderRow: (row: R, path: string, chip: boolean) => ReactNode;
+}) {
+  const out: ReactNode[] = [];
+  let i = 0;
+  while (i < props.rows.length) {
+    let j = i + 1;
+    while (j < props.rows.length && props.rows[j].parent === props.rows[i].parent) j++;
+    const run = props.rows.slice(i, j);
+    if (run.length > 1 && run[0].sub) {
+      out.push(
+        <div key={`c:${run[0].parent}`} className="cluster">
+          <div className="cluster-label">{run[0].sub}</div>
+          {run.map((r) => props.renderRow(r, "", false))}
+        </div>,
+      );
+    } else {
+      for (const r of run) out.push(props.renderRow(r, r.sub, false));
+    }
+    i = j;
+  }
+  return <>{out}</>;
+}
+
 function TabButton(props: { active: boolean; label: string; count: number; onClick: () => void }) {
   return (
     <button type="button" role="tab" aria-selected={props.active} className={props.active ? "active" : ""} onClick={props.onClick}>
@@ -238,10 +394,12 @@ function ItemText(props: { title: string; path: string; step: string | null; ste
   return (
     <div className="item-main">
       <div className="item-title">{props.title}</div>
-      <div className="item-path">
-        <StepChip step={props.step} index={props.stepIndex} />
-        <span>{props.path}</span>
-      </div>
+      {(props.path || props.step) && (
+        <div className="item-path">
+          <StepChip step={props.step} index={props.stepIndex} />
+          <span>{props.path}</span>
+        </div>
+      )}
     </div>
   );
 }

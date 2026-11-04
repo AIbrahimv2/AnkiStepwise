@@ -453,6 +453,35 @@ class View:
             return self.index.fresh.get(tag.lower(), 0)
         return len(actions.fresh_cards([tag]))
 
+    def grouped(self, rows: list[dict]) -> list[dict]:
+        """Rows grouped by resource (B&B, Pixorize, ...), each group sorted
+        by tag path so topics sharing a parent folder sit together. Every
+        row gets `parent` (its parent tag) and `sub` (that folder's path
+        inside the resource) so the page can cluster siblings."""
+        groups: dict[str, dict] = {}
+        for row in rows:
+            tag = row["tag"]
+            parts = tag.split(SEP)
+            n = 2 if len(parts) > 1 and self.is_root(parts[0]) else 1
+            resource = SEP.join(parts[:n])
+            group = groups.get(resource.lower())
+            if group is None:
+                step, step_index = self.step_of(tag) if n == 2 else (None, None)
+                group = groups[resource.lower()] = {
+                    "key": resource.lower(), "tag": resource, "label": prettify(parts[n - 1]),
+                    "step": step, "stepIndex": step_index, "rows": [],
+                }
+            group["rows"].append(dict(
+                row, parent=SEP.join(parts[:-1]).lower(),
+                sub=" › ".join(prettify(p) for p in parts[n:-1])))
+        for group in groups.values():
+            group["rows"].sort(key=lambda r: natural_key(r["tag"]))
+            tags = [r["tag"] for r in group["rows"]]
+            group["count"] = len(tags)
+            group["fresh"] = len(actions.fresh_cards(tags))  # unique within the group
+        return sorted(groups.values(), key=lambda g: (
+            g["stepIndex"] if g["stepIndex"] is not None else 99, natural_key(g["label"])))
+
     def side(self) -> dict:
         queued, later, done = self.state.queued(), self.state.later(), self.state.completed()
         n, limit = len(self.queue_ids()), self.cfg["card_limit"]
@@ -478,6 +507,7 @@ class View:
             "count": n, "limit": limit, "over": n > limit, "mode": self.mode,
             "unit": UNITS.get(self.mode, "cards"),
             "queued": queue_rows, "later": later_rows, "completed": done_rows,
+            "queueGroups": self.grouped(queue_rows), "laterGroups": self.grouped(later_rows),
         }
 
     def later_plan(self) -> dict:

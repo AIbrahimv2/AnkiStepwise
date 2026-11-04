@@ -76,6 +76,20 @@ export interface LaterRow extends QueueRow {
   date: string;
 }
 
+/** Topics from one resource (Pixorize, B&B, ...), sorted by tag path. */
+export interface RowGroup<R> {
+  key: string;
+  tag: string;
+  label: string;
+  step: string | null;
+  stepIndex: number | null;
+  count: number;
+  /** Unique cards to unsuspend across the group. */
+  fresh: number;
+  /** `parent`: the row's parent tag; `sub`: that folder's path in the resource. */
+  rows: (R & { parent: string; sub: string })[];
+}
+
 export interface DoneRow extends RowBase {
   date: string;
 }
@@ -91,6 +105,8 @@ export interface Side {
   queued: QueueRow[];
   later: LaterRow[];
   completed: DoneRow[];
+  queueGroups: RowGroup<QueueRow>[];
+  laterGroups: RowGroup<LaterRow>[];
 }
 
 export interface LaterPlan {
