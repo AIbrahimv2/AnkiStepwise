@@ -672,7 +672,7 @@ export function App() {
             onToggleLater={toggleLater}
             onContext={(key, x, y) => setMenu({ key, anchor: { x, y } })}
           />
-          <DetailsBar details={details} searching={!!search} />
+          <DetailsBar details={details} />
         </section>
         {side && (
           <SidePanel

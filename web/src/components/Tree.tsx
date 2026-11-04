@@ -481,15 +481,12 @@ function Skeleton() {
   );
 }
 
-export function DetailsBar({ details, searching }: { details: Details | null; searching: boolean }) {
+export function DetailsBar({ details }: { details: Details | null }) {
   if (!details) {
+    // Nothing selected: just the keys, no instructions.
     return (
       <div className="details">
-        <div className="details-main details-empty">
-          {searching
-            ? "Tick matches to queue them, or queue them all from the bar above."
-            : "Select a topic to see how many cards it would add."}
-        </div>
+        <div className="details-main" />
         <KeyHints />
       </div>
     );
