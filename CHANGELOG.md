@@ -5,6 +5,23 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Performance
+
+- Card counts (the meter, "queuing it adds…", search summaries, Fill queue,
+  the deck-screen meter) now come from an in-memory index of which cards sit
+  under which tag, instead of Anki searches. Anki's `tag:` search runs a regex
+  over every note per tag, so a 20-tag queue took ~3 s per click; it now takes
+  ~10 ms, and search went from up to ~20 s to ~20 ms.
+- Completing/unsuspending finds suspended cards from the index plus one SQL
+  check instead of a search.
+- The window opens instantly on the last index while a fresh one is built in
+  the background (also pre-built a few seconds after Anki starts), and the
+  index build itself is faster.
+- Folders load 300 children at a time with a "Show more" row (UWorld folders
+  hold 4,000+ tags), and off-screen rows skip layout.
+- The deck-screen meter updates in place instead of re-rendering the whole deck
+  list, and the Browser sidebar redraws its colours only when you switch to it.
+
 ### Added
 
 - Initial version.
