@@ -41,7 +41,6 @@ class QueueDialog(QDialog):
         self.resize(1140, 760)
         restoreGeom(self, GEOM_KEY)
 
-        self.index: TagIndex | None = actions.cached_index()
         self.bridge = Bridge(self)
         self._loaded = False
 
@@ -58,18 +57,22 @@ class QueueDialog(QDialog):
 
     # --- host interface for Bridge ---------------------------------------
 
+    @property
+    def index(self) -> TagIndex | None:
+        """The last built index, even if a rebuild is under way: the window
+        opens instantly and refreshes its numbers when the rebuild lands."""
+        return actions.cached_index()
+
     def request_index(self) -> None:
-        actions.request_index(self._on_index)
+        actions.request_index()
 
     def reload_index(self, force: bool = False) -> None:
         if force:
-            actions.mark_index_dirty()
+            actions.mark_index_dirty(membership=True)
         self.request_index()
 
-    def _on_index(self, index: TagIndex) -> None:
-        changed = self.index is not index
-        self.index = index
-        if changed:
+    def _on_index_built(self, _index: TagIndex) -> None:
+        if self.isVisible():
             self.push({"type": "index"})
 
     def push(self, event: dict) -> None:
@@ -102,6 +105,7 @@ class QueueDialog(QDialog):
     def showEvent(self, ev) -> None:
         super().showEvent(ev)
         actions.subscribe(self.on_state_changed)
+        actions.on_index_built(self._on_index_built)
         if not self._loaded:
             self.load()
         else:
@@ -110,11 +114,13 @@ class QueueDialog(QDialog):
 
     def hideEvent(self, ev) -> None:
         actions.unsubscribe(self.on_state_changed)
+        actions.off_index_built(self._on_index_built)
         saveGeom(self, GEOM_KEY)
         super().hideEvent(ev)
 
     def cleanup(self) -> None:
         actions.unsubscribe(self.on_state_changed)
+        actions.off_index_built(self._on_index_built)
         self.web.cleanup()
 
 
@@ -142,10 +148,9 @@ def close_dialog() -> None:
 
 
 def refresh_open_dialog() -> None:
-    """Config was edited by hand: recount and redraw."""
+    """Config was edited by hand: recount (the rebuild pushes a redraw)."""
     if _dialog is not None and _dialog.isVisible():
         _dialog.reload_index(force=True)
-        _dialog.push({"type": "index"})
 
 
 def on_operation(changes, handler) -> None:

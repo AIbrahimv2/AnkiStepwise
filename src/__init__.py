@@ -12,7 +12,7 @@ right-clicking a tag in the Browser sidebar.
 from __future__ import annotations
 
 from aqt import gui_hooks, mw
-from aqt.qt import QAction, QKeySequence, qconnect
+from aqt.qt import QAction, QKeySequence, QTimer, qconnect
 
 from . import actions, browser_menu, ui, widget
 from .config import ADDON, get_config
@@ -27,6 +27,12 @@ def _install() -> None:
     mw.form.menuTools.addAction(action)
 
 
+def _prebuild_index() -> None:
+    """Count cards in the background shortly after the profile opens, so
+    the Tag Queue window and deck-screen meter are instant later."""
+    QTimer.singleShot(4000, lambda: mw.col is not None and actions.request_index())
+
+
 def _on_profile_close() -> None:
     ui.close_dialog()
     actions.reset()
@@ -34,13 +40,14 @@ def _on_profile_close() -> None:
 
 def _on_config_saved(_cfg) -> None:
     """Config edited by hand (count mode, roots, colours...): recount."""
-    actions.mark_index_dirty()
+    actions.mark_index_dirty(membership=True)
     actions.notify()
     ui.refresh_open_dialog()
 
 
 gui_hooks.main_window_did_init.append(_install)
 gui_hooks.operation_did_execute.append(ui.on_operation)
+gui_hooks.profile_did_open.append(_prebuild_index)
 gui_hooks.profile_will_close.append(_on_profile_close)
 gui_hooks.deck_browser_will_render_content.append(widget.on_deck_render)
 gui_hooks.webview_did_receive_js_message.append(widget.on_js_message)
