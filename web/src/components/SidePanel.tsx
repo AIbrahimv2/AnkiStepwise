@@ -240,7 +240,7 @@ export function SidePanel(props: Props) {
             </>
           ) : (
             <Empty icon={<Bookmark size={18} />} title="Nothing saved for later">
-              Found a topic that won't fit this session? Hover it and click the bookmark (or press L) to park it here.
+              Found a topic that won't fit this session? Hover it and click the bookmark (or press s) to park it here.
             </Empty>
           ))}
 

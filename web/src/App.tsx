@@ -587,12 +587,12 @@ export function App() {
         onSelect: async () => warnIfOver(await act("queue", { tags: [n.tag] }), [n.tag]),
       });
     if (own === "later")
-      entries.push({ label: "Remove from Later", icon: <BookmarkMinus size={14} />, hint: "L", onSelect: () => act("unlater", { tags: [n.tag] }) });
+      entries.push({ label: "Remove from Later", icon: <BookmarkMinus size={14} />, hint: "s", onSelect: () => act("unlater", { tags: [n.tag] }) });
     else if (own !== "completed")
       entries.push({
         label: own === "queued" ? "Move to Later" : "Save for later",
         icon: <BookmarkPlus size={14} />,
-        hint: "L",
+        hint: "s",
         disabled: !!n.status && n.inherited,
         onSelect: () => act("later", { tags: [n.tag] }),
       });

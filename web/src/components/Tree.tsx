@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CornerDownLeft, Folder, Moon, SearchX, Star } from "lucide-react";
+import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, Folder, Moon, SearchX, Star } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
@@ -65,34 +65,67 @@ export function Tree(props: TreeProps) {
     return () => clearTimeout(t);
   }, [props.flash]);
 
+  // Vim keys: j/k move, h/l close or go up / open or go in, gg/G top and
+  // bottom, Ctrl-d/Ctrl-u half a page. Arrow keys, Home and End work too.
+  const lastG = useRef(0);
   const onKeyDown = (e: KeyboardEvent) => {
     if (!rows.length) return;
+    const ctrl = e.ctrlKey && !e.metaKey && !e.altKey;
+    if ((e.metaKey || e.altKey || e.ctrlKey) && !ctrl) return; // leave app shortcuts alone
     const i = Math.max(0, rows.findIndex((r) => r.key === selected));
     const row = rows[i];
     const node = nodes[row.key];
-    if (row.more && (e.key === "Enter" || e.key === " ")) {
+    if (row.more && (e.key === "Enter" || e.key === " " || e.key === "l")) {
       e.preventDefault();
       props.onLoadMore(row.key.slice(MORE.length));
       return;
     }
     const move = (j: number) => props.onSelect(rows[Math.max(0, Math.min(rows.length - 1, j))].key);
-    switch (e.key) {
+    const halfPage = Math.max(1, Math.floor((box.current?.clientHeight ?? 600) / 30 / 2));
+    let key = e.key;
+    if (key === "g" && e.shiftKey) key = "G"; // some keyboards report Shift+g as "g"
+    if (ctrl) {
+      if (key !== "d" && key !== "u") return;
+      key = key === "d" ? "PageHalfDown" : "PageHalfUp";
+    }
+    if (key === "g") {
+      // gg: two presses in a row
+      const now = Date.now();
+      const second = now - lastG.current < 600;
+      lastG.current = second ? 0 : now;
+      if (second) move(0);
+      e.preventDefault();
+      return;
+    }
+    lastG.current = 0;
+    switch (key) {
+      case "j":
       case "ArrowDown":
         move(selected ? i + 1 : 0);
         break;
+      case "k":
       case "ArrowUp":
         move(i - 1);
+        break;
+      case "PageHalfDown":
+        move(i + halfPage);
+        break;
+      case "PageHalfUp":
+        move(i - halfPage);
         break;
       case "Home":
         move(0);
         break;
+      case "G":
       case "End":
         move(rows.length - 1);
         break;
+      case "l":
       case "ArrowRight":
         if (node?.hasKids && !expanded.has(row.key)) props.onToggleExpand(row.key);
         else if (rows[i + 1]?.parent === row.key) move(i + 1);
         break;
+      case "h":
       case "ArrowLeft":
         if (expanded.has(row.key)) props.onToggleExpand(row.key);
         else if (row.parent) props.onSelect(row.parent);
@@ -100,11 +133,11 @@ export function Tree(props: TreeProps) {
       case " ":
         if (node && !isGroup(node)) props.onToggleQueue(node);
         break;
-      case "l":
-      case "L":
+      case "s":
         if (node && !isGroup(node)) props.onToggleLater(node);
         break;
       case "Enter":
+      case "o":
         if (node?.hasKids) props.onToggleExpand(row.key);
         break;
       default:
@@ -274,7 +307,7 @@ const TreeRow = memo(function TreeRow(props: {
             type="button"
             className={`row-later${ownLater ? " on" : ""}`}
             tabIndex={-1}
-            title={ownLater ? "Remove from Later (L)" : "Save for later (L)"}
+            title={ownLater ? "Remove from Later (s)" : "Save for later (s)"}
             aria-label={ownLater ? "Remove from Later" : "Save for later"}
             onClick={(e) => {
               e.stopPropagation();
@@ -475,14 +508,7 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
             ? "Tick matches to queue them, or queue them all from the bar above."
             : "Select a topic to see how many cards it would add."}
         </div>
-        <div className="hint-keys">
-          <span>↑↓ move</span>
-          <span>space queue</span>
-          <span>L later</span>
-          <span>
-            <CornerDownLeft size={11} /> expand
-          </span>
-        </div>
+        <KeyHints />
       </div>
     );
   }
@@ -533,6 +559,31 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
           <span className="details-tail">{tail}</span>
         </div>
       </div>
+    </div>
+  );
+}
+
+/** Vim-style keys for the tree (arrow keys work too). */
+function KeyHints() {
+  return (
+    <div className="hint-keys">
+      <span>
+        <kbd className="kbd">j</kbd>
+        <kbd className="kbd">k</kbd>move
+      </span>
+      <span>
+        <kbd className="kbd">h</kbd>
+        <kbd className="kbd">l</kbd>close/open
+      </span>
+      <span>
+        <kbd className="kbd">space</kbd>queue
+      </span>
+      <span>
+        <kbd className="kbd">s</kbd>later
+      </span>
+      <span>
+        <kbd className="kbd">/</kbd>search
+      </span>
     </div>
   );
 }

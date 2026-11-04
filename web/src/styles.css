@@ -510,8 +510,10 @@ body {
 .details-sub > .details-tail { flex: 0 1 auto; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
 .details .over { color: var(--danger); font-weight: 600; }
 .details .strong { color: var(--text); font-weight: 600; }
-.hint-keys { color: var(--text-3); display: flex; gap: 10px; white-space: nowrap; }
-.hint-keys span { display: inline-flex; align-items: center; gap: 4px; }
+.hint-keys { color: var(--text-3); display: flex; gap: 14px; white-space: nowrap; }
+.hint-keys span { display: inline-flex; align-items: center; gap: 3px; }
+.hint-keys .kbd { margin-right: 0; padding: 2px 5px; min-width: 18px; text-align: center; }
+.hint-keys .kbd:last-of-type { margin-right: 3px; }
 
 /* --- side panel --------------------------------------------------------------- */
 
