@@ -5,6 +5,7 @@ the deck-screen widget, plus the cached tag index."""
 
 from __future__ import annotations
 
+import time
 from typing import Callable
 
 import aqt
@@ -108,8 +109,7 @@ def _consolidate(state: QueueState) -> tuple[dict, bool]:
     session_before = list(state.session)
 
     def studied(tag: str) -> bool:
-        k = tag.lower()
-        return bool(idx.total.get(k, 0)) and not idx.suspended.get(k, 0) and not idx.waiting.get(k, 0)
+        return rollup.studied(idx, tag.lower())
 
     finished = [t for t in state.queued() + state.watched() + state.later() if studied(t)]
     not_done = [t for t in finished if state.effective(t)[0] != COMPLETED]
@@ -117,8 +117,15 @@ def _consolidate(state: QueueState) -> tuple[dict, bool]:
         changes.update(state.complete(not_done))
     for t in finished:
         state.leave_session(t)
-    done, _leaves = rollup.done_tags(idx, state.completed())
     roots = set(resource_roots(idx, get_config()["resource_roots"]))
+    # Topics you never queued or coloured but have fully studied anyway.
+    swept = rollup.sweep(idx, state, roots)
+    if swept:
+        first = _first_reviews()
+        now = int(time.time())
+        for key in swept:
+            changes.update(state.complete_rollup(idx.name(key), _finished_at(idx, key, first) or now))
+    done, _leaves = rollup.done_tags(idx, state.completed())
     tops = rollup.roll_up(state.completed(), done, roots)
     # Parents that weren't complete yet (vs. just tidying entries under one).
     newly = [t for t in tops if state.status(idx.name(t)) != COMPLETED]
@@ -127,6 +134,10 @@ def _consolidate(state: QueueState) -> tuple[dict, bool]:
         changes.update(state.complete_rollup(idx.name(top), at))
     if not changes and state.session == session_before:
         return {}, False
+    if len(swept) == 1:
+        _announce(f"Every card in {short_name(idx.last(swept[0]))} is studied, so it's marked done")
+    elif swept:
+        _announce(f"Marked {_plural(len(swept), 'topic')} done\nEvery card in them is studied")
     state.save(mw.col)
     if len(finished) == 1:
         _announce(f"Every card in {short_name(finished[0].rsplit('::', 1)[-1])} is studied — "
@@ -140,6 +151,24 @@ def _consolidate(state: QueueState) -> tuple[dict, bool]:
         _announce(f"Marked {_plural(len(newly), 'parent topic')} complete — everything under "
                   "them is done")
     return changes, True
+
+
+def _first_reviews() -> dict[int, int]:
+    """Each studied card's first review, in ms (revlog ids are timestamps)."""
+    return dict(mw.col.db.all("select cid, min(id) from revlog group by cid"))
+
+
+def _finished_at(idx: TagIndex, key: str, first: dict[int, int]) -> int:
+    """When the last card under `key` was first studied (seconds), so a
+    swept topic lands in Done on the day you actually finished it."""
+    latest = 0
+    stack = [key]
+    while stack:
+        k = stack.pop()
+        for pos in idx.tag_cards.get(k, ()):
+            latest = max(latest, first.get(idx.card_ids[pos], 0))
+        stack.extend(idx.children.get(k, ()))
+    return latest // 1000
 
 
 def consolidate() -> None:
