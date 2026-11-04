@@ -32,7 +32,7 @@ export interface TagNode {
   progress: { done: number; total: number } | null;
   /** When the (own or inherited) status was set, e.g. "Nov 4". */
   since: string | null;
-  /** Done only because none of its cards are suspended any more. */
+  /** Done only because every card under it has been studied. */
   auto: boolean;
 }
 
@@ -69,6 +69,9 @@ interface RowBase {
 
 export interface QueueRow extends RowBase {
   fresh: number;
+  /** Checked off this session: watched, cards unsuspended, still counted. */
+  watched?: boolean;
+  suspended?: number;
   waiting: number;
   buried: number;
   missing: boolean;
@@ -86,7 +89,8 @@ export interface RowGroup<R> {
   step: string | null;
   stepIndex: number | null;
   count: number;
-  /** Unique cards to unsuspend across the group. */
+  watched?: number;
+  /** Unique counted cards across the group. */
   fresh: number;
   /** `parent`: the row's parent tag; `sub`: that folder's path in the resource. */
   rows: (R & { parent: string; sub: string })[];
@@ -103,6 +107,9 @@ export interface Side {
   limit: number;
   over: boolean;
   mode: CountMode;
+  /** Session progress: topics checked off vs still to watch. */
+  watched: number;
+  toWatch: number;
   unit: string;
   queued: QueueRow[];
   later: LaterRow[];

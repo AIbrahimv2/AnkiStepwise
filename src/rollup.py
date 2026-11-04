@@ -4,8 +4,9 @@
 
 A tag is *done* when any of these holds:
 - you marked it completed;
-- none of its cards are suspended any more (everything was unsuspended,
-  whether through Tag Queue or not);
+- every one of its cards has been studied: none still suspended and none
+  still new (an unsuspended card you haven't studied yet, or a buried one,
+  keeps it open);
 - every tag nested under it is done and no card carries the tag itself
   while still suspended.
 
@@ -29,6 +30,7 @@ def done_tags(idx: TagIndex, completed: Iterable[str]) -> tuple[set[str], dict[s
     One pass over the tree, children before parents."""
     explicit = {t.lower() for t in completed}
     suspended = idx.suspended
+    waiting = idx.waiting
     children = idx.children
     leaves = idx.leaves
     tag_cards = idx.tag_cards
@@ -44,7 +46,7 @@ def done_tags(idx: TagIndex, completed: Iterable[str]) -> tuple[set[str], dict[s
     done_leaves: dict[str, int] = {}
     for key in idx.post_order:
         kids = children.get(key)
-        if key in covered or not suspended.get(key, 0):
+        if key in covered or not (suspended.get(key, 0) or waiting.get(key, 0)):
             done.add(key)
             done_leaves[key] = leaves.get(key, 1)
         elif kids and all(c in done for c in kids) and not any(

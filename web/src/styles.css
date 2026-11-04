@@ -941,3 +941,57 @@ body {
 .cluster .item { margin-left: 4px; padding-top: 6px; padding-bottom: 6px; }
 .cluster-label { font-size: 11px; font-weight: 600; color: var(--text-3); padding: 6px 10px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .badge.d.auto { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--d-raw) 45%, transparent); }
+
+/* --- session: watched topics stay in the queue -------------------------------- */
+
+.item-check {
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  display: grid;
+  place-items: center;
+  flex: none;
+  color: #fff;
+  background: var(--d-raw);
+  margin-left: -4px;
+}
+.item.watched .item-title { color: var(--text-2); font-weight: 500; }
+.item.watched .item-meta b { color: var(--text-2); }
+
+/* Status cells never spill into the Total column. */
+.cell-status { overflow: hidden; }
+.cell-status > * { flex-shrink: 0; }
+.cell-status .mini { flex-shrink: 1; min-width: 0; }
+.group-head .item-actions { margin-left: auto; }
+.group-meta + .item-actions { margin-left: 0; }
+
+/* Numbers line up in one column: every row and header reserves the same
+   room for its buttons (three icons), whatever buttons it actually has. */
+.list .item-actions, .group-head .item-actions { min-width: 76px; justify-content: flex-end; }
+.group-meta b { font-size: 13px; }
+
+/* The number column's one label. Its right edge sits where the numbers
+   end: rows keep 6px padding + 76px of buttons + a 10px gap to the right. */
+.col-head {
+  position: sticky;
+  top: -6px;
+  z-index: 2;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  height: 26px;
+  padding: 0 92px 0 10px;
+  background: var(--surface);
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+/* Group headers stick just under it. */
+.col-head ~ .group .group-head { top: 20px; }
+.group-meta { color: var(--text); }
+
+/* Same right inset as rows, so header counts line up with row counts. */
+.group-head { padding-right: 8px; }
+.group-meta { margin-right: 4px; } /* rows have a 10px gap before their buttons, headers 6px */

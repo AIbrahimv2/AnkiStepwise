@@ -10,7 +10,7 @@ ADDON = __name__.split(".")[0]
 
 DEFAULTS: dict = {
     "card_limit": 150,
-    "count_mode": "suspended",
+    "count_mode": "new",
     "unsuspend_on_complete": True,
     "resource_roots": ["#AK_Step*"],
     "pinned_resources": [],
@@ -23,17 +23,20 @@ DEFAULTS: dict = {
     "later_color": "#af52de",
     "shortcut": "Ctrl+Alt+Q",
     "import_offered": False,
-    "config_version": 2,
+    "config_version": 3,
 }
 
 
 def _migrate(cfg: dict) -> dict:
-    """v2: the limit counts suspended cards. "new" was only ever the old
-    default, so move it over once; choosing "new" again afterwards sticks."""
-    if cfg.get("config_version", 1) < 2:
-        if cfg.get("count_mode") == "new":
-            cfg["count_mode"] = "suspended"
-        cfg["config_version"] = 2
+    """v3: the session meter counts new cards again (still suspended plus
+    unsuspended but not yet studied), so checking a watched topic doesn't
+    shrink it. v2 had switched it to "suspended" automatically; undo that
+    once. A count_mode chosen afterwards sticks."""
+    version = cfg.get("config_version", 1)
+    if version < 3:
+        if version == 2 and cfg.get("count_mode") == "suspended":
+            cfg["count_mode"] = "new"
+        cfg["config_version"] = 3
         mw.addonManager.writeConfig(ADDON, cfg)
     return cfg
 

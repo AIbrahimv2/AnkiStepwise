@@ -39,6 +39,12 @@ class QueueState:
                         "status": entry["status"],
                         "at": int(entry.get("at") or 0),
                     }
+        # The current study session: topics you've watched (checked) since you
+        # last finished a session. Their status is completed, but they stay
+        # in the queue so the session's card total doesn't shrink as you go.
+        session = (data or {}).get("session")
+        self.session: list[str] = (
+            [str(t) for t in session if isinstance(t, str)] if isinstance(session, list) else [])
         self._reindex()
 
     # --- persistence -----------------------------------------------------
@@ -51,7 +57,7 @@ class QueueState:
         col.set_config(CONFIG_KEY, self.to_dict())
 
     def to_dict(self) -> dict:
-        return {"v": 1, "tags": self.tags}
+        return {"v": 1, "tags": self.tags, "session": self.session}
 
     # --- lookups ---------------------------------------------------------
 
@@ -101,6 +107,22 @@ class QueueState:
         """Tags saved for later, oldest first (the order they get queued)."""
         return self._with_status(LATER, newest_first=False)
 
+    def watched(self) -> list[str]:
+        """Topics checked off in the current session, in the order watched."""
+        return list(self.session)
+
+    def session_tags(self) -> list[str]:
+        """Everything in the current session: still to watch, then watched."""
+        queued = self.queued()
+        have = {t.lower() for t in queued}
+        return queued + [t for t in self.session if t.lower() not in have]
+
+    def leave_session(self, tag: str) -> None:
+        low = tag.lower()
+        self.session = [t for t in self.session if t.lower() != low]
+
+    _leave_session = leave_session
+
     # --- changes ---------------------------------------------------------
     # Each mutator returns {tag: new status or None} so callers can mirror
     # the change elsewhere (e.g. Colorful Tags sidebar colours).
@@ -130,9 +152,10 @@ class QueueState:
         return changes
 
     def queue(self, tag: str) -> dict:
-        """Queue a tag (also takes it off the Later list). Queued or Later
-        tags nested under it are folded into it, so the queue never lists
-        the same cards twice."""
+        """Queue a tag (also takes it off the Later list, or un-watches it).
+        Queued or Later tags nested under it are folded into it, so the queue
+        never lists the same cards twice."""
+        self._leave_session(tag)
         changes = self._fold(tag, (QUEUED, LATER))
         changes.update(self._set(tag, QUEUED))
         return changes
@@ -143,6 +166,7 @@ class QueueState:
     def save_later(self, tag: str) -> dict:
         """Park a tag for a later session (moving it out of the queue if it
         was queued). Later tags nested under it fold into it."""
+        self._leave_session(tag)
         changes = self._fold(tag, (LATER,))
         changes.update(self._set(tag, LATER))
         return changes
@@ -152,26 +176,47 @@ class QueueState:
 
     def complete(self, tags: list[str], at: int | None = None) -> dict:
         """Mark tags completed, along with any queued or Later tags nested
-        under them."""
+        under them. Queued ones count as watched in the current session (they
+        stay in the queue until the session is finished)."""
         now = int(time.time()) if at is None else int(at)
         changes: dict = {}
+        in_session = {t.lower() for t in self.session}
         for tag in tags:
-            for k in [k for k, e in self.tags.items() if e["status"] in (QUEUED, LATER)]:
-                if is_under(k, tag) and k.lower() != tag.lower():
+            under = [k for k, e in self.tags.items()
+                     if e["status"] in (QUEUED, LATER) and is_under(k, tag)]
+            for k in under:
+                if self.tags[k]["status"] == QUEUED and k.lower() not in in_session:
+                    self.session.append(k)
+                    in_session.add(k.lower())
+                if k.lower() != tag.lower():
                     changes.update(self._set(k, COMPLETED, now))
             changes.update(self._set(tag, COMPLETED, now))
         return changes
 
+    def unwatch(self, tag: str) -> dict:
+        """Undo a check: back to the queue, out of the watched list. (Its
+        cards stay unsuspended.)"""
+        return self.queue(tag)
+
+    def finish_session(self) -> list[str]:
+        """End the session: watched topics leave the queue (they stay done).
+        Returns them."""
+        done, self.session = self.session, []
+        return done
+
     def complete_rollup(self, tag: str, at: int) -> dict:
-        """Mark `tag` completed in place of everything recorded under it
-        (those entries are covered by it now)."""
+        """Mark `tag` completed in place of the completed entries under it
+        (they're covered by it now). Queued and Later entries below stay:
+        those are plans you still mean to watch."""
         changes: dict = {}
-        for k in [k for k in self.tags if is_under(k, tag) and k.lower() != tag.lower()]:
+        for k in [k for k, e in self.tags.items()
+                  if e["status"] == COMPLETED and is_under(k, tag) and k.lower() != tag.lower()]:
             changes.update(self._drop(k))
         changes.update(self._set(tag, COMPLETED, at))
         return changes
 
     def clear(self, tag: str) -> dict:
+        self._leave_session(tag)
         return self._drop(tag)
 
     def import_status(self, tag: str, status: str, at: int) -> dict:

@@ -11,12 +11,11 @@ collection.
 
 - `card_limit` — the most cards you want to add in one study session (default
   `150`). The meter turns red when the queue goes over it.
-- `count_mode` — which cards count toward the limit:
-  - `"suspended"` (default): cards still suspended, i.e. what you add by
-    unsuspending. Cards you've already unsuspended but not studied yet,
-    including ones buried by sibling settings, show separately as
-    **Waiting** and don't count.
-  - `"new"`: suspended cards plus those waiting ones.
+- `count_mode` — which cards count toward the daily limit:
+  - `"new"` (default): new cards, i.e. never studied, whether still
+    suspended, already unsuspended or buried. Checking a watched topic off
+    (which unsuspends it) doesn't change this number; studying does.
+  - `"suspended"`: only cards still suspended (what's left to unsuspend).
   - `"all"`: every card under the tag.
 - `unsuspend_on_complete` — unsuspend a topic's cards when you mark it
   completed (default `true`).

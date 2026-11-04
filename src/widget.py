@@ -78,18 +78,20 @@ def _data() -> dict | None:
     deck screen for seconds on a large collection."""
     cfg = get_config()
     state = actions.load_state()
-    queued, later = state.queued(), state.later()
-    if queued and actions.usable_index() is None:
+    session, later = state.session_tags(), state.later()
+    watched = len(state.watched())
+    if session and actions.usable_index() is None:
         return None
-    n = len(actions.fresh_cards(queued)) if queued else 0
+    n = len(actions.fresh_cards(session)) if session else 0
     limit = cfg["card_limit"]
     over = n > limit
-    if not queued:
+    progress = f"{watched}/{len(session)} watched"
+    if not session:
         sub = "Nothing queued — click to pick topics"
     elif over:
-        sub = f"{_plural(len(queued), 'topic')} · {n - limit:,} over your limit"
+        sub = f"{progress} · {n - limit:,} over your limit"
     else:
-        sub = f"{_plural(len(queued), 'topic')} · {limit - n:,} left"
+        sub = f"{progress} · {limit - n:,} left"
     if later:
         sub += f" · {len(later):,} saved for later"
     return {

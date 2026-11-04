@@ -435,16 +435,17 @@ export function App() {
 
   const complete = useCallback((tags: string[]) => act("complete", { tags }), [act]);
 
-  const completeAll = () => {
-    const n = side?.queued.length ?? 0;
-    if (!n) return;
+  const finishSession = () => {
+    if (!side?.watched) return;
+    const left = side.toWatch;
     setConfirm({
-      title: `Mark ${plural(n, "topic")} completed?`,
-      body: options?.unsuspendOnComplete
-        ? "Their suspended cards will be unsuspended so you can start reviewing them."
-        : "They'll move to your Completed list.",
-      confirm: "Complete all",
-      onConfirm: () => act("complete", { tags: [] }),
+      title: `Clear ${plural(side.watched, "watched topic")}?`,
+      body:
+        "They leave the queue now and stay in Done, so their unstudied new cards stop counting toward your daily limit. " +
+        "(Watched topics leave on their own once every card is studied.)" +
+        (left ? ` ${plural(left, "unwatched topic")} stay queued.` : ""),
+      confirm: "Clear watched",
+      onConfirm: () => act("finish_session"),
     });
   };
 
@@ -660,7 +661,8 @@ export function App() {
             unsuspendOnComplete={options?.unsuspendOnComplete ?? true}
             onLimit={(value) => act("set_limit", { value })}
             onComplete={complete}
-            onCompleteAll={completeAll}
+            onFinishSession={finishSession}
+            onUnwatch={(tag) => act("unwatch", { tags: [tag] })}
             onUnqueue={(tag) => act("unqueue", { tags: [tag] })}
             onLater={(tag) => act("later", { tags: [tag] })}
             onUnlater={(tag) => act("unlater", { tags: [tag] })}
@@ -669,7 +671,7 @@ export function App() {
             onLaterMany={(tags) => act("later", { tags })}
             onCompleteGroup={(tags, label) =>
               setConfirm({
-                title: `Mark ${plural(tags.length, `${label} topic`)} completed?`,
+                title: `Mark ${plural(tags.length, `${label} topic`)} watched?`,
                 body: options?.unsuspendOnComplete
                   ? "Their suspended cards will be unsuspended so you can start reviewing them."
                   : "They'll move to your Done list.",

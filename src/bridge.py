@@ -176,6 +176,15 @@ class Bridge:
         actions.unsuspend(tags, self.host)
         return self.bundle(msg)
 
+    def cmd_unwatch(self, msg: dict) -> dict:
+        actions.unwatch(self._tags(msg))
+        return self.bundle(msg)
+
+    def cmd_finish_session(self, msg: dict) -> dict:
+        finished = actions.finish_session()
+        self.toast(f"Cleared {_plural(len(finished), 'watched topic')} from the queue")
+        return self.bundle(msg)
+
     def cmd_browse(self, msg: dict) -> dict:
         actions.browse(self._tags(msg) or actions.load_state().queued())
         return {}

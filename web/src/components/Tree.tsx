@@ -384,9 +384,7 @@ function Progress({ done, total }: { done: number; total: number }) {
       <span className="mini-track">
         <span className="mini-fill" style={{ display: "block", width: `${(100 * done) / total}%` }} />
       </span>
-      <span className="num">
-        {done}/{total}
-      </span>
+      <span className="num">{total >= 1000 ? `${Math.round((100 * done) / total)}%` : `${done}/${total}`}</span>
     </span>
   );
 }
@@ -413,7 +411,7 @@ function StatusCell({ node }: { node: TagNode }) {
   }
   if (node.status === "completed" && node.auto) {
     return (
-      <span className="badge d auto" title="Done: none of its cards are suspended any more">
+      <span className="badge d auto" title="Done: every card is studied">
         Done
       </span>
     );
@@ -500,7 +498,7 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
   if (d.status === "queued") {
     tail = d.via ? <>Queued as part of <span className="strong">{d.via}</span></> : <>In your queue</>;
   } else if (d.status === "completed" && d.auto) {
-    tail = <>Done — all its cards are unsuspended</>;
+    tail = <>Done — every card is studied</>;
   } else if (d.status === "completed") {
     tail = <>{d.date === "imported" ? "Completed (imported from Colorful Tags)" : `Completed ${d.date}`}</>;
   } else if (d.status === "later") {

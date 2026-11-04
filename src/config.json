@@ -1,6 +1,6 @@
 {
   "card_limit": 150,
-  "count_mode": "suspended",
+  "count_mode": "new",
   "unsuspend_on_complete": true,
   "resource_roots": [
     "#AK_Step*"
@@ -15,5 +15,5 @@
   "later_color": "#af52de",
   "shortcut": "Ctrl+Alt+Q",
   "import_offered": false,
-  "config_version": 2
+  "config_version": 3
 }

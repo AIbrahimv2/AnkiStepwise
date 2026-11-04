@@ -17,7 +17,7 @@ import {
   X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
-import type { LaterPlan, RowGroup, Side } from "../types";
+import type { LaterPlan, QueueRow, RowGroup, Side } from "../types";
 import { StepChip } from "./Tree";
 import { IconButton, fmt, plural } from "./ui";
 
@@ -31,7 +31,8 @@ interface Props {
   unsuspendOnComplete: boolean;
   onLimit: (value: number) => void;
   onComplete: (tags: string[]) => void;
-  onCompleteAll: () => void;
+  onFinishSession: () => void;
+  onUnwatch: (tag: string) => void;
   onUnqueue: (tag: string) => void;
   onLater: (tag: string) => void;
   onUnlater: (tag: string) => void;
@@ -86,11 +87,11 @@ export function SidePanel(props: Props) {
           ) : side.over ? (
             <>
               <TriangleExclamationPoint size={13} />
-              {fmt(-left)} over your limit · {plural(queued, "topic")}
+              {fmt(-left)} over your limit · {side.watched}/{queued} watched
             </>
           ) : (
             <>
-              {fmt(left)} left · {plural(queued, "topic")}
+              {fmt(left)} left · {side.watched}/{queued} watched
             </>
           )}
         </div>
@@ -125,6 +126,8 @@ export function SidePanel(props: Props) {
 
         {tab === "queue" &&
           (queued ? (
+            <>
+            <ColumnHead unit={side.unit} />
             <RowList
               rows={side.queued}
               groups={byResource ? side.queueGroups : null}
@@ -136,7 +139,7 @@ export function SidePanel(props: Props) {
                   <IconButton
                     size="sm"
                     tone="good"
-                    label={`Mark all ${g.count} ${g.label} topics completed`}
+                    label={`Mark all ${g.label} topics watched`}
                     onClick={() => props.onCompleteGroup(g.rows.map((r) => r.tag), g.label)}
                   >
                     <CheckCheck size={15} strokeWidth={2.4} />
@@ -149,18 +152,31 @@ export function SidePanel(props: Props) {
               renderRow={(row, path, chip) => (
                 <div
                   key={row.tag}
-                  className={`item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
+                  className={`item${row.watched ? " watched" : ""}${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
                   onClick={() => props.onReveal(row.key)}
                   title={`${row.tag}\nClick to show it in the tree`}
                 >
-                  <span className="item-bullet" />
+                  {row.watched ? (
+                    <span className="item-check" title="Watched">
+                      <Check size={11} strokeWidth={3} />
+                    </span>
+                  ) : (
+                    <span className="item-bullet" />
+                  )}
                   <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
-                  <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
+                  <RowCounts row={row} mode={side.mode} />
+                  {row.watched ? (
+                    <div className="item-actions">
+                      <IconButton size="sm" label="Not watched yet — back to the queue" onClick={() => props.onUnwatch(row.tag)}>
+                        <RotateCcw size={14} />
+                      </IconButton>
+                    </div>
+                  ) : (
                   <div className="item-actions">
                     <IconButton
                       size="sm"
                       tone="good"
-                      label={props.unsuspendOnComplete ? "Mark completed and unsuspend its cards" : "Mark completed"}
+                      label={props.unsuspendOnComplete ? "Watched — unsuspend its cards and check it off" : "Watched — check it off"}
                       onClick={() => props.onComplete([row.tag])}
                     >
                       <Check size={15} strokeWidth={2.4} />
@@ -172,9 +188,11 @@ export function SidePanel(props: Props) {
                       <X size={15} />
                     </IconButton>
                   </div>
+                  )}
                 </div>
               )}
             />
+            </>
           ) : (
             <Empty icon={<Inbox size={18} />} title="Your queue is empty">
               Tick topics on the left, or search and queue every match at once.
@@ -185,6 +203,7 @@ export function SidePanel(props: Props) {
           (side.later.length ? (
             <>
               <FillBar plan={props.laterPlan} onFill={props.onFill} />
+              <ColumnHead unit={side.unit} />
               <RowList
                 rows={side.later}
                 groups={byResource ? side.laterGroups : null}
@@ -205,7 +224,7 @@ export function SidePanel(props: Props) {
                   >
                     <span className="item-bullet" />
                     <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
-                    <RowCounts fresh={row.fresh} waiting={row.waiting} buried={row.buried} mode={side.mode} />
+                    <RowCounts row={row} mode={side.mode} />
                     <div className="item-actions">
                       <IconButton size="sm" label="Move to the queue" onClick={() => props.onQueue(row.tag)}>
                         <ListPlus size={15} />
@@ -262,30 +281,53 @@ export function SidePanel(props: Props) {
         <button type="button" className="btn" disabled={!queued} onClick={props.onUnsuspend}>
           <LockOpen size={14} /> Unsuspend
         </button>
-        <button type="button" className="btn primary" disabled={!queued} onClick={props.onCompleteAll}>
-          <Check size={14} strokeWidth={2.6} /> Complete all
+        <button
+          type="button"
+          className="btn primary"
+          disabled={!side.watched}
+          onClick={props.onFinishSession}
+          title="Take watched topics off the queue now (they stay in Done). They also leave on their own once every card is studied."
+        >
+          <Check size={14} strokeWidth={2.6} /> Clear watched
         </button>
       </div>
     </aside>
   );
 }
 
-/** "12 to unsuspend" plus, dimmed, cards already unsuspended but unstudied. */
-function RowCounts(props: { fresh: number; waiting: number; buried: number; mode: Side["mode"] }) {
-  const word = props.mode === "suspended" ? "to unsuspend" : props.mode === "new" ? "new" : "cards";
-  const extra = props.mode === "suspended" && props.waiting > 0;
+/** The row's counted cards, and underneath how many still need
+ *  unsuspending (or that none do). */
+/** The row's counted cards. The breakdown is in the tooltip; a caption
+ *  only appears when it says something the number and check don't: an
+ *  unwatched topic whose cards are all unsuspended already. */
+function RowCounts(props: { row: QueueRow; mode: Side["mode"] }) {
+  const { row, mode } = props;
+  const suspended = row.suspended ?? 0;
+  const unit = mode === "suspended" ? "to unsuspend" : mode === "new" ? "new cards" : "cards";
+  const tip = [
+    `${fmt(row.fresh)} ${unit}`,
+    mode !== "suspended" && suspended ? `${fmt(suspended)} still suspended` : null,
+    row.waiting ? `${fmt(row.waiting)} unsuspended, not studied yet` : null,
+    row.buried ? `${fmt(row.buried)} of those buried (back on their own)` : null,
+  ]
+    .filter(Boolean)
+    .join("\n");
+  const caption = mode === "new" && !row.watched && !suspended && row.fresh ? "unsuspended" : null;
   return (
-    <div
-      className="item-meta"
-      title={
-        extra
-          ? `${props.waiting} already unsuspended, not studied yet` +
-            (props.buried ? ` (${props.buried} buried — back on their own)` : "")
-          : undefined
-      }
-    >
-      <b>{fmt(props.fresh)}</b>
-      <div className="item-sub">{extra ? `+${fmt(props.waiting)} waiting` : word}</div>
+    <div className="item-meta" title={tip}>
+      <b>{fmt(row.fresh)}</b>
+      {caption && <div className="item-sub">{caption}</div>}
+    </div>
+  );
+}
+
+/** Names the number column once, above the list, instead of labelling
+ *  every row and group. Stays in view while the list scrolls. */
+function ColumnHead({ unit }: { unit: string }) {
+  return (
+    <div className="col-head">
+      <span>Topic</span>
+      <span>{unit.charAt(0).toUpperCase() + unit.slice(1)}</span>
     </div>
   );
 }
@@ -321,6 +363,7 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
   renderRow: (row: R, path: string, chip: boolean) => ReactNode;
 }) {
   if (!props.groups) return <>{props.rows.map((r) => props.renderRow(r, r.path, true))}</>;
+  const mixedSteps = new Set(props.groups.map((g) => g.step)).size > 1;
   return (
     <>
       {props.groups.map((g) => {
@@ -341,10 +384,15 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
               </button>
               <span className="section-mark" />
               <span className="group-title">{g.label}</span>
-              <StepChip step={g.step} index={g.stepIndex} />
-              <span className="group-meta">
-                {plural(g.count, "topic")} · <b>{fmt(g.fresh)}</b>
-              </span>
+              {mixedSteps && <StepChip step={g.step} index={g.stepIndex} />}
+              {g.count > 1 && (
+                <span
+                  className="group-meta"
+                  title={`${fmt(g.fresh)} new cards across ${g.count} topics` + (g.watched ? `, ${g.watched} watched` : "")}
+                >
+                  <b>{fmt(g.fresh)}</b>
+                </span>
+              )}
               <div className="item-actions">{props.groupActions(g)}</div>
             </div>
             {open && <Clusters rows={g.rows} renderRow={props.renderRow} />}

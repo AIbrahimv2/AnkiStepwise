@@ -25,7 +25,7 @@ from .counts import (
     suspended_ids,
     tags_search,
 )
-from .state import COMPLETED, QueueState
+from .state import COMPLETED, QUEUED, QueueState
 
 # --- state + listeners -------------------------------------------------------
 
@@ -50,7 +50,7 @@ def commit(state: QueueState, changes: dict, tidy: bool = True) -> None:
     state.save(mw.col)
     if tidy:
         changes = dict(changes)
-        changes.update(_consolidate(state))
+        changes.update(_consolidate(state)[0])
     cfg = get_config()
     if changes and cfg["colorful_tags_sync"]:
         colorsync.apply(changes, cfg["queued_color"], cfg["completed_color"],
@@ -90,18 +90,32 @@ def done_info() -> tuple[set[str], dict[str, int]]:
     return _done_cache[2]
 
 
-def _consolidate(state: QueueState) -> dict:
+def _consolidate(state: QueueState) -> tuple[dict, bool]:
     """Tidy statuses against the cards' actual state, saving if anything
-    changed. Queued/Later topics with nothing left to unsuspend count as
-    done; completions roll up to the highest parent that's fully done."""
+    changed. Returns (status changes, whether anything changed at all).
+
+    - A topic in the plan (queued, watched, or Later) whose every card has
+      been studied (none suspended, none still new) is done and leaves the
+      queue. Cards that are only unsuspended keep it in the plan: they're
+      still new cards due, and checking a topic off means you watched it.
+    - Completions roll up to the highest parent that's fully done.
+    """
     idx = _index
     if idx is None:
-        return {}
+        return {}, False
     changes: dict = {}
-    nothing_left = [t for t in state.queued() + state.later()
-                    if idx.total.get(t.lower(), 0) and not idx.suspended.get(t.lower(), 0)]
-    if nothing_left:
-        changes.update(state.complete(nothing_left))
+    session_before = list(state.session)
+
+    def studied(tag: str) -> bool:
+        k = tag.lower()
+        return bool(idx.total.get(k, 0)) and not idx.suspended.get(k, 0) and not idx.waiting.get(k, 0)
+
+    finished = [t for t in state.queued() + state.watched() + state.later() if studied(t)]
+    not_done = [t for t in finished if state.effective(t)[0] != COMPLETED]
+    if not_done:
+        changes.update(state.complete(not_done))
+    for t in finished:
+        state.leave_session(t)
     done, _leaves = rollup.done_tags(idx, state.completed())
     roots = set(resource_roots(idx, get_config()["resource_roots"]))
     tops = rollup.roll_up(state.completed(), done, roots)
@@ -110,29 +124,28 @@ def _consolidate(state: QueueState) -> dict:
     for top, covered in tops.items():
         at = max(state.since(t) for t in covered) if covered else 0
         changes.update(state.complete_rollup(idx.name(top), at))
-    if not changes:
-        return {}
+    if not changes and state.session == session_before:
+        return {}, False
     state.save(mw.col)
-    if len(nothing_left) == 1:
-        _announce(f"{short_name(nothing_left[0].rsplit('::', 1)[-1])} has nothing left to "
-                  "unsuspend — moved to Done")
-    elif nothing_left:
-        _announce(f"{_plural(len(nothing_left), 'topic')} had nothing left to unsuspend — "
-                  "moved to Done")
+    if len(finished) == 1:
+        _announce(f"Every card in {short_name(finished[0].rsplit('::', 1)[-1])} is studied — "
+                  "moved it to Done")
+    elif finished:
+        _announce(f"{_plural(len(finished), 'topic')} fully studied — moved to Done")
     if 0 < len(newly) <= 2:
         for top in newly:
             _announce(f"Everything in {short_name(idx.last(top))} is done — marked it complete")
     elif newly:
         _announce(f"Marked {_plural(len(newly), 'parent topic')} complete — everything under "
                   "them is done")
-    return changes
+    return changes, True
 
 
 def consolidate() -> None:
     """Run the automatic tidy-up now (e.g. after card counts were rebuilt)."""
     state = load_state()
-    changes = _consolidate(state)
-    if changes:
+    changes, touched = _consolidate(state)
+    if touched:
         commit(state, changes, tidy=False)
 
 
@@ -211,14 +224,33 @@ def unlater(tags: list[str]) -> None:
 
 
 def fill_from_later() -> tuple[list[str], int, list[str]]:
-    """Queue Later topics, oldest first, as long as they fit under the card
-    limit. Returns (queued tags, cards added, tags that didn't fit)."""
+    """Queue Later topics, oldest first, as long as the session stays under
+    the card limit. Returns (queued tags, cards added, tags that didn't fit)."""
     cfg = get_config()
     state = load_state()
-    picked, added, skipped = plan_fill(fresh_cards, state.later(), state.queued(), cfg["card_limit"])
+    picked, added, skipped = plan_fill(
+        fresh_cards, state.later(), state.session_tags(), cfg["card_limit"])
     if picked:
         queue(picked)
     return picked, added, skipped
+
+
+def unwatch(tags: list[str]) -> None:
+    """Undo checks: back to the queue (cards stay unsuspended)."""
+    state = load_state()
+    changes: dict = {}
+    for tag in tags:
+        changes.update(state.unwatch(tag))
+    commit(state, changes)
+
+
+def finish_session() -> list[str]:
+    """Clear watched topics from the queue now (they stay done). They also
+    leave on their own once every card in them is studied."""
+    state = load_state()
+    finished = state.finish_session()
+    commit(state, {})
+    return finished
 
 
 def clear(tags: list[str]) -> None:
@@ -237,8 +269,10 @@ def complete(tags: list[str], parent=None) -> None:
     cfg = get_config()
     cids = suspended_cards(tags) if cfg["unsuspend_on_complete"] else []
     state = load_state()
+    in_queue = all(state.status(t) == QUEUED for t in tags)
     commit(state, state.complete(tags))
-    done = f"Marked {_plural(len(tags), 'topic')} completed"
+    done = (f"Checked off {_plural(len(tags), 'topic')}" if in_queue
+            else f"Marked {_plural(len(tags), 'topic')} done")
     if not cids:
         say(done, parent)
         return

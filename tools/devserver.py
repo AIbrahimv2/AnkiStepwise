@@ -146,6 +146,7 @@ def main() -> None:
         def run_in_background(self):
             col.sched.unsuspend_cards(self.cids)
             actions.mark_index_dirty()
+            actions.request_index()  # Anki recounts after the op; do the same
             if self.ok:
                 self.ok(None)
 
@@ -155,7 +156,9 @@ def main() -> None:
         open=lambda name, *a, **kw: print(f"[dev] would open {name} {kw.get('search') or ''}")))
 
     class Host(QWidget):
-        index = None
+        @property
+        def index(self):  # always the latest build, like the real window
+            return actions.cached_index()
 
         def request_index(self):
             actions.request_index(self._set)
@@ -166,7 +169,7 @@ def main() -> None:
             self.request_index()
 
         def _set(self, index):
-            self.index = index
+            pass
 
         def push(self, event):
             print(f"[dev] push {event}")

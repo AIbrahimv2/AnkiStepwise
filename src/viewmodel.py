@@ -372,8 +372,10 @@ class View:
     # --- counts & previews -------------------------------------------------
 
     def queue_ids(self) -> set[int]:
+        """Cards counted for the current session: everything queued plus the
+        topics already watched this session."""
         if self._queue_ids is None:
-            self._queue_ids = actions.fresh_cards(self.state.queued())
+            self._queue_ids = actions.fresh_cards(self.state.session_tags())
         return self._queue_ids
 
     def projection(self, tags: list[str]) -> tuple[int, int, int]:
@@ -485,6 +487,7 @@ class View:
             group["rows"].sort(key=lambda r: natural_key(r["tag"]))
             tags = [r["tag"] for r in group["rows"]]
             group["count"] = len(tags)
+            group["watched"] = sum(1 for r in group["rows"] if r.get("watched"))
             group["fresh"] = len(actions.fresh_cards(tags))  # unique within the group
         return sorted(groups.values(), key=lambda g: (
             g["stepIndex"] if g["stepIndex"] is not None else 99, natural_key(g["label"])))
@@ -497,21 +500,24 @@ class View:
         def missing(tag: str) -> bool:
             return names is not None and tag.lower() not in names
 
-        def live(tag: str) -> dict:
+        def live(tag: str, watched: bool = False) -> dict:
             row = self._row(tag)
             idx, low = self.index, tag.lower()
-            row.update(fresh=self._fresh(tag), missing=missing(tag),
+            row.update(fresh=self._fresh(tag), missing=missing(tag), watched=watched,
+                       suspended=idx.suspended.get(low, 0) if idx else 0,
                        waiting=idx.waiting.get(low, 0) if idx else 0,
                        buried=idx.buried.get(low, 0) if idx else 0)
             if row["missing"]:
                 row["path"] = "Tag not found in this collection"
             return row
 
-        queue_rows = [live(t) for t in queued]
+        watched = [t for t in self.state.watched() if t.lower() not in {q.lower() for q in queued}]
+        queue_rows = [live(t) for t in queued] + [live(t, watched=True) for t in watched]
         later_rows = [dict(live(t), date=fmt_day(self.state.since(t))) for t in later]
         done_rows = [dict(self._row(t), date=fmt_day(self.state.since(t))) for t in done]
         return {
             "count": n, "limit": limit, "over": n > limit, "mode": self.mode,
+            "watched": len(watched), "toWatch": len(queued),
             "unit": UNITS.get(self.mode, "cards"),
             "queued": queue_rows, "later": later_rows, "completed": done_rows,
             "queueGroups": self.grouped(queue_rows), "laterGroups": self.grouped(later_rows),
@@ -523,7 +529,7 @@ class View:
         if not later:
             return {"picked": 0, "add": 0, "after": len(self.queue_ids()), "skipped": 0}
         picked, add, skipped = plan_fill(
-            actions.fresh_cards, later, self.state.queued(), self.cfg["card_limit"])
+            actions.fresh_cards, later, self.state.session_tags(), self.cfg["card_limit"])
         return {"picked": len(picked), "add": add, "after": len(self.queue_ids()) + add,
                 "skipped": len(skipped), "limit": self.cfg["card_limit"]}
 
