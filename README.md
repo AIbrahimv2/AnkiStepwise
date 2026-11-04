@@ -34,6 +34,14 @@ Anki's light and dark themes, with keyboard navigation throughout.
   (already unsuspended but not studied yet; a ☾ marks ones buried by sibling
   settings, which come back by themselves), so a topic whose cards are only
   buried no longer looks unfinished.
+- **Grouped by resource.** Queue and Later group topics under their resource
+  (Pixorize, Bootcamp, …) with each group's unique card count, and cluster
+  topics that share a parent folder. Group buttons complete a whole resource or
+  move it to/from Later. Switch to "Order added" any time.
+- **Done takes care of itself.** A topic with nothing left to unsuspend counts
+  as done (and leaves Queue/Later automatically), and once everything in a
+  folder is done the folder itself is marked complete, so Done shows
+  "16 Neuro" rather than each of its videos.
 - **Click to find it.** Click any row in Queue, Later or Done to jump to that
   tag in the tree: it opens the step, resource and folders, scrolls there and
   highlights it.

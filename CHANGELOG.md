@@ -7,6 +7,17 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- Queue and Later are grouped by resource, with topics that share a parent
+  folder clustered under it, a unique card count per group, and group buttons
+  (complete all / move to Later / move to queue). "Order added" shows the flat
+  list.
+- Topics with nothing left to unsuspend count as done: they show "Done" in the
+  tree and progress, and leave Queue/Later automatically (with a note why).
+- Done rolls up: when everything under a folder is done (completed, or all
+  cards unsuspended), the folder is marked complete in place of its children's
+  entries. It never climbs past a resource. On the author's collection this
+  turned 179 Done entries into 117.
+
 - The limit now counts **suspended** cards (what you add by unsuspending).
   Cards already unsuspended but not studied yet, including ones buried by
   sibling settings, show in a separate **Waiting** column with a ☾ for buried
