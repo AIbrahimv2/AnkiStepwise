@@ -18,6 +18,8 @@ import {
   ConfirmDialog,
   Header,
   ImportDialog,
+  type Pane,
+  PaneSwitch,
   type Toast,
   Toasts,
   type Tone,
@@ -94,6 +96,8 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [tab, setTab] = useState<Tab>("queue");
+  // Which of the two shows when the window is too narrow for both.
+  const [pane, setPane] = useState<Pane>("tree");
   const [laterPlan, setLaterPlan] = useState<LaterPlan | null>(null);
   // A row to scroll to and briefly highlight (bumped on every reveal).
   const [flash, setFlash] = useState({ key: "", n: 0 });
@@ -349,8 +353,16 @@ export function App() {
       const typing = t.tagName === "INPUT" || t.tagName === "TEXTAREA" || t.isContentEditable;
       if (e.key === "/" && !typing) {
         e.preventDefault();
-        searchInput.current?.focus();
-        searchInput.current?.select();
+        const focus = () => {
+          searchInput.current?.focus();
+          searchInput.current?.select();
+        };
+        if (searchInput.current?.offsetParent) focus();
+        else {
+          // A narrow window showing the queue: bring the topics back first.
+          setPane("tree");
+          requestAnimationFrame(focus);
+        }
         return;
       }
       if (typing || e.altKey || document.querySelector(".overlay")) return;
@@ -616,6 +628,7 @@ export function App() {
    *  enough of a big folder to include it), then select, scroll to and
    *  flash it. */
   const reveal = async (key: string) => {
+    setPane("tree");
     type Located = {
       exists: boolean;
       open?: string[];
@@ -722,7 +735,18 @@ export function App() {
         }}
         onImport={() => setImporting(true)}
         onSettings={() => setSettingsOpen(true)}
-      />
+      >
+        {side && (
+          <PaneSwitch
+            pane={pane}
+            count={side.count}
+            limit={side.limit}
+            unit={side.unit}
+            over={side.over}
+            onPane={setPane}
+          />
+        )}
+      </Header>
       <div>
         {options?.banner && (
           <Banner
@@ -731,7 +755,7 @@ export function App() {
           />
         )}
       </div>
-      <main className="main">
+      <main className="main" data-pane={pane}>
         <section className="panel tree-panel">
           <div className="toolbar">
             <SearchBox ref={searchInput} value={query} onChange={setQuery} onSubmit={submitSearch} />

@@ -193,7 +193,8 @@ export function Tree(props: TreeProps) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       const tree = box.current;
-      if (e.defaultPrevented || !tree || tree.contains(e.target as Node)) return;
+      // Not while the tree is hidden (a narrow window showing the queue).
+      if (e.defaultPrevented || !tree || !tree.offsetParent || tree.contains(e.target as Node)) return;
       const t = e.target as HTMLElement;
       if (t.closest?.("input, textarea, select, button, [contenteditable]")) return;
       if (document.querySelector(".overlay, .menu")) return;

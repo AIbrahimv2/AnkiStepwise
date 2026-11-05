@@ -8,10 +8,10 @@ import {
   Settings2,
   TriangleExclamationPoint,
 } from "lucide-react";
-import { useEffect, useRef, useState } from "react";
+import { type ReactNode, useEffect, useRef, useState } from "react";
 import { call } from "../bridge";
 import type { ImportGroup, Options, Status } from "../types";
-import { type Anchor, Menu, Modal, Switch, anchorBelow, plural } from "./ui";
+import { type Anchor, Menu, Modal, Switch, anchorBelow, fmt, plural } from "./ui";
 
 // --- header ------------------------------------------------------------------
 
@@ -21,6 +21,8 @@ export function Header(props: {
   onRefresh: () => void;
   onImport: () => void;
   onSettings: () => void;
+  /** Shown between the title and the buttons (the pane switch). */
+  children?: ReactNode;
 }) {
   const btn = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -34,6 +36,7 @@ export function Header(props: {
         <div className="title">Tag Queue</div>
         <div className="subtitle">Queue topics by resource, stay under your card limit, then mark them done.</div>
       </div>
+      {props.children}
       <div className="header-actions">
         <button type="button" className="icon-btn" title="Recount cards" onClick={props.onRefresh}>
           <RefreshCw size={16} className={props.refreshing ? "spin" : undefined} />
@@ -88,6 +91,51 @@ export function Banner(props: { onImport: () => void; onDismiss: () => void }) {
           Not now
         </button>
       </div>
+    </div>
+  );
+}
+
+// --- pane switch ---------------------------------------------------------------
+
+export type Pane = "tree" | "side";
+
+/** In a narrow window the topics and the queue take turns: this picks
+ *  which one shows (hidden by the stylesheet when both fit). */
+export function PaneSwitch(props: {
+  pane: Pane;
+  count: number;
+  limit: number;
+  unit: string;
+  over: boolean;
+  onPane: (pane: Pane) => void;
+}) {
+  const tab = (pane: Pane, label: ReactNode) => (
+    <button
+      type="button"
+      role="tab"
+      aria-selected={props.pane === pane}
+      className={props.pane === pane ? "active" : ""}
+      onClick={() => props.onPane(pane)}
+    >
+      {label}
+    </button>
+  );
+  return (
+    <div className="segmented pane-switch" role="tablist">
+      <span className="thumb" style={{ ["--i" as string]: props.pane === "tree" ? 0 : 1 }} />
+      {tab("tree", "Topics")}
+      {tab(
+        "side",
+        <>
+          Queue
+          <span
+            className={`count-pill${props.over ? " over" : ""}`}
+            title={`${fmt(props.count)} of ${fmt(props.limit)} ${props.unit}`}
+          >
+            {fmt(props.count)} / {fmt(props.limit)}
+          </span>
+        </>,
+      )}
     </div>
   );
 }

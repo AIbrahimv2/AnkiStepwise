@@ -37,7 +37,8 @@ class QueueDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Tag Queue")
-        self.setMinimumSize(860, 560)
+        # The page switches to one panel at a time below 760px wide.
+        self.setMinimumSize(440, 560)
         self.resize(1140, 760)
         restoreGeom(self, GEOM_KEY)
 

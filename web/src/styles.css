@@ -816,12 +816,22 @@ body {
   .main { grid-template-columns: minmax(0, 1fr) clamp(290px, 31vw, 380px); }
   .subtitle { display: none; }
 }
-/* Very narrow (only outside Anki, which keeps the window ≥ 860px): stack. */
+
+/* Too narrow for both panels: one at a time, picked in the header. */
+.pane-switch { display: none; }
+#root .pane-switch button { padding: 0 12px; }
+.count-pill.over { background: var(--danger-soft); color: var(--danger); }
 @media (max-width: 760px) {
-  .main { grid-template-columns: minmax(0, 1fr); grid-template-rows: minmax(0, 1.4fr) minmax(0, 1fr); }
-  .toolbar { flex-wrap: wrap; }
-  .search { flex-basis: 100%; }
-  .banner { flex-wrap: wrap; }
+  .main { grid-template-columns: minmax(0, 1fr); }
+  .main[data-pane="tree"] > .side-panel,
+  .main[data-pane="side"] > .tree-panel { display: none; }
+  .pane-switch { display: grid; flex: none; margin: 0; }
+  .header { gap: 10px; }
+  .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+}
+@media (max-width: 560px) {
+  .titles { display: none; }
+  .pane-switch { flex: 1; }
 }
 
 /* --- steps (resource roots) ------------------------------------------------- */
