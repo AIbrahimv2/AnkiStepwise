@@ -202,7 +202,13 @@ export function Modal(props: { onClose: () => void; children: ReactNode; width?:
   }, [props.onClose]);
   return (
     <div className="overlay" onMouseDown={(e) => e.target === e.currentTarget && props.onClose()}>
-      <div className="modal" role="dialog" aria-modal="true" style={{ width: props.width }}>
+      <div
+        className="modal"
+        role="dialog"
+        aria-modal="true"
+        // Never wider than the window, with a margin all round.
+        style={props.width ? { width: `min(${props.width}px, calc(100vw - 32px))` } : undefined}
+      >
         {props.children}
       </div>
     </div>

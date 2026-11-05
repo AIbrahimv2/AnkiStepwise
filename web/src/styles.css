@@ -761,6 +761,8 @@ body {
 }
 .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1); }
 .import-info { flex: 1; min-width: 0; }
+/* A switch's label in a dialog wraps rather than running off the edge. */
+.modal .switch-row { white-space: normal; }
 .import-info b { font-weight: 600; }
 .import-info div { color: var(--text-3); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .mini-seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sunken); border: 1px solid var(--line); flex: none; }
@@ -1092,9 +1094,10 @@ body {
   color: var(--text-3);
 }
 .set-card { border: 1px solid var(--line); border-radius: 12px; }
-.set-row { display: flex; align-items: center; gap: 16px; padding: 11px 14px; }
+/* A control drops under its text when there isn't room beside it. */
+.set-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 11px 14px; }
 .set-row + .set-row { border-top: 1px solid var(--line); }
-.set-text { flex: 1; min-width: 0; }
+.set-text { flex: 1 1 160px; min-width: 0; }
 .set-label { font-weight: 600; color: var(--text); }
 .set-hint { margin-top: 2px; font-size: 12px; line-height: 1.45; color: var(--text-2); }
 .set-problem { margin-top: 4px; font-size: 12px; font-weight: 550; color: var(--danger); }
