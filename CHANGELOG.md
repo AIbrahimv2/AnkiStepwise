@@ -7,9 +7,10 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
-- **Jump between search matches**: Enter / Shift+Enter in the search box,
-  or `n` / `N` in the tree, select the next / previous match (wrapping
-  around), and the bar shows "Match 3 of 47". Esc leaves the search box
+- **Jump between search matches**: like vim's `/pattern<Enter>`, Enter
+  (Shift+Enter) in the search box goes to the next (previous) match and
+  hands the keys to the tree, where `n` / `N` move between matches
+  (wrapping around); the bar shows "Match 3 of 47". Esc leaves the search box
   with the results kept; Esc again clears the search.
 - The tree remembers which folders are open and which step sections you
   closed, across restarts (kept in the Anki profile).

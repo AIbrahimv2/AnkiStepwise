@@ -378,27 +378,37 @@ export function App() {
   const matchAt = selected ? matchKeys.indexOf(selected) + 1 : 0;
 
   /** Select the next (1) or previous (-1) match after the selected row,
-   *  wrapping around: n / N in the tree, Enter / Shift+Enter in search. */
+   *  wrapping around: n / N in the tree, Enter / Shift+Enter in search.
+   *  Returns the match it went to. */
   const jumpMatch = useCallback(
-    (dir: 1 | -1) => {
-      if (!matchKeys.length) return;
+    (dir: 1 | -1): string | null => {
+      if (!matchKeys.length) return null;
       const order = new Map(rows.map((r, i) => [r.key, i]));
       const here = selected ? (order.get(selected) ?? -1) : -1;
       const pos = matchKeys.map((k) => order.get(k) ?? 0);
       let j = dir === 1 ? pos.findIndex((p) => p > here) : pos.findLastIndex((p) => p < here);
       if (j < 0) j = dir === 1 ? 0 : matchKeys.length - 1;
       setSelected(matchKeys[j]);
+      return matchKeys[j];
     },
     [matchKeys, rows, selected],
   );
 
-  // Enter in the search box: search now if the results are stale, then go
-  // to the next match (Shift+Enter: previous), staying in the box.
+  // Enter in the search box works like vim's /pattern<Enter>: search now if
+  // the results are stale, go to the next match (Shift+Enter: previous), and
+  // hand the keys to the tree, where n / N carry on.
   const pendingJump = useRef<0 | 1 | -1>(0);
+  const jumpFromSearch = useCallback(
+    (dir: 1 | -1) => {
+      const key = jumpMatch(dir);
+      if (key) setFlash((f) => ({ key, n: f.n + 1 })); // centres it and focuses the tree
+    },
+    [jumpMatch],
+  );
   const submitSearch = (back: boolean) => {
     const q = query.trim();
     if (!q) return;
-    if (search?.query === q) jumpMatch(back ? -1 : 1);
+    if (search?.query === q) jumpFromSearch(back ? -1 : 1);
     else {
       pendingJump.current = back ? -1 : 1;
       runSearch(q);
@@ -406,10 +416,10 @@ export function App() {
   };
   useEffect(() => {
     if (pendingJump.current && matchKeys.length) {
-      jumpMatch(pendingJump.current);
+      jumpFromSearch(pendingJump.current);
       pendingJump.current = 0;
     }
-  }, [matchKeys, jumpMatch]);
+  }, [matchKeys, jumpFromSearch]);
 
   // --- tree interactions ---------------------------------------------------
 

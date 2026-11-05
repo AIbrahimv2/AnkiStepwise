@@ -115,7 +115,7 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `u` or `Cmd/Ctrl+Z` | Undo the last change |
 | `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
-| `Enter` / `Shift+Enter` (in search) | Jump to the next / previous match |
+| `Enter` / `Shift+Enter` (in search) | Go to the next / previous match and on to the tree, where `n` / `N` carry on |
 | `n` / `N` | Next / previous search match |
 | `Esc` | Leave the search box (results stay); again to clear the search |
 

@@ -16,7 +16,7 @@ export const SearchBox = forwardRef<
         ref={ref}
         value={props.value}
         placeholder="Search topics…"
-        title="Search topic names, e.g. brainstem or b&b cardio. / to search, Enter / Shift+Enter for the next / previous match, Esc to go back to the tree."
+        title="Search topic names, e.g. brainstem or b&b cardio. / to search; Enter (Shift+Enter) goes to the first (last) match, then n / N move between matches; Esc goes back to the tree."
         spellCheck={false}
         onChange={(e) => props.onChange(e.target.value)}
         onKeyDown={(e) => {
