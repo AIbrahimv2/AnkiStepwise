@@ -29,6 +29,13 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- **Narrower windows.** The window can now be as narrow as 440px (it was
+  860px). As it narrows, the tree's columns tighten, then Total and then
+  Waiting give way and levels indent less, so topic names stay readable; the
+  queue panel puts the limit on its own line and slims its footer buttons.
+  Below 760px a Topics / Queue switch in the header shows one at a time
+  (choosing a topic in the queue, or pressing `/`, goes back to the topics).
+  Settings and the import dialog fit the window too.
 - The tree's keys work as soon as the window opens (no click first), and
   from anywhere on the page that isn't a text field, button, menu or
   dialog.

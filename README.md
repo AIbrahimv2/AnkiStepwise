@@ -97,6 +97,10 @@ bookmark) to save it for later. Next session, open the **Later** tab and click
 Right-click a topic for more: save it for later, browse its cards, unsuspend
 without completing, clear its status, or pin a resource to the top.
 
+In a narrow window (under 760px) the topics and the queue take turns: switch
+between them in the header. The tree drops its Total and Waiting columns
+before it squeezes topic names.
+
 ### Keyboard
 
 The tree remembers which folders you had open (and which step sections you
