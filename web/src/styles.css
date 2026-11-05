@@ -161,6 +161,10 @@ body {
   min-height: 0;
 }
 
+/* Each panel's contents fit its own width (see "narrower panels"). */
+.tree-panel { container: tree / inline-size; }
+.side-panel { container: side / inline-size; }
+
 .panel {
   background: var(--surface);
   border: 1px solid var(--line);
@@ -185,8 +189,10 @@ body {
   border: 1px solid var(--line);
   box-shadow: var(--shadow);
 }
+.banner { flex-wrap: wrap; row-gap: 8px; }
 .banner-icon { color: var(--q); display: grid; }
-.banner-text { flex: 1; color: var(--text-2); }
+.banner-text { flex: 1 1 300px; min-width: 0; color: var(--text-2); }
+.banner-actions { display: flex; gap: 8px; margin-left: auto; }
 .banner-text b { color: var(--text); font-weight: 600; }
 
 /* --- buttons ---------------------------------------------------------------- */
@@ -374,6 +380,7 @@ body {
 /* Status content stops short of the hover bookmark's slot; so does its title. */
 .tree-head .status-head { padding-right: 24px; }
 .tree-head .r, .row .r { text-align: right; }
+.tree-head > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 .tree {
   flex: 1;
@@ -385,6 +392,7 @@ body {
   /* Keep a row moved to with the keyboard clear of the sticky column
      titles and step header above it. */
   scroll-padding-top: 72px;
+  --indent: 18px;
 }
 
 .row {
@@ -397,7 +405,8 @@ body {
 .row.selected { background: var(--select); }
 .tree:focus .row.selected { background: var(--select-strong); }
 
-.cell-name { display: flex; align-items: center; gap: 6px; min-width: 0; height: 100%; }
+.cell-name { display: flex; align-items: center; gap: 6px; min-width: 0; height: 100%; padding-left: calc(8px + var(--depth, 0) * var(--indent)); }
+.row.more .cell-name { padding-left: calc(32px + var(--depth, 0) * var(--indent)); }
 #root .chev {
   width: 18px;
   height: 18px;
@@ -657,12 +666,14 @@ body {
 
 .side-footer {
   display: flex;
-  gap: 8px;
+  gap: 6px;
   align-items: center;
   padding: 10px 12px;
   border-top: 1px solid var(--line);
 }
 .spacer { flex: 1; }
+/* Buttons keep their full label; the panel's width rules make room. */
+.side-footer .btn { flex: none; }
 
 /* --- floating layers -------------------------------------------------------- */
 
@@ -798,11 +809,9 @@ body {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Smaller windows: tighter columns, drop the keyboard hints. */
+/* Smaller windows: a narrower queue panel, no subtitle. */
 @media (max-width: 1060px) {
-  .hint-keys { display: none; }
   .main { grid-template-columns: minmax(0, 1fr) clamp(290px, 31vw, 380px); }
-  .tree-head, .row { grid-template-columns: minmax(0, 1fr) 66px 52px 56px 146px; }
   .subtitle { display: none; }
 }
 /* Very narrow (only outside Anki, which keeps the window ≥ 860px): stack. */
@@ -1154,3 +1163,43 @@ body {
 
 /* --- Done paging -------------------------------------------------------------- */
 #root .show-more-done { display: flex; width: calc(100% - 12px); margin: 8px 6px 4px; justify-content: center; }
+
+/* --- narrower panels ---------------------------------------------------------- */
+/* Kept last, so these win over the wider layout's rules above. */
+
+/* The tree's columns give way as its panel narrows: tighter first, then
+   Total goes (the bar already shows how far along a topic is), then
+   Waiting, so the topic names keep room to be read. Levels step in less. */
+@container tree (max-width: 700px) {
+  .tree-head, .row { grid-template-columns: minmax(0, 1fr) 74px 56px 58px 112px; }
+  .hint-keys { display: none; }
+}
+@container tree (max-width: 580px) {
+  .tree { --indent: 14px; }
+  .tree-head, .row { grid-template-columns: minmax(0, 1fr) 74px 56px 100px; }
+  .tree .col-total, .tree-head .col-total { display: none; }
+}
+@container tree (max-width: 500px) {
+  .tree { --indent: 12px; }
+  .tree-head, .row { grid-template-columns: minmax(0, 1fr) 74px 88px; }
+  .tree .col-wait, .tree-head .col-wait { display: none; }
+  .mini-track { width: 48px; }
+}
+/* Search gets the toolbar's whole first line; resource and switch below. */
+@container tree (max-width: 520px) {
+  .toolbar { flex-wrap: wrap; }
+  .search { flex-basis: 100%; }
+  .switch-row { margin-left: auto; }
+}
+
+/* Queue panel: the limit moves to a line of its own under the count, and
+   the footer's buttons drop their icons, Browse its word. */
+@container side (max-width: 370px) {
+  .meter-top { flex-wrap: wrap; row-gap: 12px; }
+  .limit { flex-basis: 100%; justify-content: space-between; }
+  .side-footer .browse .btn-label { display: none; }
+  #root .side-footer .browse { padding: 0 8px; }
+}
+@container side (max-width: 320px) {
+  .side-footer .btn:not(.browse) svg { display: none; }
+}

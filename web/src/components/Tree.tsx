@@ -1,5 +1,5 @@
 import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, Moon, SearchX, Star } from "lucide-react";
-import { type ReactNode, memo, useEffect, useRef, useState } from "react";
+import { type CSSProperties, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
 import { Checkbox, Highlight, fmt } from "./ui";
@@ -216,12 +216,12 @@ export function Tree(props: TreeProps) {
           Suspended
         </span>
         <span
-          className="r"
+          className="r col-wait"
           title="Already unsuspended but not studied yet: new cards waiting in Anki, plus any buried (☾) by sibling settings, which come back by themselves. Nothing to unsuspend."
         >
           Waiting
         </span>
-        <span className="r" title="Every card under this tag">Total</span>
+        <span className="r col-total" title="Every card under this tag">Total</span>
         <span className="r status-head">Status</span>
       </div>
         {props.loading ? (
@@ -285,7 +285,8 @@ const TreeRow = memo(function TreeRow(props: {
   onContext: (key: string, x: number, y: number) => void;
 }) {
   const { node, depth, open, selected } = props;
-  const indent = { paddingLeft: 8 + depth * 18 };
+  // How far in each level sits is up to the stylesheet (less when narrow).
+  const indent = { "--depth": depth } as CSSProperties;
   const chevron = node.hasKids ? (
     <button
       type="button"
@@ -360,7 +361,7 @@ const TreeRow = memo(function TreeRow(props: {
       </div>
       <span className={`cell-num${node.suspended ? " fresh" : " zero"}`}>{fmt(node.suspended)}</span>
       <WaitingCell waiting={node.waiting} buried={node.buried} />
-      <span className="cell-num">{fmt(node.total)}</span>
+      <span className="cell-num col-total">{fmt(node.total)}</span>
       <span className="cell-status">
         <StatusCell node={node} />
         {canLater ? (
@@ -391,7 +392,7 @@ function GroupRow(props: {
   open: boolean;
   selected: boolean;
   chevron: ReactNode;
-  indent: { paddingLeft: number };
+  indent: CSSProperties;
   onSelect: (key: string) => void;
   onToggleExpand: (key: string) => void;
 }) {
@@ -418,7 +419,7 @@ function GroupRow(props: {
         </div>
         <span className="cell-num fresh">{fmt(node.suspended ?? 0)}</span>
         <WaitingCell waiting={node.waiting ?? 0} buried={node.buried ?? 0} />
-        <span className="cell-num">{fmt(node.total ?? 0)}</span>
+        <span className="cell-num col-total">{fmt(node.total ?? 0)}</span>
         <span className="cell-status">
           {p && <Progress done={p.done} total={p.total} />}
           <span className="row-later-slot" aria-hidden="true" />
@@ -443,8 +444,8 @@ function GroupRow(props: {
         <span className="label">{node.label}</span>
       </div>
       <span />
-      <span />
-      <span />
+      <span className="col-wait" />
+      <span className="col-total" />
       <span className="cell-num">{fmt(node.count)} tags</span>
     </div>
   );
@@ -453,7 +454,7 @@ function GroupRow(props: {
 function MoreRow(props: { depth: number; hidden: number; selected: boolean; onLoad: () => void }) {
   return (
     <div className={`row more${props.selected ? " selected" : ""}`} role="treeitem">
-      <div className="cell-name" style={{ paddingLeft: 8 + props.depth * 18 + 24 }}>
+      <div className="cell-name" style={{ "--depth": props.depth } as CSSProperties}>
         <button type="button" className="more-btn" onClick={props.onLoad}>
           Show {fmt(Math.min(props.hidden, 300))} more
         </button>
@@ -466,12 +467,12 @@ function MoreRow(props: { depth: number; hidden: number; selected: boolean; onLo
 /** Unsuspended-but-unstudied cards, dimmed: nothing to do here. A moon
  *  marks the ones buried by sibling settings (back on their own). */
 function WaitingCell({ waiting, buried }: { waiting: number; buried: number }) {
-  if (!waiting) return <span className="cell-num zero">–</span>;
+  if (!waiting) return <span className="cell-num zero col-wait">–</span>;
   const tip =
     `${waiting} already unsuspended, not studied yet` +
     (buried ? ` — ${buried} buried (they come back by themselves)` : "");
   return (
-    <span className="cell-num waiting" title={tip}>
+    <span className="cell-num waiting col-wait" title={tip}>
       {buried > 0 && <Moon size={10} className="buried-icon" />}
       {fmt(waiting)}
     </span>

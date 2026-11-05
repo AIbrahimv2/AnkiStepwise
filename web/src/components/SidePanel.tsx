@@ -84,7 +84,7 @@ export function SidePanel(props: Props) {
   const left = side.limit - side.count;
 
   return (
-    <aside className="panel">
+    <aside className="panel side-panel">
       <section className={`meter${side.over ? " over" : ""}`}>
         <div className="meter-top">
           <div className="meter-count">{fmt(side.count)}</div>
@@ -296,8 +296,14 @@ export function SidePanel(props: Props) {
       </div>
 
       <div className="side-footer">
-        <button type="button" className="btn ghost" disabled={!queued} onClick={props.onBrowse}>
-          <ExternalLink size={14} /> Browse
+        <button
+          type="button"
+          className="btn ghost browse"
+          disabled={!queued}
+          onClick={props.onBrowse}
+          title="Show the queued topics' cards in the Browser"
+        >
+          <ExternalLink size={14} /> <span className="btn-label">Browse</span>
         </button>
         <span className="spacer" />
         <button type="button" className="btn" disabled={!queued} onClick={props.onUnsuspend}>

@@ -80,12 +80,14 @@ export function Banner(props: { onImport: () => void; onDismiss: () => void }) {
         You colour tags with <b>Colorful Tags</b>. Import those colours so Tag Queue knows what you've already queued
         and completed.
       </div>
-      <button type="button" className="btn primary" onClick={props.onImport}>
-        Import…
-      </button>
-      <button type="button" className="btn ghost" onClick={props.onDismiss}>
-        Not now
-      </button>
+      <div className="banner-actions">
+        <button type="button" className="btn primary" onClick={props.onImport}>
+          Import…
+        </button>
+        <button type="button" className="btn ghost" onClick={props.onDismiss}>
+          Not now
+        </button>
+      </div>
     </div>
   );
 }

@@ -732,7 +732,7 @@ export function App() {
         )}
       </div>
       <main className="main">
-        <section className="panel">
+        <section className="panel tree-panel">
           <div className="toolbar">
             <SearchBox ref={searchInput} value={query} onChange={setQuery} onSubmit={submitSearch} />
             <ScopePicker scopes={scopes} value={scope} onChange={changeScope} />
