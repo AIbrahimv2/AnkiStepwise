@@ -31,7 +31,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 
 SHELL = """<!doctype html>
-<html><head><meta charset="utf-8"><title>Tag Queue (dev)</title>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tag Queue (dev)</title>
 <link rel="stylesheet" href="/web/app.css">
 <script>
 if (new URLSearchParams(location.search).get("theme") === "dark")
