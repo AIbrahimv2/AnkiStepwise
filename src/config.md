@@ -12,9 +12,12 @@ collection.
 - `card_limit` — the most cards you want to add in one study session (default
   `150`). The meter turns red when the queue goes over it.
 - `count_mode` — which cards count toward the daily limit:
-  - `"new"` (default): new cards, i.e. never studied, whether still
-    suspended, already unsuspended or buried. Checking a topic off
-    (which unsuspends it) doesn't change this number; studying does.
+  - `"new"` (default): the new cards Anki will show you today, whether
+    still suspended or already unsuspended. It follows each deck's **Bury
+    new siblings** option: with it on, a note counts once (Anki shows one
+    new card per note a day), and a note with a sibling due today doesn't
+    count. Buried cards wait for the day they come back. Checking a topic
+    off (which unsuspends it) doesn't change this number; studying does.
   - `"suspended"`: only cards still suspended (what's left to unsuspend).
   - `"all"`: every card under the tag.
 - `unsuspend_on_complete` — unsuspend a topic's cards when you mark it

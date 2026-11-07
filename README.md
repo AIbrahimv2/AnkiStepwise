@@ -57,9 +57,15 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   Bootcamp and Pixorize tags). Select a topic to see how many cards it *would
   add* before you queue it.
 - **Daily plan.** The queue is your plan for the day's new cards (150 by
-  default). The meter counts every new card in it, still suspended or already
-  unsuspended, so checking a topic off doesn't change it; studying the
-  cards does. It turns red when the plan goes over.
+  default). The meter counts the new cards in it that Anki will show you
+  today, still suspended or already unsuspended, so checking a topic off
+  doesn't change it; studying the cards does. It turns red when the plan
+  goes over.
+- **Follows sibling burying.** With **Bury new siblings** on in a deck's
+  options (AnKing's preset has it on), Anki shows one new card per note a
+  day, so a note with three clozes counts as one today. Buried cards, and
+  notes with a sibling due for review today, wait for a later day. A queue
+  row's tooltip says how many more come after today.
 - **Check off as you go.** ✓ on a queued topic unsuspends its cards and
   checks it off: it stays in the queue (with an undo) until every card in it
   is studied, then moves to Done by itself. Anything unfinished carries over to

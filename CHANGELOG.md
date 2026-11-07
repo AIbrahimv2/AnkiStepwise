@@ -29,6 +29,14 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- **The new-card count follows sibling burying.** With **Bury new siblings**
+  on in a deck's options (as in AnKing's preset), Anki shows one new card per
+  note a day, so the meter, each topic's count, "Adds +N" and Fill queue now
+  count a note once, leave out buried cards, and leave out notes with a
+  sibling due for review today: they count on the day Anki can show them.
+  Decks with the option off count every card. A queue row's tooltip says how
+  many more come after today, and a topic with nothing until tomorrow says
+  so. On one real queue this took the meter from 162 to 140.
 - **Narrower windows.** The window can now be as narrow as 440px (it was
   860px). As it narrows, the tree's columns tighten, then Total and then
   Waiting give way and levels indent less, so topic names stay readable; the
