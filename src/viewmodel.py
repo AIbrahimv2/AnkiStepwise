@@ -508,6 +508,10 @@ class View:
                        suspended=idx.suspended.get(low, 0) if idx else 0,
                        waiting=idx.waiting.get(low, 0) if idx else 0,
                        buried=idx.buried.get(low, 0) if idx else 0)
+            # New cards Anki holds back today (siblings buried, or one of
+            # theirs due): they count from the day they can show.
+            if self.mode == "new" and idx is not None and idx.mode == self.mode:
+                row["afterToday"] = max(0, idx.new.get(low, 0) - row["fresh"])
             if row["missing"]:
                 row["path"] = "Tag not found in this collection"
             return row

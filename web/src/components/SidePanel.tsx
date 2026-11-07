@@ -323,24 +323,31 @@ export function SidePanel(props: Props) {
   );
 }
 
-/** The row's counted cards, and underneath how many still need
- *  unsuspending (or that none do). */
 /** The row's counted cards. The breakdown is in the tooltip; a caption
  *  only appears when it says something the number and check don't: an
- *  unchecked topic whose cards are all unsuspended already. */
+ *  unchecked topic whose cards are all unsuspended already, or one with
+ *  nothing today because Anki holds its new cards back until tomorrow. */
 function RowCounts(props: { row: QueueRow; mode: Side["mode"] }) {
   const { row, mode } = props;
   const suspended = row.suspended ?? 0;
   const unit = mode === "suspended" ? "to unsuspend" : mode === "new" ? "new cards" : "cards";
   const tip = [
-    `${fmt(row.fresh)} ${unit}`,
+    `${fmt(row.fresh)} ${unit}${row.afterToday ? " today" : ""}`,
     mode !== "suspended" && suspended ? `${fmt(suspended)} still suspended` : null,
     row.waiting ? `${fmt(row.waiting)} unsuspended, not studied yet` : null,
     row.buried ? `${fmt(row.buried)} of those buried (back on their own)` : null,
+    row.afterToday
+      ? `${fmt(row.afterToday)} more after today: with Bury new siblings on, Anki shows one new card per note a day`
+      : null,
   ]
     .filter(Boolean)
     .join("\n");
-  const caption = mode === "new" && !row.watched && !suspended && row.fresh ? "unsuspended" : null;
+  const caption =
+    mode === "new" && !row.fresh && row.afterToday
+      ? "tomorrow"
+      : mode === "new" && !row.watched && !suspended && row.fresh
+        ? "unsuspended"
+        : null;
   return (
     <div className="item-meta" title={tip}>
       <b>{fmt(row.fresh)}</b>

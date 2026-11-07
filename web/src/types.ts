@@ -72,6 +72,8 @@ export interface QueueRow extends RowBase {
   suspended?: number;
   waiting: number;
   buried: number;
+  /** New cards Anki won't show today (sibling burying); "new" mode only. */
+  afterToday?: number;
   missing: boolean;
 }
 
