@@ -26,6 +26,7 @@ from .counts import (
     short_name,
     suspended_ids,
     tags_search,
+    today_units,
 )
 from .state import COMPLETED, QUEUED, QueueState
 
@@ -378,13 +379,17 @@ def usable_index() -> TagIndex | None:
 
 
 def fresh_cards(tags: list[str]) -> set[int]:
-    """Ids of the unique cards under `tags` that count toward the limit."""
+    """What the unique cards under `tags` add up to toward the limit, as a
+    set whose size is the count: card ids, except that in "new" mode a note
+    whose deck buries new siblings counts once (as -note id), and cards Anki
+    won't show today (buried, or held back by a sibling) don't count."""
     if not tags:
         return set()
     idx = usable_index()
     if idx is not None:
-        return set(idx.ids(idx.fresh_under(tags)))
-    return set(fresh_ids(mw.col, tags, get_config()["count_mode"]))
+        return idx.units_under(tags)
+    mode = get_config()["count_mode"]
+    return today_units(mw.col, fresh_ids(mw.col, tags, mode), mode)
 
 
 def suspended_cards(tags: list[str]) -> list[int]:

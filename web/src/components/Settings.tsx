@@ -12,7 +12,8 @@ const MODES: { value: CountMode; label: string; hint: string }[] = [
   {
     value: "new",
     label: "New cards",
-    hint: "Cards you've never studied, suspended or not. Checking a topic off doesn't change it; studying does.",
+    hint:
+      "New cards Anki will show you today, suspended or not. With Bury new siblings on (deck options), a note counts once. Checking a topic off doesn't change it; studying does.",
   },
   { value: "suspended", label: "To unsuspend", hint: "Only cards that are still suspended." },
   { value: "all", label: "All cards", hint: "Every card under the topic, studied or not." },

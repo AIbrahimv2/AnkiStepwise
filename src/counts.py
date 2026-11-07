@@ -2,9 +2,10 @@
 # Copyright (C) 2026 AIbrahimv2
 """Card counting and tag-tree indexing.
 
-Counts are always *unique cards*: a card tagged with several queued topics
-(common in AnKing, where one card carries B&B, Bootcamp and Pixorize tags)
-is counted once. No Qt imports, so this runs against a collection outside
+Counts are always unique: a card tagged with several queued topics (common
+in AnKing, where one card carries B&B, Bootcamp and Pixorize tags) is
+counted once, and in "new" mode so is a note whose deck buries new siblings
+(see shown_today). No Qt imports, so this runs against a collection outside
 Anki for testing.
 
 Performance note: Anki's `tag:` search runs a regex over every note per
@@ -18,19 +19,94 @@ from __future__ import annotations
 
 import fnmatch
 import re
+from array import array
 from collections import Counter, defaultdict
 from collections.abc import Callable, Iterable, Iterator
 from dataclasses import dataclass, field
+from itertools import groupby
 
 from .state import SEP
 
 # What counts toward the session limit (config: count_mode).
-#   new        new cards: never studied, whether still suspended, unsuspended
-#              or buried. Default: the day's plan, which doesn't shrink when
-#              you watch a topic and unsuspend its cards, only as you study.
+#   new        the new cards Anki will show you today, still suspended or not.
+#              Default: the day's plan, which doesn't shrink when you check a
+#              topic off and unsuspend its cards, only as you study. It
+#              follows the decks' "Bury new siblings" option (see shown_today).
 #   suspended  only cards that are still suspended
 #   all        every card under the tag
 COUNT_MODES = ("new", "suspended", "all")
+
+BURIED = (-2, -3)  # buried by hand, or by sibling burying
+
+
+# --- what Anki shows today -----------------------------------------------------
+# With "Bury new siblings" on (deck options), Anki shows at most one new card
+# of a note a day: answering one buries the rest until tomorrow, and when the
+# day's queue is built a new card is left out if a sibling is already in it
+# (a review or learning card due today, or another new card). Counting every
+# new card would plan more than Anki will actually show.
+
+
+def bury_new_decks(col) -> dict[int, bool]:
+    """Deck id -> whether its options bury new siblings."""
+    out = {}
+    for d in col.decks.all_names_and_ids():
+        try:
+            out[d.id] = bool(col.decks.config_dict_for_deck_id(d.id)["new"].get("bury"))
+        except Exception:  # a filtered deck's own entry; its cards use their home deck
+            out[d.id] = False
+    return out
+
+
+def due_today(queue: int, due: int, today: int, cutoff: int) -> bool:
+    """A studied card Anki will show today: a review or day-learning card due
+    by today (`due` in days), or a learning card (`due` a timestamp)."""
+    return (queue in (2, 3) and due <= today) or (queue == 1 and due < cutoff)
+
+
+def shown_today(news: list[tuple[int, int]], sibling_due: bool, nid: int,
+                bury: dict[int, bool]) -> list[tuple[int, int]]:
+    """Of one note's new, unburied cards `news` [(card id, deck id)], the ones
+    Anki will show today, each paired with what it counts as: the card id,
+    or -nid for a card whose deck buries new siblings (the note then counts
+    once). In such a deck none show while a sibling is due today."""
+    out = []
+    for cid, deck in news:
+        if bury.get(deck):
+            if not sibling_due:
+                out.append((cid, -nid))
+        else:
+            out.append((cid, cid))
+    return out
+
+
+def today_units(col, cids: Iterable[int], mode: str) -> set[int]:
+    """What the cards `cids` (those counting in `mode`) add up to toward the
+    limit, without the index: in "new" mode the units of shown_today(), else
+    the cards themselves."""
+    cids = list(cids)
+    if mode != "new" or not cids:
+        return set(cids)
+    from anki.utils import ids2str
+
+    wanted = set(cids)
+    bury = bury_new_decks(col)
+    today, cutoff = col.sched.today, col.sched.day_cutoff  # unburies on a new day: before reading
+    rows = col.db.all(
+        "select id, nid, queue, type, did, odid, due from cards where nid in"
+        f" (select nid from cards where id in {ids2str(cids)}) order by nid"
+    )
+    out: set[int] = set()
+    for nid, cards in groupby(rows, key=lambda r: r[1]):
+        news, sibling_due = [], False
+        for cid, _nid, queue, ctype, did, odid, due in cards:
+            if ctype == 0:
+                if cid in wanted and queue not in BURIED:
+                    news.append((cid, odid or did))
+            elif due_today(queue, due, today, cutoff):
+                sibling_due = True
+        out.update(u for _cid, u in shown_today(news, sibling_due, nid, bury))
+    return out
 
 _FRESH_SEARCH = {
     "new": "is:new",
@@ -150,7 +226,8 @@ class TagIndex:
     names: dict[str, str] = field(default_factory=dict)
     children: dict[str, list[str]] = field(default_factory=dict)
     total: Counter = field(default_factory=Counter)
-    # Per tag: what counts toward the limit in `mode`, and the breakdown.
+    # Per tag: what counts toward the limit in `mode` (in "new" mode, the new
+    # cards Anki shows today: see shown_today), and the breakdown.
     fresh: Counter = field(default_factory=Counter)
     suspended: Counter = field(default_factory=Counter)
     # Unsuspended but never studied (new cards in Anki's queue, or buried).
@@ -164,7 +241,10 @@ class TagIndex:
     # tag actually on a note (lower-case) -> positions of that note's cards
     tag_cards: dict[str, list[int]] = field(default_factory=dict)
     card_ids: list[int] = field(default_factory=list)
+    # Per card: whether it counts toward the limit, and as what (its card id,
+    # or -note id when its note counts once).
     fresh_mask: bytearray = field(default_factory=bytearray)
+    unit: array = field(default_factory=lambda: array("q"))
     suspended_mask: bytearray = field(default_factory=bytearray)
     # Every tag, deepest first: children always come before their parent.
     post_order: list[str] = field(default_factory=list)
@@ -200,10 +280,11 @@ class TagIndex:
                     out.update(cards)
         return out
 
-    def fresh_under(self, tags: Iterable[str]) -> set[int]:
-        """Positions of the cards under `tags` that count toward the limit."""
-        mask = self.fresh_mask
-        return {i for i in self.cards_under(tags) if mask[i]}
+    def units_under(self, tags: Iterable[str]) -> set[int]:
+        """What the cards under `tags` add up to toward the limit: its size
+        is the count (a note whose siblings are buried counts once)."""
+        mask, unit = self.fresh_mask, self.unit
+        return {unit[i] for i in self.cards_under(tags) if mask[i]}
 
     def ids(self, positions: Iterable[int]) -> list[int]:
         card_ids = self.card_ids
@@ -237,21 +318,49 @@ def build_index(col, mode: str) -> TagIndex:
     for tag in col.tags.all():
         learn(tag)
 
+    count_all, only_suspended = mode == "all", mode == "suspended"
+    count_new = not count_all and not only_suspended
+    bury = bury_new_decks(col) if count_new else {}
+    # Before reading the cards: on a new day this is what unburies
+    # yesterday's buried cards.
+    today, cutoff = (col.sched.today, col.sched.day_cutoff) if count_new else (0, 0)
     rows = col.db.all(
-        "select c.id, n.tags, c.queue, c.type from cards c join notes n on n.id = c.nid"
-        " order by c.nid"
+        "select c.id, c.nid, n.tags, c.queue, c.type, c.did, c.odid, c.due"
+        " from cards c join notes n on n.id = c.nid order by c.nid"
     )
     total, suspended, waiting, buried, new = idx.total, idx.suspended, idx.waiting, idx.buried, idx.new
     card_ids = idx.card_ids
     mask = idx.fresh_mask = bytearray(len(rows))
     smask = idx.suspended_mask = bytearray(len(rows))
-    count_all, only_suspended = mode == "all", mode == "suspended"
+    unit = idx.unit = array("q", (r[0] for r in rows))
+    plan: Counter = Counter()  # "new" mode: what Anki shows today, per tag
+    pos: dict[int, int] = {}  # card id -> position, for the note being read
+
+    def settle(nid: int, news: list, sibling_due: bool, under: set[str]) -> None:
+        """Count a finished note's new cards that Anki shows today."""
+        units = set()
+        for cid, u in shown_today(news, sibling_due, nid, bury):
+            i = pos[cid]
+            mask[i] = 1
+            unit[i] = u
+            units.add(u)
+        for _ in units:
+            plan.update(under)
+
     get = info.get
     last_tags = None
     under: set[str] = set()
     lists: list[list[int]] = []
-    for i, (cid, tags, queue, ctype) in enumerate(rows):
-        if tags != last_tags:  # cards of one note are adjacent
+    last_nid = None
+    news: list[tuple[int, int]] = []
+    sibling_due = False
+    for i, (cid, nid, tags, queue, ctype, did, odid, due) in enumerate(rows):
+        if nid != last_nid:  # cards of one note are adjacent
+            if news:
+                settle(last_nid, news, sibling_due, under)
+            last_nid, news, sibling_due = nid, [], False
+            pos.clear()
+        if tags != last_tags:
             last_tags = tags
             found = [get(t) or learn(t) for t in tags.split()]
             under = set().union(*[f[0] for f in found])
@@ -267,12 +376,21 @@ def build_index(col, mode: str) -> TagIndex:
             suspended.update(under)
         elif ctype == 0:
             waiting.update(under)
-            if queue in (-2, -3):
+            if queue in BURIED:
                 buried.update(under)
-        if count_all or (queue == -1 if only_suspended else ctype == 0):
+        if count_new:
+            if ctype == 0:
+                if queue not in BURIED:
+                    pos[cid] = i
+                    news.append((cid, odid or did))
+            elif due_today(queue, due, today, cutoff):
+                sibling_due = True
+        elif count_all or queue == -1:
             mask[i] = 1
+    if news:
+        settle(last_nid, news, sibling_due, under)
     idx.tag_cards = {k: v for k, v in tag_cards.items() if v}
-    idx.fresh = total if count_all else suspended if only_suspended else new
+    idx.fresh = total if count_all else suspended if only_suspended else plan
 
     children: dict[str, list[str]] = defaultdict(list)
     for low in names:
