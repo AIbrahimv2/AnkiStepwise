@@ -18,10 +18,10 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 
 - **Tag tree by resource, split by step.** Resources sit under colour-coded
   **Step 1 / Step 2 / Step 3** sections that stay pinned to the top while you
-  scroll, with checkboxes to queue topics and columns for new cards, total cards
-  and a progress bar (hover it for the numbers); the status column marks Later
-  topics with a bookmark and done ones with a check (hover for the date). Queue, Later and Done rows carry a matching
-  step chip.
+  scroll, with checkboxes to queue topics. Each topic shows how many cards are
+  **Left** to unsuspend and a **Progress** bar of its cards (hover it for the
+  numbers); Later topics get a bookmark there instead and done ones a check
+  (hover for the date). Queue, Later and Done rows carry a matching step chip.
 - **Keyword search.** Type `brainstem` or `b&b cardio` to see matching topics
   from every resource, nested under the resource they belong to. A dropdown next
   to the search box limits the tree and the search to **all resources**, your
@@ -34,11 +34,13 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   doesn't count toward your limit. Going over the limit offers **Move to
   Later** right in the warning, and **Fill queue** later queues the oldest
   Later topics that fit under your limit.
-- **Suspended vs waiting.** The tree shows **Suspended** (cards you still have
-  to unsuspend — what counts toward your limit) separately from **Waiting**
-  (already unsuspended but not studied yet; a ☾ marks ones buried by sibling
-  settings, which come back by themselves), so a topic whose cards are only
-  buried no longer looks unfinished.
+- **One number, one bar.** **Left** is what you still have to unsuspend. The
+  bar fills with the cards you've studied, then, in a lighter green, the ones
+  **waiting**: already unsuspended but not studied yet, including any buried
+  by sibling settings, which come back by themselves. The percentage is the
+  unsuspended share, so waiting cards count: there's nothing left to do for
+  them. The bar's tooltip has the exact numbers, the total, and how many of
+  the topic's subtopics are done.
 - **Grouped by resource.** Queue and Later group topics under their resource
   (Pixorize, Bootcamp, …) with each group's unique new-card count in the same
   column as the topics' counts (labelled once, at the top), and cluster topics
@@ -108,8 +110,8 @@ Right-click a topic for more: save it for later, browse its cards, unsuspend
 without completing, clear its status, or pin a resource to the top.
 
 In a narrow window (under 760px) the topics and the queue take turns: switch
-between them at the top of the window. The tree drops its Total and Waiting columns
-before it squeezes topic names.
+between them at the top of the window. The tree's bars get shorter before it
+squeezes topic names.
 
 ### Keyboard
 

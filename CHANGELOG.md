@@ -39,6 +39,17 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- **The tree shows one number and one bar per topic.** The Suspended,
+  Waiting, Total and Status columns are now **Left** (cards still
+  suspended) and **Progress**: a bar of the topic's cards, studied in green,
+  then waiting (unsuspended, not studied yet) in a lighter green, then the
+  still-suspended rest, with the unsuspended percentage beside it. Waiting
+  cards count toward the percentage, since there's nothing to unsuspend for
+  them. The bar used to count subtopics done, so it disagreed with the card
+  numbers next to it; that count is now in the bar's tooltip, with studied,
+  waiting, buried, still-suspended and total cards. Topics with nothing
+  unsuspended yet show no bar, and Later and Done keep their marks. In
+  narrow windows the bars shorten instead of columns disappearing.
 - **The new-card count follows sibling burying.** With **Bury new siblings**
   on in a deck's options (as in AnKing's preset), Anki shows one new card per
   note a day, so the meter, each topic's count, "Adds +N" and Fill queue now
@@ -48,8 +59,8 @@ All notable changes to this project are documented here. The format is based on
   many more come after today, and a topic with nothing until tomorrow says
   so. On one real queue this took the meter from 162 to 140.
 - **Narrower windows.** The window can now be as narrow as 440px (it was
-  860px). As it narrows, the tree's columns tighten, then Total and then
-  Waiting give way and levels indent less, so topic names stay readable; the
+  860px). As it narrows, the tree's columns tighten, its bars shorten and
+  levels indent less, so topic names stay readable; the
   queue panel puts the limit on its own line and slims its footer buttons.
   Below 760px a Topics / Queue switch at the top shows one at a time
   (choosing a topic in the queue, or pressing `/`, goes back to the topics).
@@ -57,7 +68,7 @@ All notable changes to this project are documented here. The format is based on
 - The tree's keys work as soon as the window opens (no click first), and
   from anywhere on the page that isn't a text field, button, menu or
   dialog.
-- The tree's Status column is down to one thing per row: a progress bar
+- The tree's Progress column is down to one thing per row: the card bar
   (numbers in its tooltip), or a bookmark for Later and a check for Done
   (dates in the tooltip), all ending at one edge. The Queued badge, the queued/Later counts inside folders and
   the 320/507 fractions are gone: the ticked box and the queue panel already
@@ -118,8 +129,8 @@ All notable changes to this project are documented here. The format is based on
   entries. It never climbs past a resource. On the author's collection this
   turned 179 Done entries into 117.
 - Cards already unsuspended but not studied yet, including ones buried by
-  sibling settings, show in a separate **Waiting** column (a ☾ marks buried
-  ones) next to **Suspended**, so a topic whose cards are only buried no
+  sibling settings, count as waiting (the lighter part of the card bar)
+  rather than left to unsuspend, so a topic whose cards are only buried no
   longer looks like it has cards left to unsuspend.
 - Clicking a row in Queue, Later or Done reveals that tag in the tree (opens
   its folders, loads enough of a big folder, clears search or a narrower
