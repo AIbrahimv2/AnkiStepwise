@@ -1,4 +1,4 @@
-import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, Moon, SearchX, Star } from "lucide-react";
+import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, SearchX, Star } from "lucide-react";
 import { type CSSProperties, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
@@ -213,17 +213,15 @@ export function Tree(props: TreeProps) {
           whether or not a scrollbar takes room. */}
       <div className="tree-head" role="presentation">
         <span>Topic</span>
-        <span className="r" title="Still suspended: the cards you add to your reviews by unsuspending them">
-          Suspended
+        <span className="r" title="Cards still suspended: what's left to unsuspend">
+          Left
         </span>
         <span
-          className="r col-wait"
-          title="Already unsuspended but not studied yet: new cards waiting in Anki, plus any buried (☾) by sibling settings, which come back by themselves. Nothing to unsuspend."
+          className="r status-head"
+          title="How much of the topic is unsuspended: studied, then waiting (unsuspended, not studied yet), then still suspended. Hover a bar for the numbers. Later and Done topics show their mark instead."
         >
-          Waiting
+          Progress
         </span>
-        <span className="r col-total" title="Every card under this tag">Total</span>
-        <span className="r status-head">Status</span>
       </div>
         {props.loading ? (
           <Skeleton />
@@ -361,8 +359,6 @@ const TreeRow = memo(function TreeRow(props: {
         {node.top && depth === 0 && <StepChip step={node.step} index={node.stepIndex} />}
       </div>
       <span className={`cell-num${node.suspended ? " fresh" : " zero"}`}>{fmt(node.suspended)}</span>
-      <WaitingCell waiting={node.waiting} buried={node.buried} />
-      <span className="cell-num col-total">{fmt(node.total)}</span>
       <span className="cell-status">
         <StatusCell node={node} />
         {canLater ? (
@@ -419,10 +415,14 @@ function GroupRow(props: {
           </span>
         </div>
         <span className="cell-num fresh">{fmt(node.suspended ?? 0)}</span>
-        <WaitingCell waiting={node.waiting ?? 0} buried={node.buried ?? 0} />
-        <span className="cell-num col-total">{fmt(node.total ?? 0)}</span>
         <span className="cell-status">
-          {p && <Progress done={p.done} total={p.total} />}
+          <CardBar
+            suspended={node.suspended ?? 0}
+            waiting={node.waiting ?? 0}
+            buried={node.buried ?? 0}
+            total={node.total ?? 0}
+            topics={p}
+          />
           <span className="row-later-slot" aria-hidden="true" />
         </span>
       </div>
@@ -445,8 +445,6 @@ function GroupRow(props: {
         <span className="label">{node.label}</span>
       </div>
       <span />
-      <span className="col-wait" />
-      <span className="col-total" />
       <span className="cell-num">{fmt(node.count)} tags</span>
     </div>
   );
@@ -465,29 +463,39 @@ function MoreRow(props: { depth: number; hidden: number; selected: boolean; onLo
   );
 }
 
-/** Unsuspended-but-unstudied cards, dimmed: nothing to do here. A moon
- *  marks the ones buried by sibling settings (back on their own). */
-function WaitingCell({ waiting, buried }: { waiting: number; buried: number }) {
-  if (!waiting) return <span className="cell-num zero col-wait">–</span>;
-  const tip =
-    `${waiting} already unsuspended, not studied yet` +
-    (buried ? ` — ${buried} buried (they come back by themselves)` : "");
+/** A topic's cards in one bar: studied, then waiting (unsuspended but not
+ *  studied yet, so nothing left to do for them), then the still-suspended
+ *  rest as the empty track. The percentage is the unsuspended share, so
+ *  waiting cards count toward it. The numbers, and how many of its topics
+ *  are done, are in the tooltip. Nothing unsuspended yet: no bar. */
+function CardBar(props: {
+  suspended: number;
+  waiting: number;
+  buried: number;
+  total: number;
+  topics: { done: number; total: number } | null | undefined;
+}) {
+  const { suspended, waiting, buried, total, topics } = props;
+  const unsuspended = total - suspended;
+  if (total <= 0 || unsuspended <= 0) return null;
+  const studied = unsuspended - waiting;
+  // Rounded down, so 100% always means nothing is left to unsuspend.
+  const pct = suspended ? Math.floor((100 * unsuspended) / total) : 100;
+  const tip = [
+    `${fmt(unsuspended)} of ${fmt(total)} cards unsuspended (${pct}%)`,
+    `${fmt(studied)} studied`,
+    `${fmt(waiting)} waiting to be studied` +
+      (buried ? ` (${fmt(buried)} buried, back by themselves)` : ""),
+    `${fmt(suspended)} still suspended`,
+    ...(topics && topics.total > 1 ? [`${fmt(topics.done)} of ${fmt(topics.total)} topics done`] : []),
+  ].join("\n");
   return (
-    <span className="cell-num waiting col-wait" title={tip}>
-      {buried > 0 && <Moon size={10} className="buried-icon" />}
-      {fmt(waiting)}
-    </span>
-  );
-}
-
-/** Progress as a bar alone; the numbers are in its tooltip. */
-function Progress({ done, total }: { done: number; total: number }) {
-  const pct = Math.round((100 * done) / total);
-  return (
-    <span className="mini" title={`${fmt(done)} of ${fmt(total)} topics done (${pct}%)`}>
+    <span className="mini" title={tip}>
       <span className="mini-track">
-        <span className="mini-fill" style={{ display: "block", width: `${(100 * done) / total}%` }} />
+        <span className="mini-fill" style={{ width: `${(100 * studied) / total}%` }} />
+        <span className="mini-wait" style={{ width: `${(100 * waiting) / total}%` }} />
       </span>
+      <span className="mini-pct">{pct}%</span>
     </span>
   );
 }
@@ -498,7 +506,7 @@ const sinceText = (since: string | null) =>
   since && since !== "imported" ? <span className="since">{since}</span> : null;
 
 /** One thing per cell: a bookmark for Later, a check for Done (the date
- *  and why are in the tooltip), otherwise the progress bar. Queued needs no
+ *  and why are in the tooltip), otherwise the card bar. Queued needs no
  *  mark: the ticked box says it, and the queue panel already lists what's
  *  queued inside each resource. */
 function StatusCell({ node }: { node: TagNode }) {
@@ -526,8 +534,15 @@ function StatusCell({ node }: { node: TagNode }) {
       </span>
     );
   }
-  const p = node.progress;
-  return p && p.done > 0 ? <Progress done={p.done} total={p.total} /> : null;
+  return (
+    <CardBar
+      suspended={node.suspended}
+      waiting={node.waiting}
+      buried={node.buried}
+      total={node.total}
+      topics={node.progress}
+    />
+  );
 }
 
 function Skeleton() {
@@ -557,8 +572,9 @@ export function DetailsBar({ details, searching }: { details: Details | null; se
       </div>
     );
   }
-  // The row's own columns already show its suspended, waiting and total
-  // cards, so the bar sticks to what the row can't: where the topic sits,
+  // The row already shows what's left and, in its bar's tooltip, its
+  // studied, waiting and total cards, so the bar sticks to what the row
+  // can't: where the topic sits,
   // what queuing it would do, and its status.
   const d = details;
   const projection =
