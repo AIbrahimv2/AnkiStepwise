@@ -10,6 +10,8 @@
   --text-3: var(--fg-faint, #afafaf);
   --ink: var(--fg, #0a0a0a);
   --q-raw: #ff9300;
+  /* Stepwise's own orange: fixed, unlike the queued colour (Settings). */
+  --brand-raw: #ff9300;
   --d-raw: #00f900;
   --l-raw: #af52de;
   /* One hue per resource root (Step 1, Step 2, Step 3, ...). */
@@ -32,6 +34,8 @@
      colour so they stay readable on both light and dark backgrounds. */
   --q: color-mix(in srgb, var(--q-raw) 82%, var(--text));
   --q-soft: color-mix(in srgb, var(--q-raw) 13%, transparent);
+  --brand: color-mix(in srgb, var(--brand-raw) 70%, var(--text)); /* 3.5:1 on its tile */
+  --brand-soft: color-mix(in srgb, var(--brand-raw) 13%, transparent);
   --d: color-mix(in srgb, var(--d-raw) 52%, var(--text));
   --d-soft: color-mix(in srgb, var(--d-raw) 13%, transparent);
   --l: color-mix(in srgb, var(--l-raw) 80%, var(--text));
@@ -67,6 +71,7 @@
   --sunken: rgb(0 0 0 / 0.16);
   --focus: #60a5fa;
   --q: color-mix(in srgb, var(--q-raw) 66%, var(--text));
+  --brand: color-mix(in srgb, var(--brand-raw) 66%, var(--text));
   --d: color-mix(in srgb, var(--d-raw) 70%, var(--text));
   --l: color-mix(in srgb, var(--l-raw) 62%, var(--text));
   --s0: #60a5fa;
@@ -144,8 +149,8 @@ body {
   border-radius: 10px;
   display: grid;
   place-items: center;
-  background: var(--q-soft);
-  color: var(--q);
+  background: var(--brand-soft);
+  color: var(--brand);
   flex: none;
 }
 .titles { flex: 1; min-width: 0; }

@@ -2,7 +2,6 @@ import {
   CircleCheck,
   Ellipsis,
   Info,
-  ListChecks,
   Palette,
   RefreshCw,
   Settings2,
@@ -11,6 +10,7 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { call } from "../bridge";
 import type { ImportGroup, Options, Status } from "../types";
+import { Mark } from "./Mark";
 import { type Anchor, Menu, Modal, Switch, anchorBelow, fmt, plural } from "./ui";
 
 // --- header ------------------------------------------------------------------
@@ -30,7 +30,7 @@ export function Header(props: {
   return (
     <header className="header">
       <div className="app-icon">
-        <ListChecks size={19} strokeWidth={2.2} />
+        <Mark size={24} weight={2.5} />
       </div>
       <div className="titles">
         <div className="title">Stepwise</div>

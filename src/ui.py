@@ -10,7 +10,7 @@ import json
 import os
 
 from aqt import mw
-from aqt.qt import QDialog, QTimer, QVBoxLayout, qconnect
+from aqt.qt import QDialog, QIcon, QTimer, QVBoxLayout, qconnect
 from aqt.utils import restoreGeom, saveGeom
 from aqt.webview import AnkiWebView
 
@@ -20,6 +20,7 @@ from .config import ADDON
 from .counts import TagIndex
 
 GEOM_KEY = "tag_queue_web"
+ICONS = os.path.join(os.path.dirname(__file__), "icons")
 WEB_DIR = os.path.join(os.path.dirname(os.path.abspath(__file__)), "web")
 
 
@@ -37,6 +38,7 @@ class QueueDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
         self.setWindowTitle("Stepwise")
+        self.setWindowIcon(QIcon(os.path.join(ICONS, "stepwise.svg")))
         # The page switches to one panel at a time below 760px wide.
         self.setMinimumSize(440, 560)
         self.resize(1140, 760)

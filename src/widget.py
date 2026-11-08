@@ -14,6 +14,13 @@ from . import actions
 from .config import get_config
 
 OPEN_CMD = "tagqueue:open"
+# The Stepwise mark (web/src/components/Mark.tsx), in the brand orange.
+MARK = (
+    '<svg class="tq-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"'
+    ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
+    '<path d="M3 18h6v-6h6V6h6"/><circle cx="11.3" cy="8.3" r="2" fill="currentColor"'
+    ' stroke="none"/></svg>'
+)
 UNITS = {"new": "new cards", "suspended": "to unsuspend", "all": "cards"}
 
 STYLE = """
@@ -24,7 +31,11 @@ STYLE = """
            transition: background .15s; }
 .tq-wrap:hover { background: rgba(127,127,127,.09); }
 .tq-head { display: flex; align-items: baseline; gap: 8px; }
-.tq-label { flex: 1; font-size: 11px; text-transform: uppercase; letter-spacing: .1em; opacity: .5; }
+.tq-label { flex: 1; display: flex; align-items: center; gap: 6px; font-size: 11px;
+            text-transform: uppercase; letter-spacing: .1em; }
+.tq-label span { opacity: .5; }
+.tq-mark { width: 14px; height: 14px; flex: none; color: #c06e00; }
+.nightMode .tq-mark, .night-mode .tq-mark { color: #ffa733; }
 .tq-num b { font-size: 21px; font-weight: 800; letter-spacing: -.02em; }
 .tq-unit { font-size: 13px; opacity: .55; }
 .tq-bar { height: 4px; border-radius: 2px; background: rgba(127,127,127,.18); margin-top: 7px;
@@ -123,7 +134,7 @@ def build_widget() -> str:
     cls = "tq-wrap tq-over" if d["over"] else "tq-wrap"
     return (
         f'<div id="tq-widget" class="{cls}" onclick="pycmd(\'{OPEN_CMD}\')" title="Open Stepwise">'
-        '<div class="tq-head"><span class="tq-label">Stepwise</span>'
+        f'<div class="tq-head"><span class="tq-label">{MARK}<span>Stepwise</span></span>'
         f'<span class="tq-num"><b>{d["count"]}</b><span class="tq-unit"> / {d["limit"]} '
         f'{html.escape(d["unit"])}</span></span></div>'
         f'<div class="tq-bar"><div class="tq-fill" style="width:{d["pct"]}%"></div></div>'
