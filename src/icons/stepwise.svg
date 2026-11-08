@@ -1,8 +1,0 @@
-<svg xmlns="http://www.w3.org/2000/svg" width="128" height="128" viewBox="0 0 128 128">
-  <title>Stepwise</title>
-  <rect width="128" height="128" rx="30" fill="#ff9300"/>
-  <g transform="translate(22 22) scale(3.5)" fill="none" stroke="#ffffff" stroke-width="2.3" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M3 18h6v-6h6V6h6"/>
-    <circle cx="11.3" cy="8.3" r="2" fill="#ffffff" stroke="none"/>
-  </g>
-</svg>
