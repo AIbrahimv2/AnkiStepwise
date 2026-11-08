@@ -1,4 +1,8 @@
-# Tag Queue
+# <img src="src/icons/stepwise.svg" width="36" align="top" alt=""> Stepwise
+
+**Unsuspend your deck one topic at a time, within a daily new-card limit.**
+(Formerly Tag Queue.)
+
 
 An [Anki](https://apps.ankiweb.net/) add-on for planning study sessions by tag.
 Tick the topics you'll cover today, grouped by resource (B&B, Bootcamp,
@@ -72,7 +76,7 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   the next day. **Clear checked** takes checked-off topics off early.
 - **Deck-screen meter.** A compact meter under the deck list; click it to open
   the queue.
-- **Browser sidebar.** Right-click any tag (or several) → **Tag Queue** → Add to
+- **Browser sidebar.** Right-click any tag (or several) → **Stepwise** → Add to
   queue / Mark completed.
 - **Colorful Tags integration.** If
   [Colorful Tags](https://ankiweb.net/shared/info/594329229) is installed,
@@ -83,7 +87,7 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 
 ## Usage
 
-1. Open **Tools → Tag Queue** (Cmd/Ctrl+Alt+Q) or click the meter on the deck
+1. Open **Tools → Stepwise** (Cmd/Ctrl+Alt+Q) or click the meter on the deck
    screen.
 2. Expand a resource and tick the topics you plan to cover. Ticking a parent
    queues everything under it. Or search for a keyword, pick the resource you're
@@ -129,7 +133,7 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `n` / `N` | Next / previous search match |
 | `Esc` | Leave the search box (results stay); again to clear the search |
 
-Undo covers what you do in the Tag Queue window (queue, unqueue, Later,
+Undo covers what you do in the Stepwise window (queue, unqueue, Later,
 check off, clear, Fill queue, queue or save all search matches, imports),
 up to 50 steps back. Undoing a check-off puts the topic back in the queue
 and suspends the cards it unsuspended again, if you haven't studied them
@@ -138,7 +142,7 @@ are left alone.
 
 ### Settings
 
-**⋯ → Settings…** in the Tag Queue window (Anki's **Config** button for the
+**⋯ → Settings…** in the Stepwise window (Anki's **Config** button for the
 add-on opens the same thing) covers the daily limit and what counts toward
 it, unsuspending on check-off, which top-level tags hold your resources
 (with a live list of what each pattern matches), pinned resources, the
@@ -150,11 +154,11 @@ apply when you save; there's no JSON to edit.
 
 ### From AnkiWeb
 
-Search for "Tag Queue" in Anki's **Tools → Add-ons → Get Add-ons**.
+Search for "Stepwise" in Anki's **Tools → Add-ons → Get Add-ons**.
 
 ### Manual
 
-Download `anki-tag-queue.ankiaddon` from the
+Download `stepwise.ankiaddon` from the
 [Releases](https://github.com/AIbrahimv2/AnkiTagQueue/releases) page and
 double-click it, or run `./build.sh` and open the file it writes to `dist/`.
 

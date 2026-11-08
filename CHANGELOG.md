@@ -7,6 +7,14 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
+- **Renamed to Stepwise** (from Tag Queue), with its own mark: a staircase
+  with a dot partway up, in a fixed orange that doesn't change with the
+  queued colour. It shows in the window's header and title bar and on the
+  deck-screen meter, and the Tools menu, Browser menu and package
+  (`stepwise.ankiaddon`) carry the new name. The add-on's folder and the key
+  your queue is saved under are unchanged, so updating keeps your queue and
+  settings.
+
 - **Jump between search matches**: like vim's `/pattern<Enter>`, Enter
   (Shift+Enter) in the search box goes to the next (previous) match and
   hands the keys to the tree, where `n` / `N` move between matches
@@ -14,12 +22,12 @@ All notable changes to this project are documented here. The format is based on
   with the results kept; Esc again clears the search.
 - The tree remembers which folders are open and which step sections you
   closed, across restarts (kept in the Anki profile).
-- **Undo and redo** for changes made in the Tag Queue window: `u` or
+- **Undo and redo** for changes made in the Stepwise window: `u` or
   Cmd/Ctrl+Z undoes, `Ctrl-r` or Cmd/Ctrl+Shift+Z redoes, up to 50 steps.
   Undoing a check-off also re-suspends the cards it unsuspended (if still
   unstudied), and only what that action changed is put back.
 
-- **Settings** inside the Tag Queue window (⋯ → Settings…), replacing the
+- **Settings** inside the Stepwise window (⋯ → Settings…), replacing the
   JSON config editor: daily limit, count mode, unsuspend on check-off,
   resource-folder patterns with a live preview of what they match, pinned
   resources, the deck-screen meter, a recorded keyboard shortcut, and the
@@ -136,7 +144,7 @@ All notable changes to this project are documented here. The format is based on
 ### Added
 
 - Initial version.
-- **Tag Queue window** (Tools → Tag Queue, Cmd/Ctrl+Alt+Q), a React web UI
+- **Stepwise window** (Tools → Stepwise, Cmd/Ctrl+Alt+Q), a React web UI
   that follows Anki's light and dark themes. It has a tag tree grouped by
   resource with checkboxes to queue topics, new and total card counts,
   per-resource progress bars, search with highlighted matches, a right-click
