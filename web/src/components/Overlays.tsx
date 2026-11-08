@@ -10,47 +10,38 @@ import {
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { call } from "../bridge";
 import type { ImportGroup, Options, Status } from "../types";
-import { Mark } from "./Mark";
 import { type Anchor, Menu, Modal, Switch, anchorBelow, fmt, plural } from "./ui";
 
 // --- header ------------------------------------------------------------------
 
-export function Header(props: {
+/** Recount and the options menu (Colorful Tags import, Settings): the page's
+ *  only controls that aren't about the queue itself. They sit at the end of
+ *  the search toolbar, or in a narrow window's top bar. No title or logo:
+ *  the window's title bar already names it. */
+export function PageActions(props: {
   options: Options | null;
   refreshing: boolean;
   onRefresh: () => void;
   onImport: () => void;
   onSettings: () => void;
-  /** Shown between the title and the buttons (the pane switch). */
-  children?: ReactNode;
 }) {
   const btn = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
   const o = props.options;
   return (
-    <header className="header">
-      <div className="app-icon">
-        <Mark size={24} weight={2.5} />
-      </div>
-      <div className="titles">
-        <div className="title">Stepwise</div>
-        <div className="subtitle">Unsuspend your deck one topic at a time, within a daily new-card limit.</div>
-      </div>
-      {props.children}
-      <div className="header-actions">
-        <button type="button" className="icon-btn" title="Recount cards" onClick={props.onRefresh}>
-          <RefreshCw size={16} className={props.refreshing ? "spin" : undefined} />
-        </button>
-        <button
-          ref={btn}
-          type="button"
-          className="icon-btn"
-          title="Options"
-          onClick={() => setAnchor(btn.current ? anchorBelow(btn.current, true) : null)}
-        >
-          <Ellipsis size={18} />
-        </button>
-      </div>
+    <div className="page-actions">
+      <button type="button" className="icon-btn" title="Recount cards" onClick={props.onRefresh}>
+        <RefreshCw size={16} className={props.refreshing ? "spin" : undefined} />
+      </button>
+      <button
+        ref={btn}
+        type="button"
+        className="icon-btn"
+        title="Options"
+        onClick={() => setAnchor(btn.current ? anchorBelow(btn.current, true) : null)}
+      >
+        <Ellipsis size={18} />
+      </button>
       {anchor && o && (
         <Menu
           anchor={anchor}
@@ -69,7 +60,7 @@ export function Header(props: {
           ]}
         />
       )}
-    </header>
+    </div>
   );
 }
 

@@ -10,8 +10,6 @@
   --text-3: var(--fg-faint, #afafaf);
   --ink: var(--fg, #0a0a0a);
   --q-raw: #ff9300;
-  /* Stepwise's own orange: fixed, unlike the queued colour (Settings). */
-  --brand-raw: #ff9300;
   --d-raw: #00f900;
   --l-raw: #af52de;
   /* One hue per resource root (Step 1, Step 2, Step 3, ...). */
@@ -34,8 +32,6 @@
      colour so they stay readable on both light and dark backgrounds. */
   --q: color-mix(in srgb, var(--q-raw) 82%, var(--text));
   --q-soft: color-mix(in srgb, var(--q-raw) 13%, transparent);
-  --brand: color-mix(in srgb, var(--brand-raw) 70%, var(--text)); /* 3.5:1 on its tile */
-  --brand-soft: color-mix(in srgb, var(--brand-raw) 13%, transparent);
   --d: color-mix(in srgb, var(--d-raw) 52%, var(--text));
   --d-soft: color-mix(in srgb, var(--d-raw) 13%, transparent);
   --l: color-mix(in srgb, var(--l-raw) 80%, var(--text));
@@ -71,7 +67,6 @@
   --sunken: rgb(0 0 0 / 0.16);
   --focus: #60a5fa;
   --q: color-mix(in srgb, var(--q-raw) 66%, var(--text));
-  --brand: color-mix(in srgb, var(--brand-raw) 66%, var(--text));
   --d: color-mix(in srgb, var(--d-raw) 70%, var(--text));
   --l: color-mix(in srgb, var(--l-raw) 62%, var(--text));
   --s0: #60a5fa;
@@ -131,34 +126,17 @@ body {
 
 /* --- layout ---------------------------------------------------------------- */
 
+/* No header: the page is the queue. The window's title bar names it. */
 .app {
   height: 100%;
-  display: grid;
-  grid-template-rows: auto auto minmax(0, 1fr);
-}
-
-.header {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  padding: 16px 20px 14px;
+  flex-direction: column;
+  padding-top: 16px;
 }
-.app-icon {
-  width: 34px;
-  height: 34px;
-  border-radius: 10px;
-  display: grid;
-  place-items: center;
-  background: var(--brand-soft);
-  color: var(--brand);
-  flex: none;
-}
-.titles { flex: 1; min-width: 0; }
-.title { font-size: 17px; font-weight: 650; letter-spacing: -0.015em; }
-.subtitle { color: var(--text-2); font-size: 12.5px; margin-top: 1px; }
-.header-actions { display: flex; gap: 4px; }
+.page-actions { display: flex; gap: 2px; flex: none; }
 
 .main {
+  flex: 1;
   display: grid;
   grid-template-columns: minmax(0, 1fr) clamp(320px, 33vw, 410px);
   gap: 14px;
@@ -816,27 +794,23 @@ body {
   *, *::before, *::after { animation: none !important; transition: none !important; }
 }
 
-/* Smaller windows: a narrower queue panel, no subtitle. */
+/* Smaller windows: a narrower queue panel. */
 @media (max-width: 1060px) {
   .main { grid-template-columns: minmax(0, 1fr) clamp(290px, 31vw, 380px); }
-  .subtitle { display: none; }
 }
 
-/* Too narrow for both panels: one at a time, picked in the header. */
-.pane-switch { display: none; }
+/* Too narrow for both panels: one at a time, picked in a top bar that also
+   takes the page's buttons from the toolbar. */
+.topbar { display: none; }
 #root .pane-switch button { padding: 0 12px; }
 .count-pill.over { background: var(--danger-soft); color: var(--danger); }
 @media (max-width: 760px) {
+  .topbar { display: flex; align-items: center; gap: 8px; padding: 0 16px 12px; }
+  .pane-switch { flex: 1; margin: 0; }
+  .toolbar .page-actions { display: none; }
   .main { grid-template-columns: minmax(0, 1fr); }
   .main[data-pane="tree"] > .side-panel,
   .main[data-pane="side"] > .tree-panel { display: none; }
-  .pane-switch { display: grid; flex: none; margin: 0; }
-  .header { gap: 10px; }
-  .title { white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-}
-@media (max-width: 560px) {
-  .titles { display: none; }
-  .pane-switch { flex: 1; }
 }
 
 /* --- steps (resource roots) ------------------------------------------------- */

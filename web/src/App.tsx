@@ -16,8 +16,8 @@ import {
   Banner,
   type ConfirmRequest,
   ConfirmDialog,
-  Header,
   ImportDialog,
+  PageActions,
   type Pane,
   PaneSwitch,
   type Toast,
@@ -724,19 +724,25 @@ export function App() {
         ? "No tags to show here."
         : null;
 
+  const pageActions = (
+    <PageActions
+      options={options}
+      refreshing={refreshing}
+      onRefresh={() => {
+        setRefreshing(true);
+        call("refresh");
+      }}
+      onImport={() => setImporting(true)}
+      onSettings={() => setSettingsOpen(true)}
+    />
+  );
+
   return (
     <div className="app">
-      <Header
-        options={options}
-        refreshing={refreshing}
-        onRefresh={() => {
-          setRefreshing(true);
-          call("refresh");
-        }}
-        onImport={() => setImporting(true)}
-        onSettings={() => setSettingsOpen(true)}
-      >
-        {side && (
+      {/* Narrow windows only (the stylesheet hides it otherwise): which panel
+          shows, and the page's buttons, which then leave the toolbar. */}
+      {side && (
+        <div className="topbar">
           <PaneSwitch
             pane={pane}
             count={side.count}
@@ -745,22 +751,22 @@ export function App() {
             over={side.over}
             onPane={setPane}
           />
-        )}
-      </Header>
-      <div>
-        {options?.banner && (
-          <Banner
-            onImport={() => setImporting(true)}
-            onDismiss={() => call<{ options: Options }>("dismiss_banner").then((r) => setOptions(r.options))}
-          />
-        )}
-      </div>
+          {pageActions}
+        </div>
+      )}
+      {options?.banner && (
+        <Banner
+          onImport={() => setImporting(true)}
+          onDismiss={() => call<{ options: Options }>("dismiss_banner").then((r) => setOptions(r.options))}
+        />
+      )}
       <main className="main" data-pane={pane}>
         <section className="panel tree-panel">
           <div className="toolbar">
             <SearchBox ref={searchInput} value={query} onChange={setQuery} onSubmit={submitSearch} />
             <ScopePicker scopes={scopes} value={scope} onChange={changeScope} />
             <HideDoneSwitch checked={hideDone} onChange={(v) => setOption("hideCompleted", v)} />
+            {pageActions}
           </div>
           {search && summary && summary.count > 0 && (
             <MatchBar summary={summary} at={matchAt} onQueueAll={queueMatches} onLaterAll={() => act("later_matches")} />

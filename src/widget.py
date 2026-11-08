@@ -14,7 +14,7 @@ from . import actions
 from .config import get_config
 
 OPEN_CMD = "tagqueue:open"
-# The Stepwise mark (web/src/components/Mark.tsx), in the brand orange.
+# The Stepwise mark (as in src/icons/stepwise.svg), in the brand orange.
 MARK = (
     '<svg class="tq-mark" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.6"'
     ' stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">'
