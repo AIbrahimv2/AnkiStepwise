@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""Undo and redo for changes made in the Tag Queue window.
+"""Undo and redo for changes made in the Stepwise window.
 
 Each step keeps the queue's saved state just before and just after one
 action, plus any cards that action unsuspended. Undoing puts back, tag by

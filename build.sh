@@ -13,7 +13,7 @@ else
 fi
 
 mkdir -p dist
-OUT="dist/anki-tag-queue.ankiaddon"
+OUT="dist/stepwise.ankiaddon"
 rm -f "$OUT"
 ( cd src && zip -r -X "../$OUT" . \
     -x '*__pycache__*' -x '*.pyc' -x 'meta.json' \

@@ -1,7 +1,7 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
 """A compact queue meter on the deck (home) screen. Click it to open the
-Tag Queue window."""
+Stepwise window."""
 
 from __future__ import annotations
 
@@ -122,8 +122,8 @@ def build_widget() -> str:
              "sub": _sub("Counting cards…")}
     cls = "tq-wrap tq-over" if d["over"] else "tq-wrap"
     return (
-        f'<div id="tq-widget" class="{cls}" onclick="pycmd(\'{OPEN_CMD}\')" title="Open Tag Queue">'
-        '<div class="tq-head"><span class="tq-label">Tag queue</span>'
+        f'<div id="tq-widget" class="{cls}" onclick="pycmd(\'{OPEN_CMD}\')" title="Open Stepwise">'
+        '<div class="tq-head"><span class="tq-label">Stepwise</span>'
         f'<span class="tq-num"><b>{d["count"]}</b><span class="tq-unit"> / {d["limit"]} '
         f'{html.escape(d["unit"])}</span></span></div>'
         f'<div class="tq-bar"><div class="tq-fill" style="width:{d["pct"]}%"></div></div>'
@@ -149,7 +149,7 @@ def on_deck_render(deck_browser, content) -> None:
     try:
         content.stats += build_widget()
     except Exception as exc:  # never break the deck screen
-        print(f"Tag Queue: deck widget failed: {exc!r}")
+        print(f"Stepwise: deck widget failed: {exc!r}")
 
 
 def on_js_message(handled, message: str, context):

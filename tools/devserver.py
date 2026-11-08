@@ -1,4 +1,4 @@
-"""Run the Tag Queue web UI outside Anki, against a copy of a real collection.
+"""Run the Stepwise web UI outside Anki, against a copy of a real collection.
 
 The page talks to the add-on's actual Python bridge (src/bridge.py), so what
 you see is real data and real queue logic; only Anki's window is missing.
@@ -31,7 +31,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC = os.path.join(ROOT, "src")
 
 SHELL = """<!doctype html>
-<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Tag Queue (dev)</title>
+<html><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1"><title>Stepwise (dev)</title>
 <link rel="stylesheet" href="/web/app.css">
 <script>
 if (new URLSearchParams(location.search).get("theme") === "dark")
@@ -220,7 +220,7 @@ def main() -> None:
             result = bridge.handle(raw)
             self._send(json.dumps(result).encode(), "application/json")
 
-    print(f"Tag Queue dev server on http://127.0.0.1:{args.port}  (collection copy in {work})")
+    print(f"Stepwise dev server on http://127.0.0.1:{args.port}  (collection copy in {work})")
     try:
         HTTPServer(("127.0.0.1", args.port), Handler).serve_forever()
     except KeyboardInterrupt:

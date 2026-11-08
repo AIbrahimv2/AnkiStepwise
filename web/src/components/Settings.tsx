@@ -221,10 +221,10 @@ export function SettingsDialog(props: { onClose: () => void; onSaved: (r: Settin
         </Section>
 
         <Section title="Anki">
-          <Row label="Meter on the deck screen" hint="A small queue meter under your deck list. Click it to open Tag Queue.">
+          <Row label="Meter on the deck screen" hint="A small queue meter under your deck list. Click it to open Stepwise.">
             <Switch checked={v.showOnDeck} label="" onChange={(x) => set("showOnDeck", x)} />
           </Row>
-          <Row label="Shortcut" hint="Opens Tag Queue from Anki's main window." problem={problems.shortcut}>
+          <Row label="Shortcut" hint="Opens Stepwise from Anki's main window." problem={problems.shortcut}>
             <ShortcutField value={v.shortcut} onChange={(s) => set("shortcut", s)} />
           </Row>
         </Section>

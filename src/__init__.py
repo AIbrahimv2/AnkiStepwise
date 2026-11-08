@@ -1,11 +1,12 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""Tag Queue — queue tagged topics for a study session and track them to done.
+"""Stepwise (was Tag Queue) — queue tagged topics for a study session and track
+them to done.
 
 Pick topics by resource (B&B, Bootcamp, Pixorize, ...) from a tag tree, see a
 live count of the *unique* suspended cards they add against your session limit
 (150 by default), then mark them completed — which also unsuspends their
-cards. Open it from Tools -> Tag Queue, the deck-screen meter, or by
+cards. Open it from Tools -> Stepwise, the deck-screen meter, or by
 right-clicking a tag in the Browser sidebar.
 """
 
@@ -19,7 +20,7 @@ from .config import ADDON, get_config
 
 
 def _install() -> None:
-    action = QAction("Tag Queue", mw)
+    action = QAction("Stepwise", mw)
     shortcut = get_config()["shortcut"]
     if shortcut:
         action.setShortcut(QKeySequence(shortcut))
@@ -30,7 +31,7 @@ def _install() -> None:
 
 def _prebuild_index() -> None:
     """Count cards in the background shortly after the profile opens, so
-    the Tag Queue window and deck-screen meter are instant later."""
+    the Stepwise window and deck-screen meter are instant later."""
     QTimer.singleShot(4000, lambda: mw.col is not None and actions.request_index())
 
 
@@ -57,5 +58,5 @@ gui_hooks.browser_sidebar_will_show_context_menu.append(browser_menu.on_sidebar_
 mw.addonManager.setConfigUpdatedAction(ADDON, _on_config_saved)
 # Anki's Config button opens the in-window Settings instead of raw JSON.
 mw.addonManager.setConfigAction(ADDON, ui.open_settings)
-# Serve the built web UI (src/web/) to the Tag Queue window.
+# Serve the built web UI (src/web/) to the Stepwise window.
 mw.addonManager.setWebExports(ADDON, r"web/.*\.(js|css|svg|png|woff2?)")

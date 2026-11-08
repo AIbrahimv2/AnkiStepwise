@@ -33,8 +33,8 @@ export function Header(props: {
         <ListChecks size={19} strokeWidth={2.2} />
       </div>
       <div className="titles">
-        <div className="title">Tag Queue</div>
-        <div className="subtitle">Queue topics by resource, stay under your card limit, then mark them done.</div>
+        <div className="title">Stepwise</div>
+        <div className="subtitle">Unsuspend your deck one topic at a time, within a daily new-card limit.</div>
       </div>
       {props.children}
       <div className="header-actions">
@@ -80,7 +80,7 @@ export function Banner(props: { onImport: () => void; onDismiss: () => void }) {
         <Palette size={17} />
       </span>
       <div className="banner-text">
-        You colour tags with <b>Colorful Tags</b>. Import those colours so Tag Queue knows what you've already queued
+        You colour tags with <b>Colorful Tags</b>. Import those colours so Stepwise knows what you've already queued
         and completed.
       </div>
       <div className="banner-actions">
@@ -222,7 +222,7 @@ export function ImportDialog(props: {
     <Modal onClose={props.onClose} width={560}>
       <h2>What does each colour mean?</h2>
       <p>
-        Pick a status for each Colorful Tags colour you've used. Afterwards Tag Queue keeps the colours in sync for
+        Pick a status for each Colorful Tags colour you've used. Afterwards Stepwise keeps the colours in sync for
         you.
       </p>
       <div className="import-rows">

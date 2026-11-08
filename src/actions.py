@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""Operations shared by the Tag Queue window, the browser sidebar menu and
+"""Operations shared by the Stepwise window, the browser sidebar menu and
 the deck-screen widget, plus the cached tag index."""
 
 from __future__ import annotations
@@ -67,7 +67,7 @@ _announcer: Callable[[str], None] | None = None
 
 
 def set_announcer(fn: Callable[[str], None] | None) -> None:
-    """Where automatic changes are reported (the Tag Queue window's toasts)."""
+    """Where automatic changes are reported (the Stepwise window's toasts)."""
     global _announcer
     _announcer = fn
 

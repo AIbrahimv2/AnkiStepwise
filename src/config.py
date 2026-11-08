@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""Add-on settings. They're edited in the Tag Queue window (⋯ → Settings…),
+"""Add-on settings. They're edited in the Stepwise window (⋯ → Settings…),
 which Anki's own Config button for the add-on also opens."""
 
 from __future__ import annotations

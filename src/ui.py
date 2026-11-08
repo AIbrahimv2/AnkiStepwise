@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""The Tag Queue window: a dialog hosting the web UI (React, built from
+"""The Stepwise window: a dialog hosting the web UI (React, built from
 web/ into src/web/) in an AnkiWebView, wired to `Bridge` for data and
 actions."""
 
@@ -36,7 +36,7 @@ def asset_url(name: str) -> str:
 class QueueDialog(QDialog):
     def __init__(self, parent):
         super().__init__(parent)
-        self.setWindowTitle("Tag Queue")
+        self.setWindowTitle("Stepwise")
         # The page switches to one panel at a time below 760px wide.
         self.setMinimumSize(440, 560)
         self.resize(1140, 760)
@@ -47,7 +47,7 @@ class QueueDialog(QDialog):
 
         lay = QVBoxLayout(self)
         lay.setContentsMargins(0, 0, 0, 0)
-        self.web = AnkiWebView(self, title="tag queue")
+        self.web = AnkiWebView(self, title="stepwise")
         self.web.set_bridge_command(self.bridge.handle, self)
         lay.addWidget(self.web)
 

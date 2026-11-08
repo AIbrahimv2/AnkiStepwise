@@ -8,7 +8,7 @@ to the callback. Mutating commands answer with a refresh "bundle" (queue
 panel, the statuses of the rows the page is showing, the search summary), so
 one round trip updates the whole screen.
 
-The host is the Tag Queue window in Anki, or tools/devserver.py during
+The host is the Stepwise window in Anki, or tools/devserver.py during
 frontend development. It provides `index`, `request_index()`,
 `reload_index()`, `push(event)` and is the parent widget for operations.
 """

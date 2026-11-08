@@ -1,9 +1,9 @@
 {
-  "name": "anki-tag-queue-web",
+  "name": "stepwise-web",
   "private": true,
   "version": "0.0.0",
   "type": "module",
-  "description": "Web UI for the Tag Queue Anki add-on. Builds into ../src/web/.",
+  "description": "Web UI for the Stepwise Anki add-on. Builds into ../src/web/.",
   "scripts": {
     "dev": "vite",
     "build": "tsc --noEmit && vite build",

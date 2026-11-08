@@ -1,6 +1,6 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""Right-click a tag in the Browser sidebar -> Tag Queue -> Add to queue /
+"""Right-click a tag in the Browser sidebar -> Stepwise -> Add to queue /
 Mark completed. Works on several selected tags at once."""
 
 from __future__ import annotations
@@ -30,7 +30,7 @@ def on_sidebar_menu(sidebar, menu, item, index) -> None:
     parent = getattr(sidebar, "browser", None)
 
     menu.addSeparator()
-    sub = menu.addMenu("Tag Queue")
+    sub = menu.addMenu("Stepwise")
     if statuses != {QUEUED}:
         sub.addAction("Add to queue", lambda: actions.queue(tags))
     if QUEUED in statuses:
@@ -50,4 +50,4 @@ def on_sidebar_menu(sidebar, menu, item, index) -> None:
 
         open_dialog()
 
-    sub.addAction("Open Tag Queue…", open_window)
+    sub.addAction("Open Stepwise…", open_window)
