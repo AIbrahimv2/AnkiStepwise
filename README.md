@@ -108,7 +108,7 @@ Right-click a topic for more: save it for later, browse its cards, unsuspend
 without completing, clear its status, or pin a resource to the top.
 
 In a narrow window (under 760px) the topics and the queue take turns: switch
-between them in the header. The tree drops its Total and Waiting columns
+between them at the top of the window. The tree drops its Total and Waiting columns
 before it squeezes topic names.
 
 ### Keyboard

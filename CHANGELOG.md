@@ -7,13 +7,17 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
-- **Renamed to Stepwise** (from Tag Queue), with its own mark: a staircase
-  with a dot partway up, in a fixed orange that doesn't change with the
-  queued colour. It shows in the window's header and title bar and on the
+- **Renamed to Stepwise** (from Tag Queue), with its own mark: three steps
+  with a dot on the middle one, in a fixed orange that doesn't change with
+  the queued colour. It shows in the window's title bar and on the
   deck-screen meter, and the Tools menu, Browser menu and package
   (`stepwise.ankiaddon`) carry the new name. The add-on's folder and the key
   your queue is saved under are unchanged, so updating keeps your queue and
   settings.
+- **No header in the window.** The page is all queue: Recount and the ⋯
+  menu (Colorful Tags import, Settings) sit at the end of the search
+  toolbar, and the title, subtitle and icon are gone (the title bar names
+  the window).
 
 - **Jump between search matches**: like vim's `/pattern<Enter>`, Enter
   (Shift+Enter) in the search box goes to the next (previous) match and
@@ -49,7 +53,7 @@ All notable changes to this project are documented here. The format is based on
   860px). As it narrows, the tree's columns tighten, then Total and then
   Waiting give way and levels indent less, so topic names stay readable; the
   queue panel puts the limit on its own line and slims its footer buttons.
-  Below 760px a Topics / Queue switch in the header shows one at a time
+  Below 760px a Topics / Queue switch at the top shows one at a time
   (choosing a topic in the queue, or pressing `/`, goes back to the topics).
   Settings and the import dialog fit the window too.
 - The tree's keys work as soon as the window opens (no click first), and
