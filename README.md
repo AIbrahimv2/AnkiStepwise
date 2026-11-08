@@ -1,4 +1,4 @@
-# <img src="src/icons/stepwise.svg" width="36" align="top" alt=""> Stepwise
+# Stepwise
 
 **Unsuspend your deck one topic at a time, within a daily new-card limit.**
 (Formerly Tag Queue.)

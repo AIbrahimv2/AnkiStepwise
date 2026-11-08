@@ -7,13 +7,11 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
-- **Renamed to Stepwise** (from Tag Queue), with its own mark: three steps
-  with a dot on the middle one, in a fixed orange that doesn't change with
-  the queued colour. It shows in the window's title bar and on the
-  deck-screen meter, and the Tools menu, Browser menu and package
-  (`stepwise.ankiaddon`) carry the new name. The add-on's folder and the key
-  your queue is saved under are unchanged, so updating keeps your queue and
-  settings.
+- **Renamed to Stepwise** (from Tag Queue). The window's title bar, the
+  deck-screen meter, the Tools menu, the Browser menu and the package
+  (`stepwise.ankiaddon`) carry the new name. There's no logo: the name
+  alone, as before. The add-on's folder and the key your queue is saved
+  under are unchanged, so updating keeps your queue and settings.
 - **No header in the window.** The page is all queue: Recount and the ⋯
   menu (Colorful Tags import, Settings) sit at the end of the search
   toolbar, and the title, subtitle and icon are gone (the title bar names
