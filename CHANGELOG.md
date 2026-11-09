@@ -13,6 +13,11 @@ All notable changes to this project are documented here. The format is based on
   you reopen the window. The number shows in the tree's corner until it's used,
   and Esc cancels it.
 
+### Fixed
+
+- `Ctrl-d`, `Ctrl-u` and `Ctrl-r` now work on a Mac. Anki's web view reports the
+  Control key differently there, so they did nothing.
+
 ### Changed
 
 - The default shortcut for the Stepwise window is now Cmd/Ctrl+Shift+S (it was
