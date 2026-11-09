@@ -12,6 +12,8 @@ How AnkiWeb's add-on search behaves, tested in November 2026:
   tags work as a phrase. Their order matters.
 - Words only decide whether an add-on appears. Results are ordered by ratings,
   and nothing here changes that.
+- The screenshot is the README's (docs/screenshot.png), linked from GitHub, so
+  replacing that file updates both.
 
 ## Title
 
@@ -26,6 +28,8 @@ anking unsuspend cards study planner usmle comlex step1 medical school checklist
 A study planner for AnKing and other medical school decks. Tick the topics you're covering today (a Boards and Beyond video, a Pixorize set, a First Aid chapter) and Stepwise shows how many new cards that adds against your daily new card limit. When you've covered a topic, check it off and its cards are unsuspended.
 
 Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step 2 / Step 3 decks for USMLE and COMLEX, and works with any deck that uses hierarchical tags.
+
+<img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%">
 
 - Tag tree by resource: B&B, Bootcamp, Pixorize, Sketchy, Pathoma, First Aid, Physeo, Osmosis, OME, Ninja Nerd, Dirty Medicine, AMBOSS, UWorld, NBME and the rest, showing the cards left to unsuspend and a progress bar per topic.
 - A meter of today's new cards. It follows Bury new siblings, so a note with three clozes counts once, the way Anki will show it.
