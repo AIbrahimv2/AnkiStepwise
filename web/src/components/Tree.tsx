@@ -362,6 +362,9 @@ const TreeRow = memo(function TreeRow(props: {
   const cls = [
     "row",
     node.top && "top",
+    // A resource sticks under its step header while you're among its topics.
+    node.top && "stick",
+    node.top && depth === 0 && "stick-root",
     node.status === "completed" && "done",
     node.status === "later" && "later",
     selected && "selected",

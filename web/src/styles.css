@@ -896,6 +896,47 @@ body {
 .row.section:hover { background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
 .row.section.selected { background: color-mix(in srgb, var(--focus) 9%, var(--surface)); }
 .tree:focus .row.section.selected { background: color-mix(in srgb, var(--focus) 15%, var(--surface)); }
+
+/* "Other tags" sticks like a step header, so a step's header doesn't stay up
+   while you're among the tags after it. */
+.row.group {
+  position: sticky;
+  top: 26px;
+  z-index: 2;
+  height: 38px;
+  margin: 4px -6px 0;
+  padding-right: 18px;
+  border-radius: 0;
+  background: var(--surface);
+  box-shadow: 0 1px 0 var(--line);
+}
+.row.group .cell-name { padding-left: 14px !important; }
+.row.group:hover { background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
+.row.group.selected { background: color-mix(in srgb, var(--focus) 9%, var(--surface)); }
+.tree:focus .row.group.selected { background: color-mix(in srgb, var(--focus) 15%, var(--surface)); }
+
+/* A resource's row sticks just under its step header while you scroll through
+   its topics, so it's clear at a glance which resource the selection is in.
+   Every resource sticks, so the next one slides up over the last. Underneath
+   it's opaque and square (::before), so rows scrolling past don't show
+   through; the usual rounded hover and selection go on top (::after). */
+.row.stick { position: sticky; top: 64px; z-index: 1; }
+.row.stick.stick-root { top: 26px; } /* no step header above it */
+#root .row.stick { background: none; }
+.row.stick::before,
+.row.stick::after { content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none; }
+.row.stick::before { background: var(--surface); }
+.row.stick::after { border-radius: 8px; }
+.row.stick:hover::after { background: var(--hover); }
+.row.stick.selected::after { background: var(--select); }
+.tree:focus .row.stick.selected::after { background: var(--select-strong); }
+.row.stick.pulse { animation: none; }
+.row.stick.pulse::after { animation: pulse 1.3s ease-out; }
+
+/* Moving the selection keeps it clear of the sticky titles, step and resource. */
+.tree .row { scroll-margin: 94px 0 8px; }
+.tree .row.stick { scroll-margin-top: 64px; }
+.tree .row.section, .tree .row.group, .tree .row.stick-root { scroll-margin-top: 26px; }
 .section-mark { width: 9px; height: 9px; border-radius: 3px; background: var(--step); flex: none; margin: 0 2px 0 3px; }
 .section-label { font-weight: 700; font-size: 13.5px; letter-spacing: -0.01em; color: color-mix(in srgb, var(--step) 72%, var(--text)); white-space: nowrap; }
 .section-sub { color: var(--text-3); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
@@ -958,7 +999,7 @@ body {
 /* --- long lists ------------------------------------------------------------- */
 
 /* Let the browser skip layout and paint for rows scrolled out of view. */
-.row:not(.section) { content-visibility: auto; contain-intrinsic-size: auto 30px; }
+.row:not(.section):not(.group):not(.stick) { content-visibility: auto; contain-intrinsic-size: auto 30px; }
 
 #root .more-btn {
   height: 24px;
