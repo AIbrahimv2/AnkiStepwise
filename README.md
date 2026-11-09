@@ -156,7 +156,9 @@ apply when you save; there's no JSON to edit.
 
 ### From AnkiWeb
 
-Search for "Stepwise" in Anki's **Tools → Add-ons → Get Add-ons**.
+In Anki, open **Tools → Add-ons → Get Add-ons** and paste the code
+`1949793886`. It needs Anki 26.09.4 or newer. See the
+[AnkiWeb page](https://ankiweb.net/shared/info/1949793886).
 
 ### Manual
 
