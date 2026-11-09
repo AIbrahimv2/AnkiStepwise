@@ -27,7 +27,7 @@ import {
 import { SettingsDialog } from "./components/Settings";
 import { SidePanel, type Tab } from "./components/SidePanel";
 import { HideDoneSwitch, MatchBar, ScopePicker, SearchBox } from "./components/Toolbar";
-import { DetailsBar, type FlatRow, MORE, Tree } from "./components/Tree";
+import { ctrlLetter, DetailsBar, type FlatRow, MORE, Tree } from "./components/Tree";
 import { type Anchor, Menu, type MenuEntry, plural } from "./components/ui";
 import {
   type AnyNode,
@@ -369,7 +369,7 @@ export function App() {
       const k = e.key.toLowerCase();
       const cmdOrCtrl = e.metaKey || e.ctrlKey;
       const undo = (k === "u" && !cmdOrCtrl && !e.shiftKey) || (k === "z" && cmdOrCtrl && !e.shiftKey);
-      const redo = (k === "r" && e.ctrlKey && !e.metaKey && !e.shiftKey) || (k === "z" && cmdOrCtrl && e.shiftKey);
+      const redo = ctrlLetter(e) === "r" || (k === "z" && cmdOrCtrl && e.shiftKey);
       if (undo || redo) {
         e.preventDefault();
         act(undo ? "undo" : "redo").catch(() => undefined);

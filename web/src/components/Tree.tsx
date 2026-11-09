@@ -56,6 +56,16 @@ const TREE_KEYS = new Set([
 const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
 const MAX_COUNT = 99999;
 
+/** The letter pressed with Ctrl. Anki's web view on macOS reports the Control
+ *  key as metaKey (and Cmd as ctrlKey), and Control+d's key as the control
+ *  character "\x04", so a browser's view of these keys isn't enough. Caps Lock
+ *  can also report the letter in upper case. */
+export function ctrlLetter(e: Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey">): string | null {
+  if (!(e.ctrlKey || e.metaKey) || e.altKey || e.shiftKey) return null;
+  const code = e.key.length === 1 ? e.key.charCodeAt(0) : -1;
+  return code >= 1 && code <= 26 ? String.fromCharCode(code + 96) : e.key.toLowerCase();
+}
+
 /** Nothing on the page has focus (it's on the body). */
 const pageIdle = () => !document.activeElement || document.activeElement === document.body;
 
@@ -118,7 +128,8 @@ export function Tree(props: TreeProps) {
       return;
     }
     if (!rows.length) return;
-    const ctrl = e.ctrlKey && !e.metaKey && !e.altKey;
+    const letter = ctrlLetter(e);
+    const ctrl = letter === "d" || letter === "u";
     if ((e.metaKey || e.altKey || e.ctrlKey) && !ctrl) return; // leave app shortcuts alone
     const i = Math.max(0, rows.findIndex((r) => r.key === selected));
     const row = rows[i];
@@ -142,8 +153,6 @@ export function Tree(props: TreeProps) {
     }
 
     if (ctrl) {
-      const letter = key.toLowerCase(); // Caps Lock reports D and U
-      if (letter !== "d" && letter !== "u") return;
       key = letter === "d" ? "PageHalfDown" : "PageHalfUp";
       if (pending) scrollSize.current = pending;
     }
@@ -235,7 +244,8 @@ export function Tree(props: TreeProps) {
       const t = e.target as HTMLElement;
       if (t.closest?.("input, textarea, select, button, [contenteditable]")) return;
       if (document.querySelector(".overlay, .menu")) return;
-      const half = e.ctrlKey && !e.metaKey && !e.altKey && /^[du]$/i.test(e.key);
+      const letter = ctrlLetter(e);
+      const half = letter === "d" || letter === "u";
       if (!half && (e.ctrlKey || e.metaKey || e.altKey || !TREE_KEYS.has(e.key))) return;
       tree.focus({ preventScroll: true });
       keyRef.current(e);
