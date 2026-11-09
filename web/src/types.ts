@@ -252,6 +252,9 @@ export interface SearchResult {
   children: Record<string, string[]>;
   roots: string[];
   matches: string[];
+  /** What to highlight: the query's words, plus whole words matched loosely
+   *  (a typo, another ending, an abbreviation). */
+  terms?: string[];
   truncated: boolean;
   summary?: Summary;
 }

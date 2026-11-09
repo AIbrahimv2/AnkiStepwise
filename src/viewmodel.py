@@ -18,6 +18,7 @@ from datetime import datetime
 
 from . import actions, colorsync
 from .config import DEFAULTS, get_config
+from .fuzzy import Query
 from .counts import (
     TagIndex,
     natural_key,
@@ -308,15 +309,16 @@ class View:
         return out
 
     def search(self, query: str) -> dict:
+        """Tags matching the query loosely (see fuzzy.py), as a tree."""
         idx = self.index
-        words = query.lower().replace("_", " ").split()
+        q = Query(query, idx)
         roots = set(self.roots)
         scope = self.scope_keys()
         matches = [
             k for k in idx.names
             if k not in roots
             and self.in_scope(k, scope)
-            and all(w in k.replace("_", " ") for w in words)
+            and q.matches(k)
         ]
         mset = set(matches)
 
@@ -360,6 +362,7 @@ class View:
             "children": children,
             "roots": [h["key"] for h in headers] + other_tops,
             "matches": top,
+            "terms": q.terms(list(nodes)),
             "truncated": truncated,
             "summary": self.match_summary(top, truncated),
         }

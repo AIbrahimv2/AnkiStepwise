@@ -56,6 +56,7 @@ interface SearchState {
   totals: Record<string, number>;
   expanded: Set<string>;
   matches: string[];
+  terms: string[];
   truncated: boolean;
 }
 
@@ -219,6 +220,7 @@ export function App() {
         totals: {},
         expanded: new Set(Object.keys(r.children)),
         matches: r.matches,
+        terms: r.terms ?? [],
         truncated: r.truncated,
       });
       setSummary(r.summary ?? null);
@@ -735,7 +737,12 @@ export function App() {
   };
 
   const words = useMemo(
-    () => (search ? search.query.toLowerCase().replace(/_/g, " ").split(/\s+/).filter(Boolean) : []),
+    () =>
+      search
+        ? search.terms.length
+          ? search.terms
+          : search.query.toLowerCase().replace(/_/g, " ").split(/\s+/).filter(Boolean)
+        : [],
     [search],
   );
   const currentScope = scopes.find((s) => s.value === scope);
