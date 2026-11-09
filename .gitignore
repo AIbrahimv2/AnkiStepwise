@@ -4,6 +4,8 @@ __pycache__/
 *.pyc
 meta.json
 .DS_Store
-.claude/
+# Local Claude settings stay out; the shared release skill goes in.
+.claude/*
+!.claude/skills/
 node_modules/
 tests/fixture/
