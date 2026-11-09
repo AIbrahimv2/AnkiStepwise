@@ -120,6 +120,23 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
   description in `docs/ankiweb-listing.md`, and update it in the same session
   as any change on AnkiWeb, so the next edit starts from what's live.
 
+## Replying to reviews
+
+Reviews show at the bottom of the listing, and recent ones on
+https://ankiweb.net/shared/mine with a **Reply** button. Reply opens a box
+with a **Save** button. A saved reply is public, shown under the review as
+"Comment from author".
+
+- **Get the wording approved.** Draft the reply in the box, show it to the
+  user, and press Save only once they've approved it.
+- **Praise:** keep it short and plain, for example "Thank you, glad it's
+  useful!".
+- **Bug reports:** say which version fixes it and how to get it (Tools →
+  Add-ons → Check for Updates, then restart Anki). Explain any limitation in
+  the user's terms, but not the technical cause of the bug.
+- **Check it posted:** reload the listing with `?cb=<anything>` to skip the
+  cache, and look for "Comment from author".
+
 ## Listing conventions
 
 - **Title:** an emoji, then "Name: lowercase descriptor", under 80
