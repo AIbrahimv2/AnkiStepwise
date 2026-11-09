@@ -43,9 +43,10 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   the topic's subtopics are done.
 - **Grouped by resource.** Queue and Later group topics under their resource
   (Pixorize, Bootcamp, …) with each group's unique new-card count in the same
-  column as the topics' counts (labelled once, at the top), and cluster topics
-  that share a parent folder. Group buttons complete a whole resource or
-  move it to/from Later. Switch to "Order added" any time.
+  column as the topics' counts (labelled once, at the top), and each topic
+  sits under a heading for its folder. Hover a row or a resource for its
+  buttons; a resource's check off all its topics or move them to or from
+  Later. Switch to "Order added" any time.
 - **Done takes care of itself.** A topic whose every card has been studied
   counts as done and leaves Queue/Later on its own (cards that are only
   unsuspended keep it open). Topics you studied without ever queuing or
@@ -72,10 +73,11 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   day, so a note with three clozes counts as one today. Buried cards, and
   notes with a sibling due for review today, wait for a later day. A queue
   row's tooltip says how many more come after today.
-- **Check off as you go.** ✓ on a queued topic unsuspends its cards and
-  checks it off: it stays in the queue (with an undo) until every card in it
-  is studied, then moves to Done by itself. Anything unfinished carries over to
-  the next day. **Clear checked** takes checked-off topics off early.
+- **Check off as you go.** Clicking the ring beside a queued topic unsuspends
+  its cards and checks it off. It stays in the queue (click the check to take
+  that back) until every card in it is studied, then moves to Done by itself.
+  Anything unfinished carries over to the next day. **Clear checked** takes
+  checked-off topics off early.
 - **Deck-screen meter.** A compact meter under the deck list; click it to open
   the queue.
 - **Browser sidebar.** Right-click any tag (or several) → **Stepwise** → Add to
@@ -96,7 +98,7 @@ Anki's light and dark themes, with vim-style keyboard navigation.
    using from the dropdown, and click **Queue N** to queue every match. Keep
    the meter under your limit.
 3. Work through the topics one by one (watch the video, read the chapter) and
-   click **✓** after each. Its cards are unsuspended and it's checked off, but it stays in the plan, so the meter
+   click the ring beside each one when you're done. Its cards are unsuspended and it's checked off, but it stays in the plan, so the meter
    keeps showing the day's new cards.
 4. Study. As you finish a topic's cards it leaves the queue by itself; whatever
    you didn't get to stays queued for tomorrow, still counted against the

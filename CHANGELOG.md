@@ -3,6 +3,20 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **A tidier queue.** In Queue and Later, a topic's folder is always a heading
+  above it, once per folder, instead of sometimes a heading and sometimes a line
+  underneath. Every row is one line, with marks, names and headings on the same
+  left edges, and numbers share one style.
+- **Click the ring to check a topic off**, and the check to take that back. They
+  replace the ✓ and undo buttons. Later and Remove appear beside the number when
+  you hover a row, so names get the full width.
+- The "unsuspended" and "tomorrow" captions beside a row's number are gone. The
+  number's tooltip has the same details.
+
 ## [1.0.0] - 2026-11-09
 
 ### Added
