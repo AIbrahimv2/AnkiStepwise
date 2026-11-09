@@ -161,7 +161,7 @@ Search for "Stepwise" in Anki's **Tools → Add-ons → Get Add-ons**.
 ### Manual
 
 Download `stepwise.ankiaddon` from the
-[Releases](https://github.com/AIbrahimv2/AnkiTagQueue/releases) page and
+[Releases](https://github.com/AIbrahimv2/AnkiStepwise/releases) page and
 double-click it, or run `./build.sh` and open the file it writes to `dist/`.
 
 ## Development
