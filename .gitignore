@@ -6,3 +6,4 @@ meta.json
 .DS_Store
 .claude/
 node_modules/
+tests/fixture/
