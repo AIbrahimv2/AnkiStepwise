@@ -393,13 +393,15 @@ export function App() {
    *  wrapping around: n / N in the tree, Enter / Shift+Enter in search.
    *  Returns the match it went to. */
   const jumpMatch = useCallback(
-    (dir: 1 | -1): string | null => {
+    (dir: 1 | -1, count = 1): string | null => {
       if (!matchKeys.length) return null;
       const order = new Map(rows.map((r, i) => [r.key, i]));
       const here = selected ? (order.get(selected) ?? -1) : -1;
       const pos = matchKeys.map((k) => order.get(k) ?? 0);
       let j = dir === 1 ? pos.findIndex((p) => p > here) : pos.findLastIndex((p) => p < here);
       if (j < 0) j = dir === 1 ? 0 : matchKeys.length - 1;
+      const len = matchKeys.length;
+      j = (((j + dir * (count - 1)) % len) + len) % len;
       setSelected(matchKeys[j]);
       return matchKeys[j];
     },

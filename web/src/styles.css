@@ -520,6 +520,29 @@ body {
 .details-title { flex: 0 1 auto; max-width: 60%; color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .details .over { color: var(--danger); font-weight: 600; }
 .details .strong { color: var(--text); font-weight: 600; }
+/* A number typed before a move, shown over the tree's corner until it's used. */
+.count-pending {
+  position: sticky;
+  bottom: 10px;
+  z-index: 3;
+  height: 0;
+  display: flex;
+  justify-content: flex-end;
+  padding-right: 12px;
+  pointer-events: none;
+}
+.count-pending span {
+  height: fit-content;
+  transform: translateY(-100%);
+  padding: 4px 9px;
+  border-radius: 7px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+}
 .hint-keys { color: var(--text-3); display: flex; gap: 14px; white-space: nowrap; }
 .hint-keys span { display: inline-flex; align-items: center; gap: 3px; }
 .hint-keys .kbd { margin-right: 0; padding: 2px 5px; min-width: 18px; text-align: center; }

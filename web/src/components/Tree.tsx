@@ -32,7 +32,7 @@ interface TreeProps {
   onLoadMore: (key: string) => void;
   onContext: (key: string, x: number, y: number) => void;
   /** n / N: jump to the next or previous search match. */
-  onJumpMatch: (dir: 1 | -1) => void;
+  onJumpMatch: (dir: 1 | -1, count?: number) => void;
   /** Esc in the tree: clear the search, if there is one. */
   onEscape: () => void;
 }
@@ -49,7 +49,12 @@ type KeyLike = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "s
 const TREE_KEYS = new Set([
   "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", " ", "Enter", "Escape",
   "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End",
+  "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 ]);
+
+/** Keys that only change another key: the Shift in 10G mustn't lose the 10. */
+const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
+const MAX_COUNT = 99999;
 
 /** Nothing on the page has focus (it's on the body). */
 const pageIdle = () => !document.activeElement || document.activeElement === document.body;
@@ -82,10 +87,34 @@ export function Tree(props: TreeProps) {
 
   // Vim keys: j/k move, h/l close or go up / open or go in, gg/G top and
   // bottom, Ctrl-d/Ctrl-u half a page, n/N next/previous search match.
-  // Arrow keys, Home and End work too.
+  // Arrow keys, Home and End work too. A number first repeats a move (10j,
+  // 8k, 3n) or names a row (10G, 10gg); Esc cancels it, and any other key
+  // uses it up. The ref holds the number for the keys that follow, the state
+  // shows it on screen.
   const lastG = useRef(0);
+  const gCount = useRef(0);
+  const countRef = useRef(0);
+  const [count, setCount] = useState(0);
+  const setPending = (n: number) => {
+    countRef.current = n;
+    setCount(n);
+  };
   const onKeyDown = (e: KeyLike) => {
-    if (e.key === "Escape") return props.onEscape(); // even when a search found nothing
+    if (MODIFIER_KEYS.has(e.key)) return;
+    const plain = !e.ctrlKey && !e.metaKey && !e.altKey;
+    // Like vim, a number can't start with 0.
+    if (plain && rows.length && /^[0-9]$/.test(e.key) && (e.key !== "0" || countRef.current)) {
+      setPending(Math.min(countRef.current * 10 + Number(e.key), MAX_COUNT));
+      lastG.current = 0;
+      e.preventDefault();
+      return;
+    }
+    const pending = countRef.current;
+    if (pending) setPending(0);
+    if (e.key === "Escape") {
+      if (!pending) props.onEscape(); // even when a search found nothing
+      return;
+    }
     if (!rows.length) return;
     const ctrl = e.ctrlKey && !e.metaKey && !e.altKey;
     if ((e.metaKey || e.altKey || e.ctrlKey) && !ctrl) return; // leave app shortcuts alone
@@ -98,13 +127,14 @@ export function Tree(props: TreeProps) {
       return;
     }
     const move = (j: number) => props.onSelect(rows[Math.max(0, Math.min(rows.length - 1, j))].key);
+    const times = pending || 1;
     const halfPage = Math.max(1, Math.floor((box.current?.clientHeight ?? 600) / 30 / 2));
     let key = e.key;
     // Some keyboards report Shift+g as "g" (and so on).
     if (key === "g" && e.shiftKey) key = "G";
     if (key === "n" && e.shiftKey) key = "N";
     if (key === "n" || key === "N") {
-      props.onJumpMatch(key === "n" ? 1 : -1);
+      props.onJumpMatch(key === "n" ? 1 : -1, times);
       e.preventDefault();
       return;
     }
@@ -118,7 +148,8 @@ export function Tree(props: TreeProps) {
       const now = Date.now();
       const second = now - lastG.current < 600;
       lastG.current = second ? 0 : now;
-      if (second) move(0);
+      if (second) move((gCount.current || 1) - 1);
+      else gCount.current = pending;
       e.preventDefault();
       return;
     }
@@ -126,11 +157,11 @@ export function Tree(props: TreeProps) {
     switch (key) {
       case "j":
       case "ArrowDown":
-        move(selected ? i + 1 : 0);
+        move(selected ? i + times : times - 1);
         break;
       case "k":
       case "ArrowUp":
-        move(i - 1);
+        move(i - times);
         break;
       case "PageHalfDown":
         move(i + halfPage);
@@ -142,6 +173,8 @@ export function Tree(props: TreeProps) {
         move(0);
         break;
       case "G":
+        move(pending ? pending - 1 : rows.length - 1);
+        break;
       case "End":
         move(rows.length - 1);
         break;
@@ -208,7 +241,7 @@ export function Tree(props: TreeProps) {
   }, []);
   return (
     <>
-      <div className="tree" ref={box} tabIndex={0} onKeyDown={onKeyDown} role="tree">
+      <div className="tree" ref={box} tabIndex={0} onKeyDown={onKeyDown} onBlur={() => setPending(0)} role="tree">
       {/* Inside the scroller (and sticky) so it always has the rows' width,
           whether or not a scrollbar takes room. */}
       <div className="tree-head" role="presentation">
@@ -264,6 +297,11 @@ export function Tree(props: TreeProps) {
               />
             );
           })
+        )}
+        {count > 0 && (
+          <div className="count-pending" aria-live="polite">
+            <span>{count}</span>
+          </div>
         )}
       </div>
     </>
