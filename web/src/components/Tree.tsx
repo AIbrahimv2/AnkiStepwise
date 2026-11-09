@@ -89,9 +89,11 @@ export function Tree(props: TreeProps) {
   // bottom, Ctrl-d/Ctrl-u half a page, n/N next/previous search match.
   // Arrow keys, Home and End work too. A number first repeats a move (10j,
   // 8k, 3n) or names a row (10G, 10gg); Esc cancels it, and any other key
-  // uses it up. The ref holds the number for the keys that follow, the state
-  // shows it on screen.
+  // uses it up. Before Ctrl-d/Ctrl-u it sets how far they move from then on,
+  // like vim's 'scroll' option. The ref holds the number for the keys that
+  // follow, the state shows it on screen.
   const lastG = useRef(0);
+  const scrollSize = useRef(0);
   const gCount = useRef(0);
   const countRef = useRef(0);
   const [count, setCount] = useState(0);
@@ -140,8 +142,10 @@ export function Tree(props: TreeProps) {
     }
 
     if (ctrl) {
-      if (key !== "d" && key !== "u") return;
-      key = key === "d" ? "PageHalfDown" : "PageHalfUp";
+      const letter = key.toLowerCase(); // Caps Lock reports D and U
+      if (letter !== "d" && letter !== "u") return;
+      key = letter === "d" ? "PageHalfDown" : "PageHalfUp";
+      if (pending) scrollSize.current = pending;
     }
     if (key === "g") {
       // gg: two presses in a row
@@ -164,10 +168,10 @@ export function Tree(props: TreeProps) {
         move(i - times);
         break;
       case "PageHalfDown":
-        move(i + halfPage);
+        move(i + (scrollSize.current || halfPage));
         break;
       case "PageHalfUp":
-        move(i - halfPage);
+        move(i - (scrollSize.current || halfPage));
         break;
       case "Home":
         move(0);
@@ -231,7 +235,7 @@ export function Tree(props: TreeProps) {
       const t = e.target as HTMLElement;
       if (t.closest?.("input, textarea, select, button, [contenteditable]")) return;
       if (document.querySelector(".overlay, .menu")) return;
-      const half = e.ctrlKey && !e.metaKey && !e.altKey && (e.key === "d" || e.key === "u");
+      const half = e.ctrlKey && !e.metaKey && !e.altKey && /^[du]$/i.test(e.key);
       if (!half && (e.ctrlKey || e.metaKey || e.altKey || !TREE_KEYS.has(e.key))) return;
       tree.focus({ preventScroll: true });
       keyRef.current(e);
