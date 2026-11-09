@@ -118,8 +118,11 @@ assert toast and "hello" in toast
 # Numbers before tree keys, like vim.
 SEND = """((keys) => {
   const tree = document.querySelector('.tree');
-  for (const key of keys)
-    tree.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, shiftKey: key === 'G' }));
+  for (const k of keys) {
+    const ctrlKey = k.startsWith('ctrl+');
+    const key = ctrlKey ? k.slice(5) : k;
+    tree.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey, bubbles: true, cancelable: true, shiftKey: key === 'G' }));
+  }
 })(%s)"""
 LINE = "[...document.querySelectorAll('.tree [data-key]')].findIndex((r) => r.classList.contains('selected'))"
 
@@ -146,6 +149,15 @@ assert press("2", "0", "G") == 19, "20G"
 assert press("5", "g", "g") == 4, "5gg"
 assert press("9", "9", "9", "9", "j") == total - 1, "stops at the last row"
 assert press("9", "9", "9", "9", "k") == 0, "stops at the first row"
+half = js("Math.max(1, Math.floor(document.querySelector('.tree').clientHeight / 30 / 2))")
+press("g", "g")
+assert press("ctrl+d") == half, "Ctrl-d moves half a page"
+assert press("ctrl+u") == 0, "Ctrl-u moves back"
+assert press("ctrl+D") == half, "Caps Lock doesn't stop it"
+press("g", "g")
+assert press("3", "ctrl+d") == 3, "a number sets how far Ctrl-d moves"
+assert press("ctrl+d") == 6, "and it's remembered"
+assert press("ctrl+u") == 3, "for Ctrl-u too"
 press("4", "2")
 assert js("document.querySelector('.count-pending')?.textContent") == "42", "the number shows while it's pending"
 press("Escape")
