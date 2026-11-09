@@ -3,7 +3,7 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
-## [Unreleased]
+## [1.1.1] - 2026-11-09
 
 ### Changed
 
@@ -13,7 +13,6 @@ All notable changes to this project are documented here. The format is based on
   abbreviation (`msk`, `peds`, `heme`, `gi`, and back). "And", "of" and other
   little words are skipped. Words matched loosely are highlighted too.
   "childhood development" now finds 9 topics instead of 4.
-
 - **The resource you're in stays in view.** While you scroll through a
   resource's topics, its row stays pinned under the step header, so it's clear
   which resource the selection is in; the next resource slides up over it.
