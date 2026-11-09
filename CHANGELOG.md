@@ -5,6 +5,13 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Numbers before tree keys, like vim.** `10j` and `8k` move that many rows (the
+  arrow keys work too), `10G` or `10gg` go to row 10, and `3n` goes three search
+  matches on. The number shows in the tree's corner until it's used, and Esc
+  cancels it.
+
 ### Changed
 
 - **A tidier queue.** In Queue and Later, a topic's folder is always a heading

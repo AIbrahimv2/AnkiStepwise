@@ -124,6 +124,8 @@ soon as the window opens, and from anywhere on the page except text fields:
 | Keys | Does |
 | --- | --- |
 | `j` / `k` | Move down / up |
+| `10j` / `8k` | Type a number first to move that many rows (arrow keys too) |
+| `10G` or `10gg` | Go to row 10 |
 | `l` / `h` | Open a folder or step into it / close it or go to its parent |
 | `gg` / `G` | Jump to the top / bottom |
 | `Ctrl-d` / `Ctrl-u` | Move half a page down / up |
@@ -134,8 +136,8 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
 | `Enter` / `Shift+Enter` (in search) | Go to the next / previous match and on to the tree, where `n` / `N` carry on |
-| `n` / `N` | Next / previous search match |
-| `Esc` | Leave the search box (results stay); again to clear the search |
+| `n` / `N` | Next / previous search match (`3n` goes three matches on) |
+| `Esc` | Cancel a number you've typed; leave the search box (results stay); again to clear the search |
 
 Undo covers what you do in the Stepwise window (queue, unqueue, Later,
 check off, clear, Fill queue, queue or save all search matches, imports),
