@@ -624,7 +624,12 @@ export function App() {
     await loadTree();
   };
 
-  const setOption = (key: keyof Options, value: boolean) => act("set_option", { key, value });
+  const setOption = (key: keyof Options, value: boolean) =>
+    act("set_option", { key, value }).then(() => {
+      // Hide done changes what a search finds.
+      const q = queryRef.current.trim();
+      if (key === "hideCompleted" && q) runSearch(q);
+    });
 
   /** Settings were saved: take the new numbers, colours and resource list,
    *  and redraw the tree (again once a recount lands, if one was needed). */

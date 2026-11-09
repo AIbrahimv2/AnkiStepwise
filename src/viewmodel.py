@@ -320,6 +320,10 @@ class View:
             and self.in_scope(k, scope)
             and q.matches(k)
         ]
+        # With Hide done on, done topics aren't matches at all, so the count,
+        # the rows and n/N agree.
+        if self.cfg["hide_completed"]:
+            matches = [k for k in matches if self.status_of(k)[0] != COMPLETED]
         mset = set(matches)
 
         def has_matched_ancestor(k: str) -> bool:
