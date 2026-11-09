@@ -344,6 +344,19 @@ export function App() {
     // Re-run only when the selection changes; mutations send fresh details.
   }, [selected]);
 
+  /** Show a panel (in a narrow window) and give it the keys, once it's on
+   *  screen: after the render that shows it. */
+  const [focusAsk, setFocusAsk] = useState<{ pane: Pane; n: number }>({ pane: "tree", n: 0 });
+  const focusPane = useCallback((which: Pane) => {
+    setPane(which);
+    setFocusAsk((a) => ({ pane: which, n: a.n + 1 }));
+  }, []);
+  useEffect(() => {
+    if (!focusAsk.n) return;
+    const el = focusAsk.pane === "tree" ? ".tree" : '[data-keys="queue"]';
+    document.querySelector<HTMLElement>(el)?.focus({ preventScroll: true });
+  }, [focusAsk]);
+
   // "/" focuses search. u or Cmd/Ctrl+Z undoes the last change, Ctrl-r or
   // Cmd/Ctrl+Shift+Z redoes it (not while typing, or with a dialog open,
   // where those keys belong to the text field or the dialog).
@@ -367,6 +380,13 @@ export function App() {
       }
       if (typing || e.altKey || document.querySelector(".overlay")) return;
       const k = e.key.toLowerCase();
+      // Shift+H / Shift+L: the topics (left) or the queue (right), like moving
+      // between vim windows. In a narrow window they switch which one shows.
+      if (e.shiftKey && !e.ctrlKey && !e.metaKey && (k === "h" || k === "l") && !document.querySelector(".menu")) {
+        e.preventDefault();
+        focusPane(k === "h" ? "tree" : "side");
+        return;
+      }
       const cmdOrCtrl = e.metaKey || e.ctrlKey;
       const undo = (k === "u" && !cmdOrCtrl && !e.shiftKey) || (k === "z" && cmdOrCtrl && !e.shiftKey);
       const redo = ctrlLetter(e) === "r" || (k === "z" && cmdOrCtrl && e.shiftKey);
@@ -377,7 +397,7 @@ export function App() {
     };
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
-  }, [act]);
+  }, [act, focusPane]);
 
   // --- jumping between search matches ----------------------------------------
 
@@ -751,7 +771,7 @@ export function App() {
             limit={side.limit}
             unit={side.unit}
             over={side.over}
-            onPane={setPane}
+            onPane={focusPane}
           />
           {pageActions}
         </div>
@@ -826,6 +846,7 @@ export function App() {
             onBrowse={() => call("browse", { tags: [] })}
             onReveal={reveal}
             activeKey={selected}
+            focusSignal={focusAsk.pane === "side" ? focusAsk.n : 0}
           />
         )}
       </main>

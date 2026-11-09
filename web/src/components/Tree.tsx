@@ -113,6 +113,7 @@ export function Tree(props: TreeProps) {
   };
   const onKeyDown = (e: KeyLike) => {
     if (MODIFIER_KEYS.has(e.key)) return;
+    if (e.shiftKey && /^[hl]$/i.test(e.key)) return; // Shift+H / Shift+L switch panes (App)
     const plain = !e.ctrlKey && !e.metaKey && !e.altKey;
     // Like vim, a number can't start with 0.
     if (plain && rows.length && /^[0-9]$/.test(e.key) && (e.key !== "0" || countRef.current)) {
@@ -242,8 +243,9 @@ export function Tree(props: TreeProps) {
       // Not while the tree is hidden (a narrow window showing the queue).
       if (e.defaultPrevented || !tree || !tree.offsetParent || tree.contains(e.target as Node)) return;
       const t = e.target as HTMLElement;
-      if (t.closest?.("input, textarea, select, button, [contenteditable]")) return;
+      if (t.closest?.('input, textarea, select, button, [contenteditable], [data-keys="queue"]')) return;
       if (document.querySelector(".overlay, .menu")) return;
+      if (e.shiftKey && /^[hl]$/i.test(e.key)) return;
       const letter = ctrlLetter(e);
       const half = letter === "d" || letter === "u";
       if (!half && (e.ctrlKey || e.metaKey || e.altKey || !TREE_KEYS.has(e.key))) return;
@@ -717,6 +719,10 @@ function KeyHints({ searching }: { searching: boolean }) {
       </span>
       <span>
         <kbd className="kbd">u</kbd>undo
+      </span>
+      <span>
+        <kbd className="kbd">H</kbd>
+        <kbd className="kbd">L</kbd>topics/queue
       </span>
       {searching ? (
         <span>

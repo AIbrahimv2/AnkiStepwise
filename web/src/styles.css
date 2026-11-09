@@ -520,6 +520,21 @@ body {
 .details-title { flex: 0 1 auto; max-width: 60%; color: var(--text); font-weight: 600; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .details .over { color: var(--danger); font-weight: 600; }
 .details .strong { color: var(--text); font-weight: 600; }
+/* The queue list's keyboard cursor: only while the list has the keys, when it
+   also shows the row's buttons. The tree's selection, mirrored here as
+   .active, steps back meanwhile so one row stands out. */
+.list[data-keys] { outline: none; }
+.list:focus .item.cursor { background: var(--select-strong); }
+.list:focus .group-head.cursor { background: color-mix(in srgb, var(--focus) 15%, var(--surface)); }
+.list:focus .item.active:not(.cursor) { background: none; }
+.list:focus .item.cursor .item-actions,
+.list:focus .group-head.cursor .item-actions { width: auto; overflow: visible; opacity: 1; }
+.list:focus .show-more-done.cursor { box-shadow: 0 0 0 2px color-mix(in srgb, var(--focus) 60%, transparent); }
+/* Scrolling to the cursor clears the sticky column title and resource header,
+   and keeps a folder heading above the row in view. */
+.list .item[data-nav] { scroll-margin: 90px 0 8px; }
+.list .group-head[data-nav] { scroll-margin-top: 26px; }
+
 /* A number typed before a move, shown over the tree's corner until it's used. */
 .count-pending {
   position: sticky;

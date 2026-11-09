@@ -16,10 +16,10 @@ import {
   WandSparkles,
   X,
 } from "lucide-react";
-import { type ReactNode, useEffect, useState } from "react";
+import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { call } from "../bridge";
 import type { DoneRow, LaterPlan, QueueRow, RowGroup, Side } from "../types";
-import { StepChip } from "./Tree";
+import { ctrlLetter, StepChip } from "./Tree";
 import { IconButton, fmt, plural } from "./ui";
 
 /** Done rows loaded per "Show more". */
@@ -51,9 +51,18 @@ interface Props {
   onQueueMany: (tags: string[]) => void;
   /** The tree's selected tag, highlighted here too. */
   activeKey: string | null;
+  /** Bumped when Shift+L (or the narrow window's switch) gives this list the
+   *  keys, so the cursor shows straight away. */
+  focusSignal: number;
 }
 
 const TABS: Tab[] = ["queue", "later", "done"];
+
+/** The bits of a key event the list reads (React's and the DOM's both fit). */
+type ListKey = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey" | "preventDefault" | "target">;
+
+/** Keys that only change another key: Shift mustn't lose a typed number. */
+const MODIFIER_KEYS = new Set(["Shift", "Control", "Alt", "Meta", "CapsLock"]);
 
 export function SidePanel(props: Props) {
   const { side, tab } = props;
@@ -80,6 +89,248 @@ export function SidePanel(props: Props) {
     call<{ rows: DoneRow[] }>("done_page", { offset: doneRows.length, limit: DONE_STEP }).then((r) =>
       setDoneMore((m) => [...m, ...r.rows]),
     );
+  // --- vim keys --------------------------------------------------------------
+  // Like the tree's: j/k move (with a number, 10j), gg/G top and bottom (or
+  // row N), Ctrl-d/Ctrl-u half a page, h/l close a resource or go to it / open
+  // it. Space does the row's main thing (check off, queue), s saves for later,
+  // x or dd removes, Enter shows it in the tree, gt/gT change tab. The cursor
+  // only shows while the list has the keys; Shift+H and Shift+L (in App) move
+  // between the topics and this list. Rows are found in the page in display
+  // order (each has data-nav), so the keys always follow what's on screen.
+  const listRef = useRef<HTMLDivElement>(null);
+  // The ref answers keys that come faster than a render; the state draws it.
+  const [cursor, setCursorState] = useState<string | null>(null);
+  const cursorRef = useRef<string | null>(null);
+  const setCursor = (id: string | null) => {
+    cursorRef.current = id;
+    setCursorState(id);
+  };
+  const cursorAt = useRef(0);
+  const countRef = useRef(0);
+  const [count, setCountState] = useState(0);
+  const setCount = (n: number) => {
+    countRef.current = n;
+    setCountState(n);
+  };
+  const lastG = useRef(0);
+  const gCount = useRef(0);
+  const lastD = useRef(0);
+  const scrollSize = useRef(0);
+  const navEls = () => [...(listRef.current?.querySelectorAll<HTMLElement>("[data-nav]") ?? [])];
+  const focusedHere = () => document.activeElement === listRef.current;
+
+  // A new tab starts at its first row.
+  useEffect(() => {
+    cursorAt.current = 0;
+    setCursor(null);
+  }, [tab]);
+  // When the cursor's row goes (removed, moved to Later), take the row that
+  // moved into its place.
+  useLayoutEffect(() => {
+    const els = navEls();
+    if (!els.length) {
+      if (cursor) setCursor(null);
+      return;
+    }
+    const at = cursor ? els.findIndex((el) => el.dataset.nav === cursor) : -1;
+    if (at >= 0) cursorAt.current = at;
+    else if (cursor || focusedHere()) setCursor(els[Math.min(cursorAt.current, els.length - 1)].dataset.nav ?? null);
+  });
+  const showCursor = () => {
+    const els = navEls();
+    if (els.length) setCursor(els[Math.min(cursorAt.current, els.length - 1)].dataset.nav ?? null);
+  };
+  useEffect(() => {
+    if (props.focusSignal && !cursor) showCursor();
+    // Only when the list is handed the keys.
+  }, [props.focusSignal]);
+  useEffect(() => {
+    if (!cursor || !focusedHere()) return;
+    listRef.current?.querySelector(`[data-nav="${CSS.escape(cursor)}"]`)?.scrollIntoView({ block: "nearest" });
+  }, [cursor]);
+
+  const groupsHere = tab === "queue" ? side.queueGroups : tab === "later" ? side.laterGroups : [];
+  const rowFor = (id: string) => {
+    if (!id.startsWith("r:")) return null;
+    const rows: { tag: string; key: string }[] = tab === "queue" ? side.queued : tab === "later" ? side.later : doneRows;
+    return rows.find((r) => r.tag === id.slice(2)) ?? null;
+  };
+  const groupFor = (id: string) => (id.startsWith("g:") ? groupsHere.find((g) => g.key === id.slice(2)) ?? null : null);
+
+  /** Space: check off or uncheck (Queue), queue (Later and Done). */
+  const primary = (id: string) => {
+    if (id === "more") return void loadMoreDone();
+    const g = groupFor(id);
+    if (g) {
+      const tags = g.rows.map((r) => r.tag);
+      if (tab === "queue") props.onCompleteGroup(tags, g.label);
+      else if (tab === "later") props.onQueueMany(tags);
+      return;
+    }
+    const row = rowFor(id);
+    if (!row) return;
+    if (tab === "queue") {
+      const watched = side.queued.find((r) => r.tag === row.tag)?.watched;
+      if (watched) props.onUnwatch(row.tag);
+      else props.onComplete([row.tag]);
+    } else props.onQueue(row.tag);
+  };
+  /** s: save for later (Queue), take off Later (Later). */
+  const saveForLater = (id: string) => {
+    const g = groupFor(id);
+    if (g) {
+      if (tab === "queue") props.onLaterMany(g.rows.map((r) => r.tag));
+      return;
+    }
+    const row = rowFor(id);
+    if (!row) return;
+    if (tab === "queue" && !side.queued.find((r) => r.tag === row.tag)?.watched) props.onLater(row.tag);
+    else if (tab === "later") props.onUnlater(row.tag);
+  };
+  /** x or dd: take the topic off this list. Checked-off topics keep theirs
+   *  until Clear checked, as their row's buttons do. */
+  const removeRow = (id: string) => {
+    const row = rowFor(id);
+    if (!row) return;
+    if (tab === "queue" && !side.queued.find((r) => r.tag === row.tag)?.watched) props.onUnqueue(row.tag);
+    else if (tab === "later") props.onUnlater(row.tag);
+    else if (tab === "done") props.onClear(row.tag);
+  };
+
+  const onListKey = (e: ListKey) => {
+    if (MODIFIER_KEYS.has(e.key)) return;
+    if (e.shiftKey && /^[hl]$/i.test(e.key)) return; // Shift+H / Shift+L switch panes (App)
+    const list = listRef.current;
+    const target = e.target as HTMLElement | null;
+    const onControl = target !== list && !!target?.closest?.("button, input, select, textarea");
+    if (onControl && (e.key === " " || e.key === "Enter")) return; // the button's own keys
+    const letter = ctrlLetter(e);
+    const half = letter === "d" || letter === "u";
+    if ((e.ctrlKey || e.metaKey || e.altKey) && !half) return; // undo, redo, app shortcuts
+    const plain = !e.ctrlKey && !e.metaKey && !e.altKey;
+    // Like vim, a number can't start with 0.
+    if (plain && /^[0-9]$/.test(e.key) && (e.key !== "0" || countRef.current)) {
+      setCount(Math.min(countRef.current * 10 + Number(e.key), 99999));
+      lastG.current = lastD.current = 0;
+      e.preventDefault();
+      return;
+    }
+    const pending = countRef.current;
+    if (pending) setCount(0);
+    if (e.key === "Escape") {
+      if (pending) e.preventDefault();
+      return;
+    }
+    const els = navEls(); // may be empty: gt / gT still change tab
+    const handled = () => {
+      e.preventDefault();
+      if (!focusedHere()) list?.focus({ preventScroll: true });
+    };
+    const times = pending || 1;
+    const now0 = cursorRef.current;
+    const found = now0 ? els.findIndex((el) => el.dataset.nav === now0) : -1;
+    const i = Math.max(0, found);
+    const go = (j: number) => {
+      if (!els.length) return;
+      const k = Math.max(0, Math.min(els.length - 1, j));
+      cursorAt.current = k;
+      setCursor(els[k].dataset.nav ?? null);
+    };
+    if (half) {
+      if (pending) scrollSize.current = pending;
+      const n = scrollSize.current || Math.max(1, Math.floor((list?.clientHeight ?? 400) / 31 / 2));
+      go(letter === "d" ? i + n : i - n);
+      return handled();
+    }
+    let key = e.key;
+    if (e.shiftKey && /^[a-z]$/.test(key)) key = key.toUpperCase(); // some keyboards
+    const now = Date.now();
+    // g-prefixed: gg (top, or row N), gt / gT (next / previous tab, or tab N).
+    if (lastG.current && now - lastG.current < 600 && (key === "g" || key === "t" || key === "T")) {
+      lastG.current = 0;
+      if (key === "g") go((gCount.current || 1) - 1);
+      else {
+        const at = TABS.indexOf(tab);
+        const next = key === "t" && gCount.current ? gCount.current - 1 : at + (key === "t" ? 1 : -(gCount.current || 1));
+        props.onTab(TABS[((next % TABS.length) + TABS.length) % TABS.length]);
+      }
+      return handled();
+    }
+    if (key === "g") {
+      lastG.current = now;
+      gCount.current = pending;
+      return handled();
+    }
+    lastG.current = 0;
+    if (!els.length) return;
+    const id = els[i].dataset.nav ?? "";
+    if (key === "d") {
+      if (lastD.current && now - lastD.current < 600) {
+        lastD.current = 0;
+        removeRow(id);
+      } else lastD.current = now;
+      return handled();
+    }
+    lastD.current = 0;
+    const kind = els[i].dataset.kind;
+    const group = els[i].dataset.group;
+    switch (key) {
+      case "j":
+      case "ArrowDown":
+        go(found >= 0 ? i + times : times - 1);
+        break;
+      case "k":
+      case "ArrowUp":
+        go(i - times);
+        break;
+      case "G":
+        go(pending ? pending - 1 : els.length - 1);
+        break;
+      case "Home":
+        go(0);
+        break;
+      case "End":
+        go(els.length - 1);
+        break;
+      case "l":
+      case "ArrowRight":
+        if (kind === "group") {
+          const g = id.slice(2);
+          if (collapsed.has(g)) toggleGroup(g);
+          else if (els[i + 1]?.dataset.group === g) go(i + 1);
+        }
+        break;
+      case "h":
+      case "ArrowLeft":
+        if (kind === "group") {
+          if (!collapsed.has(id.slice(2))) toggleGroup(id.slice(2));
+        } else if (group) go(els.findIndex((el) => el.dataset.nav === `g:${group}`));
+        break;
+      case "Enter":
+      case "o":
+        if (kind === "group") toggleGroup(id.slice(2));
+        else if (id === "more") loadMoreDone();
+        else {
+          const row = rowFor(id);
+          if (row) props.onReveal(row.key);
+        }
+        break;
+      case " ":
+        primary(id);
+        break;
+      case "s":
+        saveForLater(id);
+        break;
+      case "x":
+        removeRow(id);
+        break;
+      default:
+        return;
+    }
+    handled();
+  };
+  const cursorClass = (id: string) => (cursor === id ? " cursor" : "");
+
   const pct = Math.min(100, side.limit ? (100 * side.count) / side.limit : 0);
   const left = side.limit - side.count;
 
@@ -123,7 +374,16 @@ export function SidePanel(props: Props) {
         />
       </div>
 
-      <div className="list">
+      <div
+        className="list"
+        ref={listRef}
+        tabIndex={0}
+        data-keys="queue"
+        aria-label={`${tab === "queue" ? "Queue" : tab === "later" ? "Later" : "Done"} list`}
+        onKeyDown={(e) => onListKey(e)}
+        onBlur={() => countRef.current && setCount(0)}
+        onFocus={(e) => e.target === e.currentTarget && !cursor && showCursor()}
+      >
         {(tab === "queue" || tab === "later") && (side.queued.length || side.later.length) ? (
           <div className="list-tools">
             <span>{tab === "later" ? "Fill takes oldest first" : ""}</span>
@@ -163,11 +423,18 @@ export function SidePanel(props: Props) {
                   </IconButton>
                 </>
               )}
-              renderRow={(row, path, chip) => (
+              cursor={cursor}
+              renderRow={(row, path, chip, group) => (
                 <div
                   key={row.tag}
-                  className={`item${row.watched ? " watched" : ""}${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
-                  onClick={() => props.onReveal(row.key)}
+                  data-nav={`r:${row.tag}`}
+                  data-kind="row"
+                  data-group={group}
+                  className={`item${row.watched ? " watched" : ""}${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}${cursorClass(`r:${row.tag}`)}`}
+                  onClick={() => {
+                    setCursor(`r:${row.tag}`);
+                    props.onReveal(row.key);
+                  }}
                   title={`${row.tag}\nClick to show it in the tree`}
                 >
                   <RowMark
@@ -214,12 +481,19 @@ export function SidePanel(props: Props) {
                     <ListPlus size={15} />
                   </IconButton>
                 )}
-                renderRow={(row, path, chip) => (
+                cursor={cursor}
+                renderRow={(row, path, chip, group) => (
                   <div
                     key={row.tag}
-                    className={`item later-item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}`}
+                    data-nav={`r:${row.tag}`}
+                    data-kind="row"
+                    data-group={group}
+                    className={`item later-item${row.missing ? " missing" : ""}${props.activeKey === row.key ? " active" : ""}${cursorClass(`r:${row.tag}`)}`}
                     title={`${row.tag}\nClick to show it in the tree`}
-                    onClick={() => props.onReveal(row.key)}
+                    onClick={() => {
+                      setCursor(`r:${row.tag}`);
+                      props.onReveal(row.key);
+                    }}
                   >
                     <span className="item-bullet" />
                     <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
@@ -248,9 +522,14 @@ export function SidePanel(props: Props) {
             {doneRows.map((row) => (
               <div
                 key={row.tag}
-                className={`item done-item${props.activeKey === row.key ? " active" : ""}`}
+                data-nav={`r:${row.tag}`}
+                data-kind="row"
+                className={`item done-item${props.activeKey === row.key ? " active" : ""}${cursorClass(`r:${row.tag}`)}`}
                 title={`${row.tag}\nClick to show it in the tree`}
-                onClick={() => props.onReveal(row.key)}
+                onClick={() => {
+                  setCursor(`r:${row.tag}`);
+                  props.onReveal(row.key);
+                }}
               >
                 <span className="item-check">
                   <Check size={11} strokeWidth={3} />
@@ -268,7 +547,13 @@ export function SidePanel(props: Props) {
               </div>
             ))}
             {doneRows.length < side.doneTotal && (
-              <button type="button" className="btn ghost sm show-more-done" onClick={loadMoreDone}>
+              <button
+                type="button"
+                className={`btn ghost sm show-more-done${cursorClass("more")}`}
+                data-nav="more"
+                data-kind="more"
+                onClick={loadMoreDone}
+              >
                 Show {Math.min(DONE_STEP, side.doneTotal - doneRows.length).toLocaleString()} more of{" "}
                 {(side.doneTotal - doneRows.length).toLocaleString()}
               </button>
@@ -279,6 +564,11 @@ export function SidePanel(props: Props) {
               Topics you finish land here with the date.
             </Empty>
           )
+        )}
+        {count > 0 && (
+          <div className="count-pending" aria-live="polite">
+            <span>{count}</span>
+          </div>
         )}
       </div>
 
@@ -400,7 +690,9 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
   onCollapse: (key: string) => void;
   onReveal: (key: string) => void;
   groupActions: (group: RowGroup<R>) => ReactNode;
-  renderRow: (row: R, path: string, chip: boolean) => ReactNode;
+  /** The keyboard cursor's row (data-nav), to mark a resource header. */
+  cursor: string | null;
+  renderRow: (row: R, path: string, chip: boolean, group?: string) => ReactNode;
 }) {
   if (!props.groups) return <>{props.rows.map((r) => props.renderRow(r, r.path, true))}</>;
   const mixedSteps = new Set(props.groups.map((g) => g.step)).size > 1;
@@ -410,7 +702,13 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
         const open = !props.collapsed.has(g.key);
         return (
           <section key={g.key} className={`group step-${(g.stepIndex ?? 0) % 4}`}>
-            <div className="group-head" onClick={() => props.onReveal(g.key)} title={`${g.tag}\nClick to show it in the tree`}>
+            <div
+              className={`group-head${props.cursor === `g:${g.key}` ? " cursor" : ""}`}
+              data-nav={`g:${g.key}`}
+              data-kind="group"
+              onClick={() => props.onReveal(g.key)}
+              title={`${g.tag}\nClick to show it in the tree`}
+            >
               <button
                 type="button"
                 className={`chev${open ? " open" : ""}`}
@@ -432,7 +730,7 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
                 {g.count > 1 && <b>{fmt(g.fresh)}</b>}
               </span>
             </div>
-            {open && <Clusters rows={g.rows} renderRow={props.renderRow} />}
+            {open && <Clusters rows={g.rows} renderRow={(r, path, chip) => props.renderRow(r, path, chip, g.key)} />}
           </section>
         );
       })}
