@@ -129,6 +129,7 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `l` / `h` | Open a folder or step into it / close it or go to its parent |
 | `gg` / `G` | Jump to the top / bottom |
 | `Ctrl-d` / `Ctrl-u` | Move half a page down / up |
+| `5` then `Ctrl-d` or `Ctrl-u` | Move 5 rows, and keep moving 5 until you reopen the window |
 | `o` or `Enter` | Open or close a folder |
 | `Space` | Queue or unqueue the topic |
 | `s` | Save the topic for later (or take it back off Later) |
