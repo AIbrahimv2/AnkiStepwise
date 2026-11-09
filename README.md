@@ -14,6 +14,8 @@ It's built for the AnKing workflow of "cover the resource, unsuspend its cards",
 and works with any hierarchical tags. The window is a web UI (React) that follows
 Anki's light and dark themes, with vim-style keyboard navigation.
 
+![Stepwise: the tag tree by resource on the left, today's queue on the right](docs/screenshot.png)
+
 ## Features
 
 - **Tag tree by resource, split by step.** Resources sit under colour-coded
