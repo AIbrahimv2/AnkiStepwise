@@ -151,6 +151,78 @@ assert s["paneSwitch"] and s["side"] and not s["overflow"]
 js("document.querySelectorAll('.pane-switch button')[0].click()")
 s = at(440)
 assert s["tree"] and s["heads"] == HEADS and not s["overflow"]
+# --- the queue section --------------------------------------------------------
+# Whatever is still unstudied: a folder with a deeper topic between two of its
+# own, and a topic right under the resource that sorts after that folder.
+idx = actions.cached_index()
+
+
+def has_cards(k):
+    return not idx.kids(k) and idx.suspended.get(k, 0) > 0
+
+
+def pick_topics():
+    for folder in idx.post_order:
+        if not folder.startswith("#ak_step1_v12::") or folder.count("::") != 2:
+            continue  # a folder right under a Step 1 resource
+        kids, siblings = idx.kids(folder), idx.kids(folder.rsplit("::", 1)[0])
+        after = siblings[siblings.index(folder) + 1:]
+        direct = next((k for k in after if idx.suspended.get(k, 0) > 0), None)
+        for j, mid in enumerate(kids):
+            deep = next((g for g in idx.kids(mid) if has_cards(g)), None)
+            first = next((k for k in kids[:j] if has_cards(k)), None)
+            last = next((k for k in kids[j + 1:] if has_cards(k)), None)
+            if direct and deep and first and last:
+                return [first, deep, last, direct]
+    raise AssertionError("need a folder with a deeper topic between two of its own")
+
+
+picked = [idx.name(k) for k in pick_topics()]
+at(1140)  # the last narrow check left the topics showing instead of the queue
+actions.queue(picked)
+assert wait_for("document.querySelectorAll('.group .item').length >= 4"), "queue rows did not render"
+LAYOUT = """JSON.stringify((() => {
+  const all = (s) => [...document.querySelectorAll(s)];
+  const uniq = (s, f) => [...new Set(all(s).map(f))];
+  const edge = (s, side) => uniq(s, (e) => Math.round(e.getBoundingClientRect()[side]));
+  return {
+    order: all('.group .cluster-label, .group .item').map((e) => e.matches('.cluster-label') ? 'h:' + e.textContent : 'r'),
+    text: edge('.group-title, .group .item-title', 'left'),
+    headings: uniq('.cluster-label', (e) => Math.round(e.getBoundingClientRect().left + parseFloat(getComputedStyle(e).paddingLeft))),
+    marks: edge('.group .item-check, .group .item-bullet', 'left'),
+    markSizes: uniq('.group .item-check, .group .item-bullet', (e) => Math.round(e.getBoundingClientRect().width)),
+    numbers: edge('.group-meta b, .group .item-meta b', 'right'),
+    rowHeights: uniq('.group .item', (e) => Math.round(e.getBoundingClientRect().height)),
+    restingButtons: uniq('.list .item-actions, .group-head .item-actions', (e) => e.offsetWidth),
+  };
+})())"""
+for width in (1140, 860):
+    at(width)
+    q = json.loads(js(LAYOUT))
+    print("queue section", width, q)
+    heads = [x for x in q["order"] if x != "r"]
+    assert q["order"][0] == "r", "a topic right under the resource comes before any heading"
+    assert len(heads) == 2 == len(set(heads)), "one heading per folder"
+    assert q["order"].count("r") == 4, q["order"]
+    assert len(q["text"]) == 1 and q["headings"] == q["text"], "names and headings share one left edge"
+    assert len(q["marks"]) == 1 and q["markSizes"] == [14], "marks share one left edge and size"
+    assert len(q["numbers"]) == 1, "numbers share one right edge"
+    assert len(q["rowHeights"]) == 1, "every row is the same height"
+    assert q["restingButtons"] == [0], "row buttons take no room until hovered"
+
+# The ring checks a topic off and the check takes that back, without also
+# jumping to the topic in the tree.
+assert not js("document.querySelector('.item-sub')"), "no captions beside the numbers"
+selected = "document.querySelector('.row.selected, .row.active, .row.flash')?.textContent ?? ''"
+before = js(selected)
+assert js("document.querySelector('.group .item-bullet').click(); true")
+assert wait_for("document.querySelectorAll('.group .item-check').length === 1"), "ring checks off"
+assert len(actions.load_state().watched()) == 1
+assert js(selected) == before, "clicking the mark doesn't reveal the topic"
+assert js("document.querySelector('.group .item-check').click(); true")
+assert wait_for("document.querySelectorAll('.group .item-check').length === 0"), "check takes it back"
+assert not actions.load_state().watched()
+
 print("\nNARROW TEST PASSED")
 srv.shutdown()
 # QtWebEngine can crash in its own teardown, after the test has finished: leave
