@@ -116,8 +116,7 @@ class View:
         idx, pinned = self.index, self.pinned
 
         def order(key: str):
-            return (key not in pinned, pinned.index(key) if key in pinned else 0,
-                    natural_key(idx.last(key)))
+            return (key not in pinned, natural_key(idx.last(key)))
 
         resources = [(c, r) for r in self.roots for c in sorted(idx.kids(r), key=order)]
         others = sorted((k for k in idx.kids("") if k not in self.roots), key=order)
@@ -567,6 +566,9 @@ class View:
             pinned.append({"tag": tag, "label": prettify(parts[-1]),
                            "step": root_label(root) if root else None,
                            "stepIndex": self.roots.index(key) if key in self.roots else None})
+        # Same order as the tree: by step, then by name; other tags last.
+        pinned.sort(key=lambda p: (p["stepIndex"] is None, p["stepIndex"] or 0,
+                                   natural_key(p["tag"].rsplit(SEP, 1)[-1])))
         return {
             **shape(cfg),
             "pinned": pinned,
