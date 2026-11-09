@@ -91,7 +91,7 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 
 ## Usage
 
-1. Open **Tools → Stepwise** (Cmd/Ctrl+Alt+Q) or click the meter on the deck
+1. Open **Tools → Stepwise** (Cmd/Ctrl+Shift+S) or click the meter on the deck
    screen.
 2. Expand a resource and tick the topics you plan to cover. Ticking a parent
    queues everything under it. Or search for a keyword, pick the resource you're

@@ -15,6 +15,9 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- The default shortcut for the Stepwise window is now Cmd/Ctrl+Shift+S (it was
+  Cmd/Ctrl+Alt+Q). If you already have a saved shortcut, it stays until you
+  change it in Settings.
 - **A tidier queue.** In Queue and Later, a topic's folder is always a heading
   above it, once per folder, instead of sometimes a heading and sometimes a line
   underneath. Every row is one line, with marks, names and headings on the same

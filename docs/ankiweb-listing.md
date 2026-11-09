@@ -35,6 +35,6 @@ Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step
 - Undo, vim-style keys, light and dark mode, a meter on the deck screen.
 - Works with Colorful Tags: queued topics turn orange and done ones green in the Browser sidebar, and your existing colours can be imported.
 
-Open it from Tools → Stepwise (Cmd/Ctrl+Alt+Q). Your queue is saved in your collection, so it syncs with it.
+Open it from Tools → Stepwise (Cmd/Ctrl+Shift+S). Your queue is saved in your collection, so it syncs with it.
 
 Source, changelog and issues: [github.com/AIbrahimv2/AnkiStepwise](https://github.com/AIbrahimv2/AnkiStepwise)

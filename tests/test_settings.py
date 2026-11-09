@@ -65,7 +65,7 @@ check(bridge.booted, "booted")
 
 s = call("settings")["settings"]
 check(s["cardLimit"] == 150 and s["countMode"] == "new" and s["resourceRoots"] == ["#AK_Step*"], s)
-check(s["defaults"]["cardLimit"] == 150 and s["defaults"]["shortcut"] == "Ctrl+Alt+Q", s["defaults"])
+check(s["defaults"]["cardLimit"] == 150 and s["defaults"]["shortcut"] == "Ctrl+Shift+S", s["defaults"])
 check(s["colorSyncAvailable"] is True and s["colors"]["queued"] == "#ff9300", "colours")
 
 m = call("root_matches", patterns=["#AK_Step*", "#nothing*", ""])["matches"]

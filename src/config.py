@@ -25,7 +25,7 @@ DEFAULTS: dict = {
     "queued_color": "#ff9300",
     "completed_color": "#00f900",
     "later_color": "#af52de",
-    "shortcut": "Ctrl+Alt+Q",
+    "shortcut": "Ctrl+Shift+S",
     "import_offered": False,
     "config_version": 3,
 }
