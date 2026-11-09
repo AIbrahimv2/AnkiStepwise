@@ -977,10 +977,12 @@ body {
 .item { cursor: pointer; }
 .item.active { background: var(--select); }
 .item.active:hover { background: var(--select-strong); }
+/* Orange, then eases into whatever the row shows normally: no end keyframe, so
+   it animates to the row's own background (the stronger blue while the tree
+   has focus) and nothing changes when the class comes off. */
 .row.pulse { animation: pulse 1.3s ease-out; }
 @keyframes pulse {
   0%, 30% { background: color-mix(in srgb, var(--q-raw) 30%, transparent); }
-  100% { background: var(--select); }
 }
 
 /* --- suspended vs waiting ---------------------------------------------------- */
