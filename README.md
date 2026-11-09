@@ -196,6 +196,15 @@ cd web && npm run dev   # http://localhost:5173 (add ?theme=dark for dark mode)
 Run `./build.sh` to build the UI and produce a distributable `.ankiaddon` in
 `dist/`.
 
+The tests in `tests/` run with Anki's own Python against a snapshot of a real
+collection (an AnKing deck, with Colorful Tags installed). The snapshot stays
+in `tests/fixture/`, which git ignores, so your cards don't end up in the repo:
+
+```bash
+python3 tests/make_fixture.py   # once, or again to test against newer data
+./tests/run.sh                  # all of them, or name some: ./tests/run.sh test_bridge
+```
+
 ## License
 
 [AGPL-3.0-or-later](LICENSE).
