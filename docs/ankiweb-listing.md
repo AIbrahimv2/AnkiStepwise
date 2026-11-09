@@ -20,8 +20,8 @@ Built for the AnKing Step 1 / Step 2 / Step 3 decks, and works with any
 deck that uses hierarchical tags.
 
 - Tag tree by resource: B&B, Bootcamp, Pixorize, Sketchy, Pathoma, First
-  Aid, AMBOSS, UWorld and the rest, with suspended, waiting and total
-  counts and a progress bar per topic.
+  Aid, AMBOSS, UWorld and the rest, showing the cards left to unsuspend
+  and a progress bar per topic.
 - A meter of today's new cards. It follows Bury new siblings, so a note
   with three clozes counts once, the way Anki will show it.
 - Search across every resource, then queue all matches in one click.
