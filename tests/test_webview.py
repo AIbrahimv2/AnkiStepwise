@@ -116,13 +116,12 @@ print("toast:", toast)
 assert toast and "hello" in toast
 
 # Numbers before tree keys, like vim.
+from aqt.qt import QApplication, QEvent, QKeyEvent, Qt  # noqa: E402
+
 SEND = """((keys) => {
   const tree = document.querySelector('.tree');
-  for (const k of keys) {
-    const ctrlKey = k.startsWith('ctrl+');
-    const key = ctrlKey ? k.slice(5) : k;
-    tree.dispatchEvent(new KeyboardEvent('keydown', { key, ctrlKey, bubbles: true, cancelable: true, shiftKey: key === 'G' }));
-  }
+  for (const key of keys)
+    tree.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, shiftKey: key === 'G' }));
 })(%s)"""
 LINE = "[...document.querySelectorAll('.tree [data-key]')].findIndex((r) => r.classList.contains('selected'))"
 
@@ -149,15 +148,57 @@ assert press("2", "0", "G") == 19, "20G"
 assert press("5", "g", "g") == 4, "5gg"
 assert press("9", "9", "9", "9", "j") == total - 1, "stops at the last row"
 assert press("9", "9", "9", "9", "k") == 0, "stops at the first row"
+# Ctrl keys go through Qt as real key events, because that's what differs from
+# a browser: on a Mac the Control key arrives as Qt's Meta modifier, the page
+# sees metaKey, and Control+d's key is the control character \\x04.
+M = Qt.KeyboardModifier
+proxy = d.web.focusProxy() or d.web
+
+
+def qt_key(key, mods, text, native_key, count=8):
+    for kind in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+        QApplication.sendEvent(proxy, QKeyEvent(kind, key, mods, 0, native_key, 0, text))
+    for _ in range(count):
+        pump(5)
+        time.sleep(0.03)
+    return js(LINE)
+
+
+def control_d():
+    return qt_key(Qt.Key.Key_D, M.MetaModifier, "\x04", 0x02)
+
+
+def control_u():
+    return qt_key(Qt.Key.Key_U, M.MetaModifier, "\x15", 0x20)
+
+
+js("document.querySelector('.tree').focus(); 1")
+d.web.setFocus()
+pump(20)
 half = js("Math.max(1, Math.floor(document.querySelector('.tree').clientHeight / 30 / 2))")
 press("g", "g")
-assert press("ctrl+d") == half, "Ctrl-d moves half a page"
-assert press("ctrl+u") == 0, "Ctrl-u moves back"
-assert press("ctrl+D") == half, "Caps Lock doesn't stop it"
+assert control_d() == half, "Control-d moves half a page"
+assert control_u() == 0, "Control-u moves back"
+assert qt_key(Qt.Key.Key_D, M.ControlModifier, "d", 0x02) == half, "so does the other Ctrl modifier"
+assert qt_key(Qt.Key.Key_U, M.ControlModifier, "u", 0x20) == 0
+assert qt_key(Qt.Key.Key_D, M.MetaModifier, "D", 0x02) == half, "Caps Lock doesn't stop it"
 press("g", "g")
-assert press("3", "ctrl+d") == 3, "a number sets how far Ctrl-d moves"
-assert press("ctrl+d") == 6, "and it's remembered"
-assert press("ctrl+u") == 3, "for Ctrl-u too"
+press("3")
+assert control_d() == 3, "a number sets how far Control-d moves"
+assert control_d() == 6, "and it's remembered"
+assert control_u() == 3, "for Control-u too"
+
+# Control-r redoes, for the same reason.
+queued = len(actions.load_state().queued())
+js("document.querySelector('.row .cb').click()")
+assert wait_for(f"document.querySelectorAll('.item').length > {queued}"), "queued a topic"
+press("u")
+assert wait_for(f"document.querySelectorAll('.item').length === {queued}"), "u undoes"
+qt_key(Qt.Key.Key_R, M.MetaModifier, "\x12", 0x0F)
+assert wait_for(f"document.querySelectorAll('.item').length > {queued}"), "Control-r redoes"
+press("u")
+assert wait_for(f"document.querySelectorAll('.item').length === {queued}")
+
 press("4", "2")
 assert js("document.querySelector('.count-pending')?.textContent") == "42", "the number shows while it's pending"
 press("Escape")
