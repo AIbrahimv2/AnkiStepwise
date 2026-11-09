@@ -50,6 +50,9 @@ All notable changes to this project are documented here. The format is based on
   waiting, buried, still-suspended and total cards. Topics with nothing
   unsuspended yet show no bar, and Later and Done keep their marks. In
   narrow windows the bars shorten instead of columns disappearing.
+- Pinned resources sort alphabetically, in the tree, the resource picker and
+  Settings. They used to keep the order they were pinned in (or imported from
+  Colorful Tags), with no way to rearrange them.
 - **The new-card count follows sibling burying.** With **Bury new siblings**
   on in a deck's options (as in AnKing's preset), Anki shows one new card per
   note a day, so the meter, each topic's count, "Adds +N" and Fill queue now
