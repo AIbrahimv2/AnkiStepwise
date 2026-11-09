@@ -151,6 +151,24 @@ assert s["paneSwitch"] and s["side"] and not s["overflow"]
 js("document.querySelectorAll('.pane-switch button')[0].click()")
 s = at(440)
 assert s["tree"] and s["heads"] == HEADS and not s["overflow"]
+# --- a resource sticks under its step header ---------------------------------
+at(1140)
+js("[...document.querySelectorAll('.tree .row.stick')].find((r) => r.innerText.startsWith('B&B')).querySelector('.chev').click(); 1")
+assert wait_for("document.querySelectorAll('.tree .row').length > 60"), "B&B opened"
+STUCK = """JSON.stringify((() => {
+  const tree = document.querySelector('.tree');
+  const bb = [...tree.querySelectorAll('.row.stick')].find((r) => r.innerText.startsWith('B&B'));
+  tree.scrollTop = bb.offsetTop + 300;
+  const box = tree.getBoundingClientRect();
+  const under = (y) => document.elementFromPoint(box.left + 140, box.top + y)?.closest('.row')?.innerText.split('\\n')[0];
+  return { step: under(45), resource: under(79), below: under(110) };
+})())"""
+pump(10)
+stuck = json.loads(js(STUCK))
+print("stuck rows", stuck)
+assert stuck["step"] == "Step 1" and stuck["resource"] == "B&B" and stuck["below"] not in ("B&B", "Step 1"), stuck
+js("document.querySelector('.tree').scrollTop = 0; 1")
+
 # --- the queue section --------------------------------------------------------
 # Whatever is still unstudied: a folder with a deeper topic between two of its
 # own, and a topic right under the resource that sorts after that folder.
