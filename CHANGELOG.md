@@ -14,8 +14,15 @@ All notable changes to this project are documented here. The format is based on
   little words are skipped. Words matched loosely are highlighted too.
   "childhood development" now finds 9 topics instead of 4.
 
+- **The resource you're in stays in view.** While you scroll through a
+  resource's topics, its row stays pinned under the step header, so it's clear
+  which resource the selection is in; the next resource slides up over it.
+  "Other tags" pins like a step header too.
+
 ### Fixed
 
+- The highlight after showing a topic in the tree eases into the row's normal
+  highlight, instead of jumping to a darker blue when it finished.
 - With **Hide done** on, search counted done topics it then hid, so "Match 1
   of 4" showed one row and `n` couldn't reach the rest. Done topics are now
   left out of the results, and turning Hide done on or off redoes the search.

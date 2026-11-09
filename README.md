@@ -20,7 +20,9 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 
 - **Tag tree by resource, split by step.** Resources sit under colour-coded
   **Step 1 / Step 2 / Step 3** sections that stay pinned to the top while you
-  scroll, with checkboxes to queue topics. Each topic shows how many cards are
+  scroll, and the resource you're scrolling through stays pinned just under its
+  step, so you can always tell which one a topic belongs to. Checkboxes queue
+  topics. Each topic shows how many cards are
   **Left** to unsuspend and a **Progress** bar of its cards (hover it for the
   numbers); Later topics get a bookmark there instead and done ones a check
   (hover for the date). Queue, Later and Done rows carry a matching step chip.
