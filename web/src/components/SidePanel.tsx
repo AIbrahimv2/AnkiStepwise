@@ -170,37 +170,22 @@ export function SidePanel(props: Props) {
                   onClick={() => props.onReveal(row.key)}
                   title={`${row.tag}\nClick to show it in the tree`}
                 >
-                  {row.watched ? (
-                    <span className="item-check" title="Checked off">
-                      <Check size={11} strokeWidth={3} />
-                    </span>
-                  ) : (
-                    <span className="item-bullet" />
-                  )}
+                  <RowMark
+                    watched={!!row.watched}
+                    checkLabel={props.unsuspendOnComplete ? "Check off and unsuspend its cards" : "Check off"}
+                    onCheck={() => props.onComplete([row.tag])}
+                    onUncheck={() => props.onUnwatch(row.tag)}
+                  />
                   <ItemText title={row.title} path={path} step={chip ? row.step : null} stepIndex={row.stepIndex} />
-                  {row.watched ? (
+                  {!row.watched && (
                     <div className="item-actions">
-                      <IconButton size="sm" label="Uncheck: back to the queue" onClick={() => props.onUnwatch(row.tag)}>
-                        <RotateCcw size={14} />
+                      <IconButton size="sm" label="Move to Later" onClick={() => props.onLater(row.tag)}>
+                        <BookmarkPlus size={14} />
+                      </IconButton>
+                      <IconButton size="sm" tone="bad" label="Remove from queue" onClick={() => props.onUnqueue(row.tag)}>
+                        <X size={15} />
                       </IconButton>
                     </div>
-                  ) : (
-                  <div className="item-actions">
-                    <IconButton
-                      size="sm"
-                      tone="good"
-                      label={props.unsuspendOnComplete ? "Check off and unsuspend its cards" : "Check off"}
-                      onClick={() => props.onComplete([row.tag])}
-                    >
-                      <Check size={15} strokeWidth={2.4} />
-                    </IconButton>
-                    <IconButton size="sm" label="Move to Later" onClick={() => props.onLater(row.tag)}>
-                      <BookmarkPlus size={14} />
-                    </IconButton>
-                    <IconButton size="sm" tone="bad" label="Remove from queue" onClick={() => props.onUnqueue(row.tag)}>
-                      <X size={15} />
-                    </IconButton>
-                  </div>
                   )}
                   <RowCounts row={row} mode={side.mode} />
                 </div>
@@ -267,7 +252,9 @@ export function SidePanel(props: Props) {
                 title={`${row.tag}\nClick to show it in the tree`}
                 onClick={() => props.onReveal(row.key)}
               >
-                <span className="item-bullet" />
+                <span className="item-check">
+                  <Check size={11} strokeWidth={3} />
+                </span>
                 <ItemText title={row.title} path={row.path} step={row.step} stepIndex={row.stepIndex} />
                 <div className="item-actions">
                   <IconButton size="sm" label="Move back to the queue" onClick={() => props.onQueue(row.tag)}>
@@ -323,10 +310,35 @@ export function SidePanel(props: Props) {
   );
 }
 
-/** The row's counted cards. The breakdown is in the tooltip; a caption
- *  only appears when it says something the number and check don't: an
- *  unchecked topic whose cards are all unsuspended already, or one with
- *  nothing today because Anki holds its new cards back until tomorrow. */
+/** A queued row's mark is also its main action: the ring checks the topic
+ *  off, and the check takes that back. */
+function RowMark(props: { watched: boolean; checkLabel: string; onCheck: () => void; onUncheck: () => void }) {
+  const label = props.watched ? "Uncheck: back to the queue" : props.checkLabel;
+  return (
+    <button
+      type="button"
+      className={`item-mark ${props.watched ? "item-check" : "item-bullet"}`}
+      title={label}
+      aria-label={label}
+      onClick={(e) => {
+        e.stopPropagation();
+        if (props.watched) props.onUncheck();
+        else props.onCheck();
+      }}
+    >
+      {props.watched ? (
+        <>
+          <Check className="mark-rest" size={11} strokeWidth={3} />
+          <RotateCcw className="mark-hover" size={9} strokeWidth={3} />
+        </>
+      ) : (
+        <Check size={10} strokeWidth={3} />
+      )}
+    </button>
+  );
+}
+
+/** The row's counted cards, with the breakdown in the tooltip. */
 function RowCounts(props: { row: QueueRow; mode: Side["mode"] }) {
   const { row, mode } = props;
   const suspended = row.suspended ?? 0;
@@ -342,16 +354,9 @@ function RowCounts(props: { row: QueueRow; mode: Side["mode"] }) {
   ]
     .filter(Boolean)
     .join("\n");
-  const caption =
-    mode === "new" && !row.fresh && row.afterToday
-      ? "tomorrow"
-      : mode === "new" && !row.watched && !suspended && row.fresh
-        ? "unsuspended"
-        : null;
   return (
     <div className="item-meta" title={tip}>
       <b>{fmt(row.fresh)}</b>
-      {caption && <div className="item-sub">{caption}</div>}
     </div>
   );
 }
@@ -386,8 +391,8 @@ function writePref(key: string, value: string): void {
 type GroupedRow<R> = R & { parent: string; sub: string };
 
 /** Rows either flat (order added, with step chip and full path) or grouped
- *  by resource: a header per resource, and topics sharing a parent folder
- *  clustered under that folder's name. */
+ *  by resource: a header per resource, and each topic under a heading for
+ *  its folder. */
 function RowList<R extends { tag: string; key: string; path: string }>(props: {
   rows: R[];
   groups: RowGroup<R>[] | null;
@@ -417,7 +422,6 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
               >
                 <ChevronRight size={14} strokeWidth={2.4} />
               </button>
-              <span className="section-mark" />
               <span className="group-title">{g.label}</span>
               {mixedSteps && <StepChip step={g.step} index={g.stepIndex} />}
               <div className="item-actions">{props.groupActions(g)}</div>
@@ -436,31 +440,34 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
   );
 }
 
-/** Consecutive rows with the same parent folder: if two or more, show the
- *  folder once as a label and the rows without a path underneath. */
+/** A resource's topics under one heading per folder, so a path always sits
+ *  in the same place and each folder appears once. Topics right under the
+ *  resource come first, with no heading, so none of them looks like part of
+ *  the folder above it. */
 function Clusters<R>(props: {
   rows: GroupedRow<R>[];
   renderRow: (row: R, path: string, chip: boolean) => ReactNode;
 }) {
-  const out: ReactNode[] = [];
-  let i = 0;
-  while (i < props.rows.length) {
-    let j = i + 1;
-    while (j < props.rows.length && props.rows[j].parent === props.rows[i].parent) j++;
-    const run = props.rows.slice(i, j);
-    if (run.length > 1 && run[0].sub) {
-      out.push(
-        <div key={`c:${run[0].parent}`} className="cluster">
-          <div className="cluster-label">{run[0].sub}</div>
-          {run.map((r) => props.renderRow(r, "", false))}
-        </div>,
-      );
-    } else {
-      for (const r of run) out.push(props.renderRow(r, r.sub, false));
-    }
-    i = j;
+  const folders = new Map<string, GroupedRow<R>[]>();
+  for (const row of props.rows) {
+    if (!row.sub) continue;
+    const rows = folders.get(row.parent);
+    if (rows) rows.push(row);
+    else folders.set(row.parent, [row]);
   }
-  return <>{out}</>;
+  return (
+    <>
+      {props.rows.filter((r) => !r.sub).map((r) => props.renderRow(r, "", false))}
+      {[...folders].map(([parent, rows]) => (
+        <div key={`c:${parent}`} className="cluster">
+          <div className="cluster-label" title={rows[0].sub}>
+            {rows[0].sub}
+          </div>
+          {rows.map((r) => props.renderRow(r, "", false))}
+        </div>
+      ))}
+    </>
+  );
 }
 
 function TabButton(props: { active: boolean; label: string; count: number; onClick: () => void }) {

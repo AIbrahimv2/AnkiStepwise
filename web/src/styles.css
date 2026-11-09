@@ -637,16 +637,15 @@ body {
 .item:hover { background: var(--hover); }
 .item + .item { margin-top: 1px; }
 .item-main { flex: 1; min-width: 0; }
-.item-title { font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.item-title { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .item-path { font-size: 11.5px; color: var(--text-3); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-top: 1px; }
 .item.missing .item-path { color: var(--danger); }
 .item-meta { font-size: 12px; color: var(--text-2); font-variant-numeric: tabular-nums; white-space: nowrap; }
-.item-meta b { color: var(--text); font-weight: 600; }
-.item-actions { display: flex; gap: 2px; opacity: 0.5; transition: opacity 0.12s; }
-.item:hover .item-actions { opacity: 1; }
-.item-bullet { width: 6px; height: 6px; border-radius: 50%; background: var(--q-raw); flex: none; }
-.item.done-item .item-bullet { background: var(--d-raw); }
-.item.later-item .item-bullet { background: var(--l-raw); }
+.item-meta b { color: var(--text); font-weight: 500; }
+.item-actions { display: flex; gap: 2px; transition: opacity 0.12s; }
+/* Still to do: a ring the same size as the check it turns into. */
+.item-bullet { width: 14px; height: 14px; box-sizing: border-box; border-radius: 50%; border: 1.5px solid var(--q-raw); flex: none; }
+.item.later-item .item-bullet { border-color: var(--l-raw); }
 
 .list-empty { display: grid; place-items: center; gap: 8px; text-align: center; padding: 40px 20px; color: var(--text-2); }
 .list-empty .empty-icon { margin-bottom: 2px; }
@@ -949,9 +948,7 @@ body {
 /* --- suspended vs waiting ---------------------------------------------------- */
 
 .item-meta { text-align: right; }
-.item-sub { font-size: 11px; color: var(--text-3); margin-top: 1px; }
 .item-meta b { font-size: 13px; }
-.item-meta .item-sub { white-space: nowrap; }
 
 /* --- queue grouped by resource ---------------------------------------------- */
 
@@ -963,25 +960,20 @@ body {
   z-index: 1;
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 8px; /* puts the name on the rows' text edge: 8 + 18 + 8 = 10 + 14 + 10 */
   height: 34px;
-  padding: 0 4px 0 2px;
-  margin: 0 -2px;
+  padding: 0 6px 0 8px;
   border-radius: 8px;
   background: var(--surface);
   cursor: pointer;
 }
 .group-head:hover { background: color-mix(in srgb, var(--ink) 3.5%, var(--surface)); }
-.group-head .item-actions { opacity: 0.45; }
-.group-head:hover .item-actions { opacity: 1; }
-.group-title { font-weight: 700; letter-spacing: -0.01em; color: color-mix(in srgb, var(--step) 65%, var(--text)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.group-head .step-chip { margin-left: 0; height: 16px; font-size: 10px; padding: 0 6px; }
+.group-title { font-weight: 600; letter-spacing: -0.01em; color: color-mix(in srgb, var(--step) 65%, var(--text)); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+#root .group-head .step-chip { margin: 0; height: auto; padding: 0; background: none; font-size: 11px; font-weight: 400; letter-spacing: 0; color: var(--text-2); }
 .group-meta { margin-left: auto; color: var(--text-3); font-size: 11.5px; white-space: nowrap; }
-.group-meta b { color: var(--text); font-weight: 650; }
-.group .item { margin-left: 12px; }
-.cluster { margin: 2px 0 4px 12px; border-left: 2px solid color-mix(in srgb, var(--step) 30%, transparent); }
-.cluster .item { margin-left: 4px; padding-top: 6px; padding-bottom: 6px; }
-.cluster-label { font-size: 11px; font-weight: 600; color: var(--text-3); padding: 6px 10px 2px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.group-meta b { color: var(--text); font-weight: 500; }
+.group .item { padding-top: 5px; padding-bottom: 5px; }
+.cluster-label { font-size: 11.5px; font-weight: 500; color: var(--text-2); padding: 8px 6px 2px 34px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .badge.d.auto { background: transparent; box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--d-raw) 45%, transparent); }
 
 /* --- session: watched topics stay in the queue -------------------------------- */
@@ -995,9 +987,29 @@ body {
   flex: none;
   color: #fff;
   background: var(--d-raw);
-  margin-left: -4px;
 }
-.item.watched .item-title { color: var(--text-2); font-weight: 500; }
+.item.watched .item-title { color: var(--text-2); }
+
+/* A queued row's mark is a button: same size at rest as the marks in Later and
+   Done, with a bigger area to click. Hovering shows what a click would do. */
+#root .item-mark {
+  position: relative;
+  display: grid;
+  place-items: center;
+  flex: none;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  margin-top: 2px;
+}
+#root .item-mark::after { content: ""; position: absolute; inset: -7px; }
+#root .item-mark.item-check { background: var(--d-raw); color: #fff; }
+#root .item-mark.item-bullet { box-sizing: border-box; border: 1.5px solid var(--q-raw); color: #1a1a1a; }
+.item-mark.item-bullet svg { opacity: 0; }
+#root .item-mark.item-bullet:hover, #root .item-mark.item-bullet:focus-visible { background: var(--q-raw); }
+.item-mark.item-bullet:hover svg, .item-mark.item-bullet:focus-visible svg { opacity: 1; }
+.item-mark .mark-hover, .item-mark:hover .mark-rest, .item-mark:focus-visible .mark-rest { display: none; }
+.item-mark:hover .mark-hover, .item-mark:focus-visible .mark-hover { display: block; }
 .item.watched .item-meta b { color: var(--text-2); }
 
 /* Progress cells never spill past the row's edge. */
@@ -1006,14 +1018,13 @@ body {
 .cell-status .mini { flex-shrink: 1; min-width: 0; }
 .group-head .item-actions { margin-left: auto; }
 
-/* Numbers sit in one column at the right edge, and buttons in one column
-   just left of it: every number slot is the same width, and every row and
-   header reserves room for three buttons whatever it actually has. */
-.list .item-actions, .group-head .item-actions { min-width: 76px; justify-content: flex-end; }
-.list .item-meta, .group-head .group-meta { min-width: 40px; text-align: right; }
-.list .item-meta { position: relative; }
-/* The caption under a number hangs below it without widening the column. */
-.list .item-meta .item-sub { position: absolute; right: 0; top: 100%; }
+/* Numbers sit in one column at the right edge. A row's buttons only appear
+   while it's hovered or holds keyboard focus; they take no room until then,
+   so names get the full width. */
+.list .item-actions, .group-head .item-actions { width: 0; overflow: hidden; opacity: 0; justify-content: flex-end; }
+.list .item:hover .item-actions, .list .item:focus-within .item-actions,
+.group-head:hover .item-actions, .group-head:focus-within .item-actions { width: auto; overflow: visible; opacity: 1; }
+.list .item-meta, .group-head .group-meta { text-align: right; }
 .group-meta b { font-size: 13px; }
 
 /* The number column's one label, over the numbers at the rows' right
@@ -1038,26 +1049,12 @@ body {
 .col-head ~ .group .group-head { top: 20px; }
 .group-meta { color: var(--text); }
 
-/* Same right inset as rows (8px less the header's -2px margin), so
-   header totals line up with row counts. */
-.group-head { padding-right: 8px; }
-.group-head .group-meta { margin-left: 4px; } /* rows have a 10px gap, headers 6px */
-
-/* Numbers, bullets and buttons sit on the topic name's line rather than
-   midway down a two-line row (the path or caption takes the second line). */
+/* Numbers, marks and buttons sit on the topic name's line rather than
+   midway down a two-line row (the path takes the second line). */
 .list .item { align-items: flex-start; }
-.list .item-bullet { margin-top: 6px; }
-.list .item-check { margin-top: 2px; }
+.list .item-bullet, .list .item-check { margin-top: 2px; }
 .list .item-meta { line-height: 18px; }
-.list .item-meta .item-sub { line-height: 16px; }
 .list .item-actions { margin-top: -3px; }
-
-/* Dark mode: resting row buttons need more than half opacity to stay
-   visible (3:1) against the dark panel. */
-:root.night-mode .list .item-actions,
-:root.night-mode .group-head .item-actions { opacity: 0.65; }
-:root.night-mode .item:hover .item-actions,
-:root.night-mode .group-head:hover .item-actions { opacity: 1; }
 
 /* Dark mode: a dark tick reads on the orange box (white was 2.2:1), and
    empty boxes get an outline you can actually see (3:1). */
