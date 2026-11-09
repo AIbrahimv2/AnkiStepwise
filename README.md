@@ -25,7 +25,12 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   numbers); Later topics get a bookmark there instead and done ones a check
   (hover for the date). Queue, Later and Done rows carry a matching step chip.
 - **Keyword search.** Type `brainstem` or `b&b cardio` to see matching topics
-  from every resource, nested under the resource they belong to. A dropdown next
+  from every resource, nested under the resource they belong to. Every word
+  has to turn up somewhere in a topic's path, but loosely: part of a word
+  (`cardio` finds Cardiology), another ending (`developmental` finds
+  Development), a typo (`pyschiatry`), or a common abbreviation (`msk`, `peds`,
+  `heme`, `gi`). Words like "and" and "of" are skipped. With **Hide done** on,
+  finished topics are left out of the results too. A dropdown next
   to the search box limits the tree and the search to **all resources**, your
   **pinned resources**, or a **single resource**.
 - **Queue all matches.** One click queues every topic the search found that

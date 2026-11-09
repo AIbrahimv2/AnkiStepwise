@@ -3,6 +3,23 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **Laxer search.** Each word still has to appear somewhere in a topic's path,
+  but now as part of a word, with another ending (`developmental` finds
+  Development), with a typo (`devlopment`, `pyschiatry`), or as a common
+  abbreviation (`msk`, `peds`, `heme`, `gi`, and back). "And", "of" and other
+  little words are skipped. Words matched loosely are highlighted too.
+  "childhood development" now finds 9 topics instead of 4.
+
+### Fixed
+
+- With **Hide done** on, search counted done topics it then hid, so "Match 1
+  of 4" showed one row and `n` couldn't reach the rest. Done topics are now
+  left out of the results, and turning Hide done on or off redoes the search.
+
 ## [1.1.0] - 2026-11-09
 
 ### Added
