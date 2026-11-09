@@ -139,6 +139,25 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `Enter` / `Shift+Enter` (in search) | Go to the next / previous match and on to the tree, where `n` / `N` carry on |
 | `n` / `N` | Next / previous search match (`3n` goes three matches on) |
 | `Esc` | Cancel a number you've typed; leave the search box (results stay); again to clear the search |
+| `Shift+L` / `Shift+H` | Move to the queue panel / back to the topics (in a narrow window, switch which one shows) |
+
+The queue panel has vim keys too, once `Shift+L` (or a click on the list)
+gives it the keys. They act on the row under the cursor, in whichever tab
+shows:
+
+| Keys | Does |
+| --- | --- |
+| `j` / `k`, `gg` / `G`, `Ctrl-d` / `Ctrl-u` | Move, as in the tree, numbers included (`5j`, `3G`) |
+| `h` / `l` | Go to the topic's resource, close it / open it, or step into it |
+| `Space` | Check the topic off, or uncheck it (in Later and Done, move it to the queue) |
+| `s` | Move it to Later (in Later, take it off) |
+| `x` or `dd` | Remove it from the queue (in Later, take it off; in Done, clear it) |
+| `Enter` or `o` | Show the topic in the tree; on a resource, close or open it |
+| `gt` / `gT` | Next / previous tab (`2gt` goes to Later) |
+
+On a resource, `Space` and `s` act on all of its topics, like its buttons.
+Checked-off topics keep their place until you uncheck them or **Clear
+checked**, so `s` and `x` leave them alone.
 
 Undo covers what you do in the Stepwise window (queue, unqueue, Later,
 check off, clear, Fill queue, queue or save all search matches, imports),

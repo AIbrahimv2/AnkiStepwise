@@ -7,6 +7,12 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
+- **Vim keys in the queue panel.** `Shift+L` moves to the queue and `Shift+H`
+  back to the topics (in a narrow window they switch which one shows). There,
+  `j`/`k`, `gg`/`G`, `Ctrl-d`/`Ctrl-u` and numbers move a cursor; `Space` checks
+  a topic off (or queues it, in Later and Done), `s` moves it to Later, `x` or
+  `dd` removes it, `Enter` shows it in the tree, `h`/`l` close and open a
+  resource, and `gt`/`gT` change tab.
 - **Numbers before tree keys, like vim.** `10j` and `8k` move that many rows (the
   arrow keys work too), `10G` or `10gg` go to row 10, and `3n` goes three search
   matches on. A number before `Ctrl-d` or `Ctrl-u` sets how far they move until
