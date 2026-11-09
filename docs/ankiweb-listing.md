@@ -14,6 +14,8 @@ How AnkiWeb's add-on search behaves, tested in November 2026:
   and nothing here changes that.
 - The screenshot is the README's (docs/screenshot.png), linked from GitHub, so
   replacing that file updates both.
+- Wrap an image in `<p>`: on its own, AnkiWeb leaves it inline, so the list
+  after it starts with no gap.
 
 ## Title
 
@@ -29,7 +31,7 @@ A study planner for AnKing and other medical school decks. Tick the topics you'r
 
 Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step 2 / Step 3 decks for USMLE and COMLEX, and works with any deck that uses hierarchical tags.
 
-<img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%">
+<p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%"></p>
 
 - Tag tree by resource: B&B, Bootcamp, Pixorize, Sketchy, Pathoma, First Aid, Physeo, Osmosis, OME, Ninja Nerd, Dirty Medicine, AMBOSS, UWorld, NBME and the rest, showing the cards left to unsuspend and a progress bar per topic.
 - A meter of today's new cards. It follows Bury new siblings, so a note with three clozes counts once, the way Anki will show it.
