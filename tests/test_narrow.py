@@ -210,6 +210,24 @@ for width in (1140, 860):
     assert len(q["rowHeights"]) == 1, "every row is the same height"
     assert q["restingButtons"] == [0], "row buttons take no room until hovered"
 
+# A resource's buttons sit at the right edge, right beside its number. This
+# window never has real focus or hover, so the test shows them with a style.
+gap = json.loads(js("""JSON.stringify((() => {
+  const show = document.createElement('style');
+  show.textContent = '.group-head .item-actions { width: auto !important; }';
+  document.head.append(show);
+  const head = document.querySelector('.group-head');
+  const buttons = head.querySelector('.item-actions');
+  const out = {
+    width: buttons.offsetWidth,
+    gap: head.querySelector('.group-meta').getBoundingClientRect().left - buttons.getBoundingClientRect().right,
+  };
+  show.remove();
+  return out;
+})())"""))
+print("resource buttons", gap)
+assert gap["width"] > 0 and 0 <= gap["gap"] <= 12, gap
+
 # The ring checks a topic off and the check takes that back, without also
 # jumping to the topic in the tree.
 assert not js("document.querySelector('.item-sub')"), "no captions beside the numbers"
