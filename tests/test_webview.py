@@ -1,5 +1,6 @@
 """Load the real QueueDialog (AnkiWebView + QWebChannel pycmd bridge) offscreen,
 serving the built bundle from a stub media server, and drive it via JS."""
+import json
 import os
 import sys
 import threading
@@ -113,6 +114,43 @@ d.show_toast("hello from python")
 toast = wait_for("[...document.querySelectorAll('.toast')].map(t => t.textContent).join(' | ').includes('hello') && [...document.querySelectorAll('.toast')].map(t => t.textContent).join(' | ')")
 print("toast:", toast)
 assert toast and "hello" in toast
+
+# Numbers before tree keys, like vim.
+SEND = """((keys) => {
+  const tree = document.querySelector('.tree');
+  for (const key of keys)
+    tree.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, shiftKey: key === 'G' }));
+})(%s)"""
+LINE = "[...document.querySelectorAll('.tree [data-key]')].findIndex((r) => r.classList.contains('selected'))"
+
+
+def press(*keys):
+    js(SEND % json.dumps(keys))
+    pump(5)
+    time.sleep(0.1)
+    pump(5)
+    return js(LINE)
+
+
+total = js("document.querySelectorAll('.tree [data-key]').length")
+assert total > 25, total
+assert press("g", "g") == 0
+assert press("1", "0", "j") == 10, "10j"
+assert press("8", "k") == 2, "8k"
+assert press("3", "ArrowDown") == 5, "arrow keys take a number"
+assert press("3", "Shift", "j") == 8, "pressing Shift keeps the number"
+assert press("5", "Escape", "j") == 9, "Esc cancels the number and keeps the selection"
+assert press("0", "j") == 10, "0 alone isn't a number"
+assert press("5", "n", "j") == 11, "any other key uses the number up"
+assert press("2", "0", "G") == 19, "20G"
+assert press("5", "g", "g") == 4, "5gg"
+assert press("9", "9", "9", "9", "j") == total - 1, "stops at the last row"
+assert press("9", "9", "9", "9", "k") == 0, "stops at the first row"
+press("4", "2")
+assert js("document.querySelector('.count-pending')?.textContent") == "42", "the number shows while it's pending"
+press("Escape")
+assert not js("document.querySelector('.count-pending')"), "and goes once it's cancelled"
+print("number prefixes work")
 
 print("\nWEBVIEW TEST PASSED")
 srv.shutdown()
