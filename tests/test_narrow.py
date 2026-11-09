@@ -241,6 +241,38 @@ assert js("document.querySelector('.group .item-check').click(); true")
 assert wait_for("document.querySelectorAll('.group .item-check').length === 0"), "check takes it back"
 assert not actions.load_state().watched()
 
+# In a narrow window Shift+L and Shift+H switch which one shows, and give it
+# the keys. Sent through Qt, as Anki delivers them.
+from aqt.qt import QApplication, QEvent, QKeyEvent, Qt  # noqa: E402
+
+proxy = d.web.focusProxy() or d.web
+
+
+def shift(letter):
+    key, native = (Qt.Key.Key_L, 0x25) if letter == "L" else (Qt.Key.Key_H, 0x04)
+    for kind in (QEvent.Type.KeyPress, QEvent.Type.KeyRelease):
+        QApplication.sendEvent(proxy, QKeyEvent(kind, key, Qt.KeyboardModifier.ShiftModifier, 0, native, 0, letter))
+    for _ in range(20):
+        pump(3)
+        time.sleep(0.02)
+    s = json.loads(js(STATE))
+    s["focus"] = js("document.activeElement.dataset.keys || document.activeElement.className")
+    return s
+
+
+at(700)
+js("document.querySelector('.tree').focus(); 1")
+d.web.setFocus()
+s = shift("L")
+assert s["side"] and not s["tree"] and s["focus"] == "queue", ("Shift+L shows the queue", s)
+s = shift("H")
+assert s["tree"] and not s["side"] and s["focus"].startswith("tree"), ("Shift+H shows the topics", s)
+at(1140)
+s = shift("L")
+assert s["side"] and s["tree"] and s["focus"] == "queue", ("Shift+L in a wide window", s)
+shift("H")
+print("Shift+H / Shift+L switch panes")
+
 print("\nNARROW TEST PASSED")
 srv.shutdown()
 # QtWebEngine can crash in its own teardown, after the test has finished: leave

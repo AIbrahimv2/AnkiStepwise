@@ -205,6 +205,117 @@ press("Escape")
 assert not js("document.querySelector('.count-pending')"), "and goes once it's cancelled"
 print("number prefixes work")
 
+# --- the queue list's keys, and Shift+H / Shift+L between the two -----------------
+idx = actions.cached_index()
+picked = [k for k in idx.post_order if k.startswith("#ak_step1_v12::#b&b::") and not idx.kids(k)
+          and idx.suspended.get(k, 0) > 0][:3]
+assert len(picked) == 3, picked
+names = [idx.name(k) for k in picked]
+actions.queue(names)
+d.push({"type": "sync"})  # the window isn't shown here, so it isn't told by itself
+assert wait_for("document.querySelectorAll('.group .item').length === 3"), "queue rows render"
+
+QSTATE = """JSON.stringify((() => {
+  const c = document.querySelector('[data-keys="queue"] .cursor');
+  return {
+    focus: document.activeElement.dataset.keys || document.activeElement.className,
+    cursor: c ? c.dataset.nav : null,
+    tab: [...document.querySelectorAll('.side-panel [role=tab]')].findIndex((t) => t.getAttribute('aria-selected') === 'true'),
+  };
+})())"""
+QSEND = """((keys) => {
+  const list = document.querySelector('[data-keys="queue"]');
+  for (const key of keys)
+    list.dispatchEvent(new KeyboardEvent('keydown', { key, bubbles: true, cancelable: true, shiftKey: /^[A-Z]$/.test(key) }));
+})(%s)"""
+
+
+def qstate():
+    return json.loads(js(QSTATE))
+
+
+def qpress(*keys):
+    js(QSEND % json.dumps(keys))
+    for _ in range(6):
+        pump(5)
+        time.sleep(0.05)
+    return qstate()
+
+
+def shift(letter):
+    key = Qt.Key.Key_L if letter == "L" else Qt.Key.Key_H
+    qt_key(key, M.ShiftModifier, letter, 0x25 if letter == "L" else 0x04, count=12)
+    return qstate()
+
+
+def rows_in_order():
+    return json.loads(js("JSON.stringify([...document.querySelectorAll('[data-keys=\"queue\"] [data-nav]')].map((e) => e.dataset.nav))"))
+
+
+s = shift("L")
+assert s["focus"] == "queue" and s["cursor"] == rows_in_order()[0], ("Shift+L gives the queue the keys", s)
+order = rows_in_order()
+first, second, third = [x for x in order if x.startswith("r:")]
+assert qpress("j")["cursor"] == first, "j"
+assert qpress("2", "j")["cursor"] == third, "2j"
+assert qpress("k")["cursor"] == second, "k"
+assert qpress("g", "g")["cursor"] == order[0], "gg"
+assert qpress("G")["cursor"] == order[-1], "G"
+assert qpress("h")["cursor"] == order[0], "h goes to the resource"
+qpress("h")
+assert rows_in_order() == [order[0]], "h again closes it"
+qpress("l")
+assert rows_in_order() == order, "l opens it"
+assert qpress("l")["cursor"] == order[1], "and again goes in"
+
+# Space checks off and unchecks, s saves for later, x and dd remove.
+tag = lambda nav: nav[2:].lower()
+
+
+def has(tags, t):
+    return t in {x.lower() for x in tags}
+
+
+qpress("g", "g", "j")
+qpress(" ")
+assert wait_for("document.querySelectorAll('.group .item-check').length === 1"), "Space checks off"
+assert has(actions.load_state().watched(), tag(first))
+qpress(" ")
+assert wait_for("document.querySelectorAll('.group .item-check').length === 0"), "Space again unchecks"
+s = qpress("s")
+assert wait_for("document.querySelectorAll('.group .item').length === 2"), "s moves it to Later"
+assert has(actions.load_state().later(), tag(first))
+assert qstate()["cursor"] == second, "the cursor takes the next row"
+qpress("x")
+assert wait_for("document.querySelectorAll('.group .item').length === 1"), "x removes it"
+assert not has(actions.load_state().queued(), tag(second))
+qpress("d", "d")
+assert wait_for("document.querySelectorAll('.group .item').length === 0"), "dd removes it"
+assert not actions.load_state().queued()
+
+# gt / gT change tab; in Later, Space queues the topic again.
+assert qpress("g", "t")["tab"] == 1, "gt"
+assert qstate()["cursor"] is not None
+assert wait_for("!!document.querySelector('.later-item')"), "Later shows"
+qpress("j")
+later_tag = tag(qstate()["cursor"])
+qpress(" ")
+assert wait_for("!document.querySelector('[data-nav=\"r:%s\"]')" % later_tag.replace('"', '\\"')), "Space queues it"
+assert has(actions.load_state().queued(), later_tag)
+assert qpress("g", "T")["tab"] == 0, "gT"
+
+# Enter shows the topic in the tree and hands it the keys; Shift+H and
+# Shift+L go back and forth, and the cursor stays where it was.
+qpress("g", "g", "j")
+row = qstate()["cursor"]
+qpress("Enter")
+assert wait_for("document.activeElement.classList.contains('tree')"), "Enter goes to the tree"
+assert shift("L") == {**qstate(), "focus": "queue", "cursor": row}
+assert shift("H")["focus"].startswith("tree"), "Shift+H gives the tree the keys"
+actions.unqueue(actions.load_state().queued())
+d.push({"type": "sync"})
+print("queue keys work")
+
 print("\nWEBVIEW TEST PASSED")
 srv.shutdown()
 # QtWebEngine can crash in its own teardown, after the test has finished: leave
