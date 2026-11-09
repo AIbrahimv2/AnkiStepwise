@@ -7,7 +7,7 @@ in both.
 
 ## Title
 
-Stepwise – Unsuspend AnKing by topic, within a daily new-card limit
+🪜 Stepwise: unsuspend AnKing one topic at a time
 
 ## Description
 
