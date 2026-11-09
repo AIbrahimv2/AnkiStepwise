@@ -35,4 +35,4 @@ deck that uses hierarchical tags.
 Open it from Tools → Stepwise (Cmd/Ctrl+Alt+Q). Your queue is saved in
 your collection, so it syncs with it.
 
-Source, changelog and issues: https://github.com/AIbrahimv2/AnkiStepwise
+Source, changelog and issues: [github.com/AIbrahimv2/AnkiStepwise](https://github.com/AIbrahimv2/AnkiStepwise)
