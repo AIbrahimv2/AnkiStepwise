@@ -35,6 +35,8 @@ interface TreeProps {
   onJumpMatch: (dir: 1 | -1, count?: number) => void;
   /** Esc in the tree: clear the search, if there is one. */
   onEscape: () => void;
+  /** p: the topic's cards in Skim (only when Skim is installed). */
+  onPreview?: (key: string) => void;
 }
 
 /** Small coloured "Step 1" pill; colours cycle per resource root. */
@@ -47,7 +49,7 @@ export function StepChip({ step, index }: { step: string | null; index: number |
 type KeyLike = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey" | "preventDefault">;
 
 const TREE_KEYS = new Set([
-  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", " ", "Enter", "Escape",
+  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", "p", " ", "Enter", "Escape",
   "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 ]);
@@ -207,6 +209,10 @@ export function Tree(props: TreeProps) {
         break;
       case "s":
         if (node && !isGroup(node)) props.onToggleLater(node);
+        break;
+      case "p":
+        if (!props.onPreview || !node || isGroup(node)) return;
+        props.onPreview(row.key);
         break;
       case "Enter":
       case "o":

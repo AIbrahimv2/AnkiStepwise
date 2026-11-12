@@ -237,6 +237,8 @@ export interface Boot {
   scope: string;
   options: Options;
   colors: StatusColors;
+  /** Skim (a separate card browser add-on) is installed. */
+  skim?: boolean;
 }
 
 export interface Bundle {

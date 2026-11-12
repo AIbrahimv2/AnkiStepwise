@@ -4,6 +4,7 @@ import {
   CircleCheck,
   Eraser,
   ExternalLink,
+  Eye,
   ListMinus,
   ListPlus,
   LockOpen,
@@ -88,6 +89,8 @@ export function App() {
   const [search, setSearch] = useState<SearchState | null>(null);
   const [summary, setSummary] = useState<Summary | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
+  // Skim, the card browser add-on, is installed: p shows a topic's cards.
+  const [skim, setSkim] = useState(false);
   const [details, setDetails] = useState<Details | null>(null);
 
   const [toasts, setToasts] = useState<Toast[]>([]);
@@ -272,6 +275,7 @@ export function App() {
       setScopes(b.scopes);
       setScope(b.scope);
       applyColors(b.colors);
+      setSkim(!!b.skim);
       if (b.openSettings) setSettingsOpen(true);
       // Reopen the folders that were open last time (and keep closed the
       // step sections you closed).
@@ -729,6 +733,7 @@ export function App() {
     entries.push(
       { separator: true },
       { label: "Browse cards", icon: <ExternalLink size={14} />, onSelect: () => call("browse", { tags: [n.tag] }) },
+      ...(skim ? [{ label: "Preview in Skim", icon: <Eye size={14} />, hint: "p", onSelect: () => call("preview", { key }) }] : []),
       { label: "Unsuspend cards", icon: <LockOpen size={14} />, onSelect: () => act("unsuspend", { tags: [n.tag] }) },
     );
     if (n.resource)
@@ -822,6 +827,7 @@ export function App() {
             onContext={(key, x, y) => setMenu({ key, anchor: { x, y } })}
             onJumpMatch={jumpMatch}
             onEscape={() => queryRef.current && setQuery("")}
+            onPreview={skim ? (key) => void call("preview", { key }).catch(() => undefined) : undefined}
           />
           <DetailsBar details={details} searching={!!search} />
         </section>

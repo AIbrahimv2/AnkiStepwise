@@ -21,7 +21,7 @@ import traceback
 
 from aqt import mw
 
-from . import actions, colorsync, history
+from . import actions, colorsync, history, skim_link
 from .config import check_settings, get_config, update_config
 from .state import COMPLETED, LATER, QUEUED
 from .viewmodel import View
@@ -166,6 +166,7 @@ class Bridge:
             "options": view.options(),
             "colors": {"queued": cfg["queued_color"], "completed": cfg["completed_color"],
                        "later": cfg["later_color"]},
+            "skim": skim_link.available(),
         }
 
     def cmd_done_page(self, msg: dict) -> dict:
@@ -222,7 +223,17 @@ class Bridge:
         return view.search(str(msg.get("query", "")))
 
     def cmd_details(self, msg: dict) -> dict:
-        return {"details": self.view().details(str(msg.get("key", "")))}
+        key = str(msg.get("key", ""))
+        # The page asks for these whenever the selection moves, so Skim
+        # follows from here (only while it shows Stepwise's cards).
+        skim_link.follow(self.host.index, key)
+        return {"details": self.view().details(key)}
+
+    def cmd_preview(self, msg: dict) -> dict:
+        """p on a topic: its cards in Skim."""
+        if not skim_link.preview(self.host.index, str(msg.get("key", ""))):
+            return {"error": "Skim isn't installed."}
+        return {}
 
     def cmd_sync(self, msg: dict) -> dict:
         return self.bundle(msg)
