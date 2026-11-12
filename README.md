@@ -148,7 +148,8 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `o` or `Enter` | Open or close a folder |
 | `Space` | Queue or unqueue the topic |
 | `s` | Save the topic for later (or take it back off Later) |
-| `p` | See the topic's cards in Skim, if it's installed |
+| `b` | See the topic's cards in Anki's browser |
+| `p` | See the topic's cards in Skim, if it's installed (it follows as you move) |
 | `u` or `Cmd/Ctrl+Z` | Undo the last change |
 | `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
@@ -169,7 +170,11 @@ shows:
 | `s` | Move it to Later (in Later, take it off) |
 | `x` or `dd` | Remove it from the queue (in Later, take it off; in Done, clear it) |
 | `Enter` or `o` | Show the topic in the tree; on a resource, close or open it |
+| `b` | The topic's cards in Anki's browser (on a resource, all its topics) |
+| `p` | The same in Skim, if it's installed; Skim follows the cursor here too |
 | `gt` / `gT` | Next / previous tab (`2gt` goes to Later) |
+
+Press `?` anywhere in the window (or **⋯ → Keys**) to see all of these.
 
 On a resource, `Space` and `s` act on all of its topics, like its buttons.
 Checked-off topics keep their place until you uncheck them or **Clear

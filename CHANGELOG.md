@@ -12,7 +12,12 @@ All notable changes to this project are documented here. The format is based on
   **Preview in Skim** in its right-click menu, shows the topic's cards there.
   While Skim is open, moving through topics shows each one's cards, and the
   keys stay in Stepwise. The cards come from Stepwise's own index, so there's
-  no wait for Anki's tag search. Without Skim nothing changes.
+  no wait for Anki's tag search. Without Skim nothing changes. The queue
+  panel takes `p` too, and Skim follows its cursor; on a resource's row it
+  shows all the resource's topics.
+- **`b` opens a topic's cards in Anki's browser**, from the tree or the queue
+  panel (on a resource's row, all its topics).
+- **`?` shows every key**, grouped by where it works; so does **⋯ → Keys**.
 
 ## [1.1.1] - 2026-11-09
 
