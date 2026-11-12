@@ -91,7 +91,8 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   the queue.
 - **See a topic's cards in Skim.** With
   [Skim](https://github.com/AIbrahimv2/AnkiSkim) installed (a fast card
-  browser with vim keys), press `p` on a topic to see its cards there. Leave
+  browser with vim keys), `b` on a topic shows its cards there instead of in
+  Anki's browser (`Shift+B` still opens Anki's browser). Leave
   Skim open and it follows you: every topic you move to shows its cards,
   while the keys stay in Stepwise. `p` in Skim comes back.
 - **Browser sidebar.** Right-click any tag (or several) → **Stepwise** → Add to
@@ -122,9 +123,9 @@ Hit your limit but found more to do? Press **s** on a topic (or click its
 bookmark) to save it for later. Next session, open the **Later** tab and click
 **Fill queue**.
 
-Right-click a topic for more: save it for later, browse its cards (or
-preview them in Skim), unsuspend without completing, clear its status, or pin
-a resource to the top.
+Right-click a topic for more: save it for later, browse its cards (in Skim
+or Anki's browser), unsuspend without completing, clear its status, or pin a
+resource to the top.
 
 In a narrow window (under 760px) the topics and the queue take turns: switch
 between them at the top of the window. The tree's bars get shorter before it
@@ -148,8 +149,9 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `o` or `Enter` | Open or close a folder |
 | `Space` | Queue or unqueue the topic |
 | `s` | Save the topic for later (or take it back off Later) |
-| `b` | See the topic's cards in Anki's browser |
-| `p` | See the topic's cards in Skim, if it's installed (it follows as you move) |
+| `b` | See the topic's cards: in Skim if it's installed (it follows as you move), otherwise in Anki's browser |
+| `Shift+B` | See them in Anki's browser, even with Skim installed |
+| `p` | The same as `b` with Skim installed |
 | `u` or `Cmd/Ctrl+Z` | Undo the last change |
 | `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
@@ -170,8 +172,9 @@ shows:
 | `s` | Move it to Later (in Later, take it off) |
 | `x` or `dd` | Remove it from the queue (in Later, take it off; in Done, clear it) |
 | `Enter` or `o` | Show the topic in the tree; on a resource, close or open it |
-| `b` | The topic's cards in Anki's browser (on a resource, all its topics) |
-| `p` | The same in Skim, if it's installed; Skim follows the cursor here too |
+| `b` | The topic's cards, in Skim if it's installed, otherwise in Anki's browser (on a resource, all its topics); Skim follows the cursor here too |
+| `Shift+B` | The same in Anki's browser, even with Skim installed |
+| `p` | The same as `b` with Skim installed |
 | `gt` / `gT` | Next / previous tab (`2gt` goes to Later) |
 
 Press `?` anywhere in the window (or **⋯ → Keys**) to see all of these.
