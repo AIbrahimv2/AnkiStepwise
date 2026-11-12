@@ -319,15 +319,19 @@ import harness  # noqa: E402
 
 harness.BROWSED.clear()
 press("b")
-assert len(harness.BROWSED) == 1 and harness.BROWSED[0], ("b in the tree", harness.BROWSED)
+assert len(harness.BROWSED) == 1 and harness.BROWSED[0], ("b in the tree (no Skim here)", harness.BROWSED)
+press("B")
+assert len(harness.BROWSED) == 2, "B in the tree"
+harness.BROWSED.clear()
 shift("L")
 qpress("g", "g")
 assert qstate()["cursor"].startswith("g:"), "the queue starts on a resource's row"
 qpress("b")
-assert len(harness.BROWSED) == 2 and " OR " in harness.BROWSED[1][0] or "tag:" in harness.BROWSED[1][0], harness.BROWSED
+assert len(harness.BROWSED) == 1 and "tag:" in harness.BROWSED[0][0], ("b on a resource's row", harness.BROWSED)
 qpress("j")
 qpress("b")
-assert len(harness.BROWSED) == 3, "b on a topic's row"
+qpress("B")
+assert len(harness.BROWSED) == 3, "b and B on a topic's row"
 # Without Skim, p does nothing.
 qpress("p")
 assert not js("!!document.querySelector('.toast.error')"), "p without Skim is quiet"
