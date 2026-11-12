@@ -2,15 +2,17 @@ import {
   CircleCheck,
   Ellipsis,
   Info,
+  Keyboard,
   Palette,
   RefreshCw,
   Settings2,
   TriangleExclamationPoint,
+  X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { call } from "../bridge";
 import type { ImportGroup, Options, Status } from "../types";
-import { type Anchor, Menu, Modal, Switch, anchorBelow, fmt, plural } from "./ui";
+import { type Anchor, IconButton, Menu, Modal, Switch, anchorBelow, fmt, plural } from "./ui";
 
 // --- header ------------------------------------------------------------------
 
@@ -24,6 +26,7 @@ export function PageActions(props: {
   onRefresh: () => void;
   onImport: () => void;
   onSettings: () => void;
+  onKeys: () => void;
 }) {
   const btn = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -56,6 +59,7 @@ export function PageActions(props: {
               disabled: !o.colorSyncAvailable,
             },
             { separator: true },
+            { label: "Keys", icon: <Keyboard size={14} />, hint: "?", onSelect: props.onKeys },
             { label: "Settings…", icon: <Settings2 size={14} />, onSelect: props.onSettings },
           ]}
         />
@@ -329,5 +333,85 @@ export function Toasts({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id:
         </div>
       ))}
     </div>
+  );
+}
+
+// --- keys ----------------------------------------------------------------------
+
+/** Keys, what they do, and whether they need Skim installed. */
+type KeyRow = [keys: string[], does: string, skim?: true];
+
+const SKIM_DOES = "Its cards in Skim, which follows as you move; p there comes back";
+
+const KEY_SECTIONS: [string, KeyRow[]][] = [
+  [
+    "Topics",
+    [
+      [["j", "k"], "Move down / up (arrow keys too); a number first moves that many"],
+      [["gg", "G"], "Top / bottom; 10G goes to row 10"],
+      [["Ctrl-d", "Ctrl-u"], "Half a page down / up"],
+      [["l", "h"], "Open a folder or step in / close it or go to its parent"],
+      [["o", "Enter"], "Open or close a folder"],
+      [["Space"], "Queue or unqueue the topic"],
+      [["s"], "Save it for later, or take it off Later"],
+      [["b"], "Its cards in Anki's browser"],
+      [["p"], SKIM_DOES, true],
+      [["/"], "Search topics; Enter goes to the first match"],
+      [["n", "N"], "Next / previous search match"],
+    ],
+  ],
+  [
+    "Queue, Later and Done",
+    [
+      [["j", "k"], "Move, as in the topics (gg, G, Ctrl-d, Ctrl-u too)"],
+      [["Space"], "Check the topic off, or uncheck it (Later, Done: queue it)"],
+      [["s"], "Move it to Later (in Later, take it off)"],
+      [["x", "dd"], "Remove it from this list"],
+      [["Enter", "o"], "Show it in the topics"],
+      [["b"], "Its cards in Anki's browser (on a resource, all its topics)"],
+      [["p"], SKIM_DOES, true],
+      [["gt", "gT"], "Next / previous tab"],
+    ],
+  ],
+  [
+    "Anywhere",
+    [
+      [["Shift-L", "Shift-H"], "To the queue / back to the topics"],
+      [["u", "Cmd-Z"], "Undo"],
+      [["Ctrl-r", "Cmd-Shift-Z"], "Redo"],
+      [["?"], "These keys"],
+    ],
+  ],
+];
+
+/** Every key, by where it works. `p` only with Skim installed. */
+export function KeysDialog(props: { onClose: () => void; skim: boolean }) {
+  const sections = KEY_SECTIONS.map(([title, rows]) => [title, rows.filter((r) => !r[2] || props.skim)] as const);
+  return (
+    <Modal onClose={props.onClose} width={560}>
+      <div className="dialog-head">
+        <h2>Keys</h2>
+        <IconButton size="sm" label="Close" onClick={props.onClose}>
+          <X size={15} />
+        </IconButton>
+      </div>
+      {sections.map(([title, rows]) => (
+        <section className="keys-section" key={title}>
+          <h3>{title}</h3>
+          <div className="keys-table">
+            {rows.map(([keys, does]) => (
+              <div className="keys-row" key={keys.join(" ")}>
+                <span className="keys-keys">
+                  {keys.map((k) => (
+                    <kbd key={k}>{k}</kbd>
+                  ))}
+                </span>
+                <span className="keys-label">{does}</span>
+              </div>
+            ))}
+          </div>
+        </section>
+      ))}
+    </Modal>
   );
 }
