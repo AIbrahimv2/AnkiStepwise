@@ -49,6 +49,13 @@ interface Props {
   onCompleteGroup: (tags: string[], label: string) => void;
   onLaterMany: (tags: string[]) => void;
   onQueueMany: (tags: string[]) => void;
+  /** b: these topics' cards in Anki's browser. */
+  onBrowseTags: (tags: string[]) => void;
+  /** Skim (the card browser add-on) is installed: p opens it on these
+   *  topics' cards, and it follows the cursor while it shows them. */
+  skim: boolean;
+  onPreview: (tags: string[], title?: string) => void;
+  onFollow: (tags: string[], title?: string) => void;
   /** The tree's selected tag, highlighted here too. */
   activeKey: string | null;
   /** Bumped when Shift+L (or the narrow window's switch) gives this list the
@@ -187,6 +194,20 @@ export function SidePanel(props: Props) {
     if (tab === "queue" && !side.queued.find((r) => r.tag === row.tag)?.watched) props.onLater(row.tag);
     else if (tab === "later") props.onUnlater(row.tag);
   };
+  /** The topics a row stands for: its own, or a resource's. */
+  const topicsAt = (id: string): { tags: string[]; title?: string } | null => {
+    const g = groupFor(id);
+    if (g) return { tags: g.rows.map((r) => r.tag), title: g.label };
+    const row = rowFor(id);
+    return row ? { tags: [row.tag] } : null;
+  };
+  // Skim follows the cursor here as it does the tree's selection.
+  useEffect(() => {
+    if (!props.skim || !cursor || !focusedHere()) return;
+    const t = topicsAt(cursor);
+    if (t) props.onFollow(t.tags, t.title);
+    // Only when the cursor moves.
+  }, [cursor]);
   /** x or dd: take the topic off this list. Checked-off topics keep theirs
    *  until Clear checked, as their row's buttons do. */
   const removeRow = (id: string) => {
@@ -324,6 +345,17 @@ export function SidePanel(props: Props) {
       case "x":
         removeRow(id);
         break;
+      case "b": {
+        const t = topicsAt(id);
+        if (t) props.onBrowseTags(t.tags);
+        break;
+      }
+      case "p": {
+        const t = props.skim ? topicsAt(id) : null;
+        if (!t) return;
+        props.onPreview(t.tags, t.title);
+        break;
+      }
       default:
         return;
     }

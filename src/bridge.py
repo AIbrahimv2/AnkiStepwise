@@ -226,13 +226,23 @@ class Bridge:
         key = str(msg.get("key", ""))
         # The page asks for these whenever the selection moves, so Skim
         # follows from here (only while it shows Stepwise's cards).
-        skim_link.follow(self.host.index, key)
+        skim_link.follow(self.host.index, [key])
         return {"details": self.view().details(key)}
 
+    def _skim_args(self, msg: dict) -> tuple[list[str], str | None]:
+        keys = self._tags(msg) or [str(msg.get("key") or "")]
+        title = msg.get("title")
+        return keys, title if isinstance(title, str) and title else None
+
     def cmd_preview(self, msg: dict) -> dict:
-        """p on a topic: its cards in Skim."""
-        if not skim_link.preview(self.host.index, str(msg.get("key", ""))):
+        """p on a topic (or a resource's topics): their cards in Skim."""
+        if not skim_link.preview(self.host.index, *self._skim_args(msg)):
             return {"error": "Skim isn't installed."}
+        return {}
+
+    def cmd_follow(self, msg: dict) -> dict:
+        """The queue panel's cursor moved (the tree's follows via details)."""
+        skim_link.follow(self.host.index, *self._skim_args(msg))
         return {}
 
     def cmd_sync(self, msg: dict) -> dict:

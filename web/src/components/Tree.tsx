@@ -37,6 +37,8 @@ interface TreeProps {
   onEscape: () => void;
   /** p: the topic's cards in Skim (only when Skim is installed). */
   onPreview?: (key: string) => void;
+  /** b: the topic's cards in Anki's browser. */
+  onBrowse: (key: string) => void;
 }
 
 /** Small coloured "Step 1" pill; colours cycle per resource root. */
@@ -49,7 +51,7 @@ export function StepChip({ step, index }: { step: string | null; index: number |
 type KeyLike = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey" | "preventDefault">;
 
 const TREE_KEYS = new Set([
-  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", "p", " ", "Enter", "Escape",
+  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", "p", "b", " ", "Enter", "Escape",
   "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 ]);
@@ -213,6 +215,10 @@ export function Tree(props: TreeProps) {
       case "p":
         if (!props.onPreview || !node || isGroup(node)) return;
         props.onPreview(row.key);
+        break;
+      case "b":
+        if (!node || isGroup(node)) return;
+        props.onBrowse(row.key);
         break;
       case "Enter":
       case "o":
