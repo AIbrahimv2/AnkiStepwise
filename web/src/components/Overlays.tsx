@@ -338,8 +338,9 @@ export function Toasts({ toasts, onDismiss }: { toasts: Toast[]; onDismiss: (id:
 
 // --- keys ----------------------------------------------------------------------
 
-/** Keys, what they do, and whether they need Skim installed. */
-type KeyRow = [keys: string[], does: string, skim?: true];
+/** Keys, what they do, and whether they're listed only with Skim
+ *  installed (true) or only without it (false). */
+type KeyRow = [keys: string[], does: string, skim?: boolean];
 
 const SKIM_DOES = "Its cards in Skim, which follows as you move; p there comes back";
 
@@ -354,8 +355,9 @@ const KEY_SECTIONS: [string, KeyRow[]][] = [
       [["o", "Enter"], "Open or close a folder"],
       [["Space"], "Queue or unqueue the topic"],
       [["s"], "Save it for later, or take it off Later"],
-      [["b"], "Its cards in Anki's browser"],
-      [["p"], SKIM_DOES, true],
+      [["b", "p"], SKIM_DOES, true],
+      [["B"], "Its cards in Anki's browser", true],
+      [["b"], "Its cards in Anki's browser", false],
       [["/"], "Search topics; Enter goes to the first match"],
       [["n", "N"], "Next / previous search match"],
     ],
@@ -368,8 +370,9 @@ const KEY_SECTIONS: [string, KeyRow[]][] = [
       [["s"], "Move it to Later (in Later, take it off)"],
       [["x", "dd"], "Remove it from this list"],
       [["Enter", "o"], "Show it in the topics"],
-      [["b"], "Its cards in Anki's browser (on a resource, all its topics)"],
-      [["p"], SKIM_DOES, true],
+      [["b", "p"], "Its cards in Skim (on a resource, all its topics); Skim follows the cursor", true],
+      [["B"], "Its cards in Anki's browser (on a resource, all its topics)", true],
+      [["b"], "Its cards in Anki's browser (on a resource, all its topics)", false],
       [["gt", "gT"], "Next / previous tab"],
     ],
   ],
@@ -384,9 +387,9 @@ const KEY_SECTIONS: [string, KeyRow[]][] = [
   ],
 ];
 
-/** Every key, by where it works. `p` only with Skim installed. */
+/** Every key, by where it works; b means Skim when it's installed. */
 export function KeysDialog(props: { onClose: () => void; skim: boolean }) {
-  const sections = KEY_SECTIONS.map(([title, rows]) => [title, rows.filter((r) => !r[2] || props.skim)] as const);
+  const sections = KEY_SECTIONS.map(([title, rows]) => [title, rows.filter((r) => r[2] === undefined || r[2] === props.skim)] as const);
   return (
     <Modal onClose={props.onClose} width={560}>
       <div className="dialog-head">

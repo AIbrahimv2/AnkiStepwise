@@ -749,8 +749,12 @@ export function App() {
     if (own) entries.push({ label: "Clear status", icon: <Eraser size={14} />, onSelect: () => act("clear", { tags: [n.tag] }) });
     entries.push(
       { separator: true },
-      { label: "Browse cards", icon: <ExternalLink size={14} />, hint: "b", onSelect: () => call("browse", { tags: [n.tag] }) },
-      ...(skim ? [{ label: "Preview in Skim", icon: <Eye size={14} />, hint: "p", onSelect: () => call("preview", { key }) }] : []),
+      ...(skim
+        ? [
+            { label: "Browse cards in Skim", icon: <Eye size={14} />, hint: "b", onSelect: () => call("preview", { key }) },
+            { label: "Browse in Anki's browser", icon: <ExternalLink size={14} />, hint: "B", onSelect: () => call("browse", { tags: [n.tag] }) },
+          ]
+        : [{ label: "Browse cards", icon: <ExternalLink size={14} />, hint: "b", onSelect: () => call("browse", { tags: [n.tag] }) }]),
       { label: "Unsuspend cards", icon: <LockOpen size={14} />, onSelect: () => act("unsuspend", { tags: [n.tag] }) },
     );
     if (n.resource)
@@ -846,9 +850,9 @@ export function App() {
             onJumpMatch={jumpMatch}
             onEscape={() => queryRef.current && setQuery("")}
             onPreview={skim ? (key) => void call("preview", { key }).catch(() => undefined) : undefined}
-            onBrowse={(key) => {
+            onBrowse={(key, anki) => {
               const n = nodes[key];
-              if (n && !isGroup(n)) void call("browse", { tags: [n.tag] });
+              if (n && !isGroup(n)) void call("browse", { tags: [n.tag], skim: !anki });
             }}
           />
           <DetailsBar details={details} searching={!!search} />
@@ -884,7 +888,7 @@ export function App() {
             onClear={(tag) => act("clear", { tags: [tag] })}
             onUnsuspend={() => act("unsuspend", { tags: [] })}
             onBrowse={() => call("browse", { tags: [] })}
-            onBrowseTags={(tags) => void call("browse", { tags })}
+            onBrowseTags={(tags, title, anki) => void call("browse", { tags, title, skim: !anki })}
             skim={skim}
             onPreview={(tags, title) => void call("preview", { tags, title }).catch(() => undefined)}
             onFollow={(tags, title) => void call("follow", { tags, title }).catch(() => undefined)}

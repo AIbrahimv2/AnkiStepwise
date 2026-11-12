@@ -298,7 +298,12 @@ class Bridge:
         return self.bundle(msg)
 
     def cmd_browse(self, msg: dict) -> dict:
-        actions.browse(self._tags(msg) or actions.load_state().queued())
+        """Topics' cards in Anki's browser; with "skim", in Skim instead
+        when it's installed (b; B always means Anki's browser)."""
+        tags = self._tags(msg)
+        if tags and msg.get("skim") and skim_link.preview(self.host.index, *self._skim_args(msg)):
+            return {}
+        actions.browse(tags or actions.load_state().queued())
         return {}
 
     def cmd_queue_matches(self, msg: dict) -> dict:

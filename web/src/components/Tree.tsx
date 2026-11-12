@@ -37,8 +37,9 @@ interface TreeProps {
   onEscape: () => void;
   /** p: the topic's cards in Skim (only when Skim is installed). */
   onPreview?: (key: string) => void;
-  /** b: the topic's cards in Anki's browser. */
-  onBrowse: (key: string) => void;
+  /** b: the topic's cards (in Skim when it's installed); B: always in
+   *  Anki's browser. */
+  onBrowse: (key: string, anki: boolean) => void;
 }
 
 /** Small coloured "Step 1" pill; colours cycle per resource root. */
@@ -51,7 +52,7 @@ export function StepChip({ step, index }: { step: string | null; index: number |
 type KeyLike = Pick<KeyboardEvent, "key" | "ctrlKey" | "metaKey" | "altKey" | "shiftKey" | "preventDefault">;
 
 const TREE_KEYS = new Set([
-  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", "p", "b", " ", "Enter", "Escape",
+  "j", "k", "h", "l", "g", "G", "o", "s", "n", "N", "p", "b", "B", " ", "Enter", "Escape",
   "ArrowDown", "ArrowUp", "ArrowLeft", "ArrowRight", "Home", "End",
   "0", "1", "2", "3", "4", "5", "6", "7", "8", "9",
 ]);
@@ -151,6 +152,7 @@ export function Tree(props: TreeProps) {
     // Some keyboards report Shift+g as "g" (and so on).
     if (key === "g" && e.shiftKey) key = "G";
     if (key === "n" && e.shiftKey) key = "N";
+    if (key === "b" && e.shiftKey) key = "B";
     if (key === "n" || key === "N") {
       props.onJumpMatch(key === "n" ? 1 : -1, times);
       e.preventDefault();
@@ -217,8 +219,9 @@ export function Tree(props: TreeProps) {
         props.onPreview(row.key);
         break;
       case "b":
+      case "B":
         if (!node || isGroup(node)) return;
-        props.onBrowse(row.key);
+        props.onBrowse(row.key, key === "B");
         break;
       case "Enter":
       case "o":

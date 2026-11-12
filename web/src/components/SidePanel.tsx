@@ -49,8 +49,9 @@ interface Props {
   onCompleteGroup: (tags: string[], label: string) => void;
   onLaterMany: (tags: string[]) => void;
   onQueueMany: (tags: string[]) => void;
-  /** b: these topics' cards in Anki's browser. */
-  onBrowseTags: (tags: string[]) => void;
+  /** b: these topics' cards (in Skim when it's installed); B: always in
+   *  Anki's browser. */
+  onBrowseTags: (tags: string[], title: string | undefined, anki: boolean) => void;
   /** Skim (the card browser add-on) is installed: p opens it on these
    *  topics' cards, and it follows the cursor while it shows them. */
   skim: boolean;
@@ -345,9 +346,10 @@ export function SidePanel(props: Props) {
       case "x":
         removeRow(id);
         break;
-      case "b": {
+      case "b":
+      case "B": {
         const t = topicsAt(id);
-        if (t) props.onBrowseTags(t.tags);
+        if (t) props.onBrowseTags(t.tags, t.title, key === "B");
         break;
       }
       case "p": {
