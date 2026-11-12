@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **See a topic's cards in Skim.** If [Skim](https://github.com/AIbrahimv2/AnkiSkim)
+  is installed (a fast card browser with vim keys), `p` on a topic, or
+  **Preview in Skim** in its right-click menu, shows the topic's cards there.
+  While Skim is open, moving through topics shows each one's cards, and the
+  keys stay in Stepwise. The cards come from Stepwise's own index, so there's
+  no wait for Anki's tag search. Without Skim nothing changes.
+
 ## [1.1.1] - 2026-11-09
 
 ### Changed

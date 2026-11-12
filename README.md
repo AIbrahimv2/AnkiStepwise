@@ -89,6 +89,11 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   checked-off topics off early.
 - **Deck-screen meter.** A compact meter under the deck list; click it to open
   the queue.
+- **See a topic's cards in Skim.** With
+  [Skim](https://github.com/AIbrahimv2/AnkiSkim) installed (a fast card
+  browser with vim keys), press `p` on a topic to see its cards there. Leave
+  Skim open and it follows you: every topic you move to shows its cards,
+  while the keys stay in Stepwise. `p` in Skim comes back.
 - **Browser sidebar.** Right-click any tag (or several) → **Stepwise** → Add to
   queue / Mark completed.
 - **Colorful Tags integration.** If
@@ -117,8 +122,9 @@ Hit your limit but found more to do? Press **s** on a topic (or click its
 bookmark) to save it for later. Next session, open the **Later** tab and click
 **Fill queue**.
 
-Right-click a topic for more: save it for later, browse its cards, unsuspend
-without completing, clear its status, or pin a resource to the top.
+Right-click a topic for more: save it for later, browse its cards (or
+preview them in Skim), unsuspend without completing, clear its status, or pin
+a resource to the top.
 
 In a narrow window (under 760px) the topics and the queue take turns: switch
 between them at the top of the window. The tree's bars get shorter before it
@@ -142,6 +148,7 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `o` or `Enter` | Open or close a folder |
 | `Space` | Queue or unqueue the topic |
 | `s` | Save the topic for later (or take it back off Later) |
+| `p` | See the topic's cards in Skim, if it's installed |
 | `u` or `Cmd/Ctrl+Z` | Undo the last change |
 | `Ctrl-r` or `Cmd/Ctrl+Shift+Z` | Redo it |
 | `/` | Search |
