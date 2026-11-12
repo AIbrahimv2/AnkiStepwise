@@ -89,9 +89,20 @@ check(len(skim.followed) == 1 and skim.followed[0][2] == skim_link.short_name(in
       "moving to another topic shows its cards in Skim")
 check(sorted(skim.followed[0][1]) == sorted(col.find_cards(skim.followed[0][0])), "the right cards")
 
+# The queue panel: p on a resource's row opens all its topics, and its
+# cursor is followed like the tree's selection.
+check("error" not in call("preview", tags=[topic, other], title="Pixorize"), "p on a resource's row")
+search2, ids2, title2, _ = skim.opened[-1]
+check(title2 == "Pixorize", "named after the resource")
+check(sorted(ids2) == sorted(col.find_cards(search2)), "with every one of its topics' cards")
+call("follow", tags=[topic])
+check(skim.followed[-1][2] == skim_link.short_name(index.last(topic)), "the queue's cursor is followed")
+
 skim.showing = "something else"  # searched for something else in Skim
+followed = len(skim.followed)
 call("details", key=topic)
-check(len(skim.followed) == 1, "no following once Skim shows other cards")
+call("follow", tags=[other])
+check(len(skim.followed) == followed, "no following once Skim shows other cards")
 
 del mw.skim
 call("details", key=other)

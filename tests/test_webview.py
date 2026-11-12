@@ -312,6 +312,34 @@ qpress("Enter")
 assert wait_for("document.activeElement.classList.contains('tree')"), "Enter goes to the tree"
 assert shift("L") == {**qstate(), "focus": "queue", "cursor": row}
 assert shift("H")["focus"].startswith("tree"), "Shift+H gives the tree the keys"
+
+# b: the topic's cards in Anki's browser, from the tree and from the queue
+# (on a resource's row, all its topics).
+import harness  # noqa: E402
+
+harness.BROWSED.clear()
+press("b")
+assert len(harness.BROWSED) == 1 and harness.BROWSED[0], ("b in the tree", harness.BROWSED)
+shift("L")
+qpress("g", "g")
+assert qstate()["cursor"].startswith("g:"), "the queue starts on a resource's row"
+qpress("b")
+assert len(harness.BROWSED) == 2 and " OR " in harness.BROWSED[1][0] or "tag:" in harness.BROWSED[1][0], harness.BROWSED
+qpress("j")
+qpress("b")
+assert len(harness.BROWSED) == 3, "b on a topic's row"
+# Without Skim, p does nothing.
+qpress("p")
+assert not js("!!document.querySelector('.toast.error')"), "p without Skim is quiet"
+
+# ? shows every key, from either list; Esc closes it.
+js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true, cancelable: true }))")
+assert wait_for("document.querySelector('.modal h2') && document.querySelector('.modal h2').textContent === 'Keys'"), "? shows the keys"
+keys_text = js("document.querySelector('.modal').textContent")
+assert "Its cards in Anki's browser" in keys_text and "Skim" not in keys_text, keys_text
+js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))")
+assert wait_for("!document.querySelector('.overlay')"), "Esc closes it"
+shift("H")
 actions.unqueue(actions.load_state().queued())
 d.push({"type": "sync"})
 print("queue keys work")
