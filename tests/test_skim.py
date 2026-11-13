@@ -116,6 +116,43 @@ call("details", key=topic)
 call("follow", tags=[other])
 check(len(skim.followed) == followed, "no following once Skim shows other cards")
 
+# Skim 2 also takes the topic, and asks Stepwise about pins and statuses.
+class FakeSkim2(FakeSkim):
+    VERSION = 2
+
+    def __init__(self):
+        super().__init__()
+        self.context, self.topics = None, []
+
+    def set_context(self, factory):
+        self.context = factory
+
+    def open(self, *, search, card_ids, title, source, topic):
+        self.topics.append(topic)
+        super().open(search=search, card_ids=card_ids, title=title, source=source)
+
+
+mw.skim = skim2 = FakeSkim2()
+call("preview", key=topic)
+check(skim2.topics[-1] == [tag], "Skim 2 gets the topic it's reading cards against")
+check(skim2.context is skim_link.Plan, "and where to ask about the plan")
+plan = skim2.context()
+roots = plan.roots()
+check(roots and all("::" not in r for r in roots), f"the resource roots ({roots[:2]})")
+actions.queue([tag])
+check(plan.status(tag) is None, "a plan is a snapshot")
+check(skim2.context().status(tag) == "queued", "a fresh one sees the topic queued")
+check(skim2.context().status(tag + "::Some_Video") == "queued", "and its children, through it")
+actions.unqueue([tag])
+from tq.config import update_config  # noqa: E402
+
+step1 = next(k for k in index.kids("") if k.startswith("#ak_step1"))
+pins = [index.name(k) for k in sorted(index.kids(step1))[:3]]
+update_config(pinned_resources=list(reversed(pins)))
+got = skim2.context().pinned()
+check(got == sorted(got, key=lambda t: t.rsplit("::", 1)[-1].lower()) and set(got) == set(pins),
+      f"pinned resources come in the tree's order, A to Z ({got})")
+
 del mw.skim
 call("details", key=other)
 check(True, "and nothing breaks if Skim goes away")
