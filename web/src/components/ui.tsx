@@ -192,6 +192,21 @@ export function anchorBelow(el: HTMLElement, alignRight = false): Anchor {
   return { x: alignRight ? r.right : r.left, y: r.bottom + 6, alignRight };
 }
 
+/** Scroll a row into view where it sits in the list, not where it's stuck.
+ *  A sticky header (a step, resource or folder) held at the top while you're
+ *  scrolled past it already looks in view, so scrollIntoView alone barely
+ *  moves: gg would land on the first row without going back up to it. */
+export function scrollToRow(el: HTMLElement, block: ScrollLogicalPosition = "nearest") {
+  if (getComputedStyle(el).position !== "sticky") {
+    el.scrollIntoView({ block });
+    return;
+  }
+  const was = el.style.position;
+  el.style.position = "static";
+  el.scrollIntoView({ block });
+  el.style.position = was;
+}
+
 // --- modal -------------------------------------------------------------------
 
 export function Modal(props: { onClose: () => void; children: ReactNode; width?: number }) {

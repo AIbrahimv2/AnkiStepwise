@@ -20,7 +20,7 @@ import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "re
 import { call } from "../bridge";
 import type { DoneRow, LaterPlan, QueueRow, RowGroup, Side } from "../types";
 import { ctrlLetter, StepChip } from "./Tree";
-import { IconButton, fmt, plural } from "./ui";
+import { IconButton, fmt, plural, scrollToRow } from "./ui";
 
 /** Done rows loaded per "Show more". */
 const DONE_STEP = 200;
@@ -154,7 +154,11 @@ export function SidePanel(props: Props) {
   }, [props.focusSignal]);
   useEffect(() => {
     if (!cursor || !focusedHere()) return;
-    listRef.current?.querySelector(`[data-nav="${CSS.escape(cursor)}"]`)?.scrollIntoView({ block: "nearest" });
+    const els = navEls();
+    const el = els.find((e) => e.dataset.nav === cursor);
+    // The first row is the top of the list: show the tools above it too.
+    if (el === els[0]) listRef.current?.scrollTo({ top: 0 });
+    else if (el) scrollToRow(el);
   }, [cursor]);
 
   const groupsHere = tab === "queue" ? side.queueGroups : tab === "later" ? side.laterGroups : [];

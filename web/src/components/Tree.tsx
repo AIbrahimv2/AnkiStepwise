@@ -2,7 +2,7 @@ import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folde
 import { type CSSProperties, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
-import { Checkbox, Highlight, fmt } from "./ui";
+import { Checkbox, Highlight, fmt, scrollToRow } from "./ui";
 
 export interface FlatRow {
   key: string;
@@ -82,7 +82,7 @@ export function Tree(props: TreeProps) {
   useEffect(() => {
     if (!selected || !box.current) return;
     const el = box.current.querySelector<HTMLElement>(`[data-key="${CSS.escape(selected)}"]`);
-    el?.scrollIntoView({ block: "nearest" });
+    if (el) scrollToRow(el);
   }, [selected]);
 
   // Revealed from the queue panel: centre it, pulse it, and take focus so
@@ -93,7 +93,7 @@ export function Tree(props: TreeProps) {
     if (!n || !box.current) return;
     const el = box.current.querySelector<HTMLElement>(`[data-key="${CSS.escape(key)}"]`);
     if (!el) return;
-    el.scrollIntoView({ block: "center" });
+    scrollToRow(el, "center");
     box.current.focus({ preventScroll: true });
     setPulse(key);
     const t = setTimeout(() => setPulse(null), 1300);
