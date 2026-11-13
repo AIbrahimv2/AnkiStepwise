@@ -28,8 +28,25 @@ All notable changes to this project are documented here. The format is based on
   them), and say whether to unsuspend a card now or wait for the system it
   mostly belongs to.
 
+### Changed
+
+- **Opening Stepwise is instant, even right after Anki starts.** Card counts
+  are saved when you close Anki and read back when it opens (about 40 ms),
+  instead of being counted from scratch every launch (0.7 to 1.6 s on a full
+  AnKing deck, competing with Anki's own startup). Nothing is counted while
+  Anki starts. The window is also made ahead of time, a few seconds later, so
+  even the first open is as quick as the rest.
+- **"Syncing" while counts catch up.** The saved counts are from last
+  session, so when you open Stepwise it brings them up to date in the
+  background and says "Syncing" beside the recount button until it's done.
+  Until then, checking a topic off asks Anki which cards are under it, so it
+  never acts on out-of-date tags.
+
 ### Fixed
 
+- The deck-screen meter kept showing the numbers from the last count until
+  you opened Stepwise (after a study session, say). It now recounts by itself
+  shortly after the deck screen shows, never while Anki is starting.
 - `gg` selected the first topic without scrolling back up to it, so the list
   stayed put until you moved down and up again. Jumping up to a step or
   resource row (`10gg`, `Ctrl-u`) could do the same.
