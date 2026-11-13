@@ -85,6 +85,10 @@ def _data() -> dict | None:
     watched = len(state.watched())
     if session and actions.usable_index() is None:
         return None
+    if actions.index_stale():
+        # Counts from before the last changes (or from last session):
+        # recount, but not during startup, and patch the numbers in after.
+        actions.refresh_index_later(update_in_place)
     n = len(actions.fresh_cards(session)) if session else 0
     limit = cfg["card_limit"]
     over = n > limit
