@@ -28,6 +28,12 @@ All notable changes to this project are documented here. The format is based on
   them), and say whether to unsuspend a card now or wait for the system it
   mostly belongs to.
 
+### Fixed
+
+- `gg` selected the first topic without scrolling back up to it, so the list
+  stayed put until you moved down and up again. Jumping up to a step or
+  resource row (`10gg`, `Ctrl-u`) could do the same.
+
 ## [1.1.1] - 2026-11-09
 
 ### Changed
