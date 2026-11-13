@@ -17,7 +17,7 @@ when they change. Without Skim, nothing here does anything.
 
 from __future__ import annotations
 
-from aqt import mw
+from aqt import gui_hooks, mw
 
 from . import actions
 from .counts import TagIndex, short_name, tags_search
@@ -77,6 +77,18 @@ def plan_changed() -> None:
 
 
 actions.subscribe(plan_changed)
+
+
+def _connect_on_open() -> None:
+    """Skim may be opened from its own menu before Stepwise ever opens it:
+    say where to ask as soon as the profile is open (add-ons load in any
+    order, so not before)."""
+    skim = _skim()
+    if skim is not None:
+        _connect(skim)
+
+
+gui_hooks.profile_did_open.append(_connect_on_open)
 
 
 def _cards(index: TagIndex | None, keys: list[str], title: str | None) -> dict:
