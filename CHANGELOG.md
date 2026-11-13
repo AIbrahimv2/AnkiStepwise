@@ -21,6 +21,12 @@ All notable changes to this project are documented here. The format is based on
   installed, otherwise in Anki's browser. `Shift+B` always opens Anki's
   browser.
 - **`?` shows every key**, grouped by where it works; so does **⋯ → Keys**.
+- **Skim knows your plan.** Skim reads each card's tags against the topic you
+  opened it on, and Stepwise tells it which resources you've pinned and what
+  you've queued, done or saved for later. Skim can then put your resources
+  first, show which other systems a card comes up in (and whether you've done
+  them), and say whether to unsuspend a card now or wait for the system it
+  mostly belongs to.
 
 ## [1.1.1] - 2026-11-09
 
