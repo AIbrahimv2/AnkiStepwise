@@ -148,6 +148,13 @@ assert press("2", "0", "G") == 19, "20G"
 assert press("5", "g", "g") == 4, "5gg"
 assert press("9", "9", "9", "9", "j") == total - 1, "stops at the last row"
 assert press("9", "9", "9", "9", "k") == 0, "stops at the first row"
+# The first row is a sticky step header: scrolled past, it's held at the top
+# and looks in view, so scrolling to it mustn't trust where it's drawn.
+SCROLL = "document.querySelector('.tree').scrollTop"
+press("G")
+assert js(SCROLL) > 0, "G scrolls down"
+press("g", "g")
+assert js(SCROLL) == 0, "gg scrolls back up to the first row"
 # Ctrl keys go through Qt as real key events, because that's what differs from
 # a browser: on a Mac the Control key arrives as Qt's Meta modifier, the page
 # sees metaKey, and Control+d's key is the control character \\x04.
