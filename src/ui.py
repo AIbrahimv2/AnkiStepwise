@@ -55,6 +55,10 @@ class QueueDialog(QDialog):
         self._index_timer.setSingleShot(True)
         self._index_timer.setInterval(1500)
         qconnect(self._index_timer.timeout, self.request_index)
+        # For the window's whole life, hidden or not: a window made ahead of
+        # time (prewarm) must hear about rebuilds before it's first shown.
+        actions.on_index_built(self._on_index_built)
+        actions.on_building(self._on_building)
 
     # --- host interface for Bridge ---------------------------------------
 
@@ -65,7 +69,10 @@ class QueueDialog(QDialog):
         return actions.cached_index()
 
     def request_index(self) -> None:
-        actions.request_index()
+        """Only while the window shows: a window made ahead of time doesn't
+        start a rebuild (that waits until you open it, with "Syncing")."""
+        if self.isVisible():
+            actions.request_index()
 
     def reload_index(self, force: bool = False) -> None:
         if force:
@@ -73,8 +80,10 @@ class QueueDialog(QDialog):
         self.request_index()
 
     def _on_index_built(self, _index: TagIndex) -> None:
-        if self.isVisible():
-            self.push({"type": "index"})
+        self.push({"type": "index"})
+
+    def _on_building(self, on: bool) -> None:
+        self.push({"type": "syncing", "on": on})
 
     def open_settings(self) -> None:
         """Show the Settings dialog in the page (now, or as soon as it loads)."""
@@ -113,7 +122,6 @@ class QueueDialog(QDialog):
     def showEvent(self, ev) -> None:
         super().showEvent(ev)
         actions.subscribe(self.on_state_changed)
-        actions.on_index_built(self._on_index_built)
         actions.set_announcer(self.show_toast)
         if not self._loaded:
             self.load()
@@ -126,7 +134,6 @@ class QueueDialog(QDialog):
 
     def hideEvent(self, ev) -> None:
         actions.unsubscribe(self.on_state_changed)
-        actions.off_index_built(self._on_index_built)
         actions.set_announcer(None)
         saveGeom(self, GEOM_KEY)
         super().hideEvent(ev)
@@ -134,12 +141,23 @@ class QueueDialog(QDialog):
     def cleanup(self) -> None:
         actions.unsubscribe(self.on_state_changed)
         actions.off_index_built(self._on_index_built)
+        actions.off_building(self._on_building)
         self.web.cleanup()
 
 
 # --- entry points ------------------------------------------------------------
 
 _dialog: QueueDialog | None = None
+
+
+def prewarm() -> None:
+    """Make the window and load its page, hidden, once startup has settled,
+    so the first open is as quick as the rest. Counts nothing: the page
+    shows the index saved last session until you open the window."""
+    global _dialog
+    if _dialog is None and mw.col is not None:
+        _dialog = QueueDialog(mw)
+        _dialog.load()
 
 
 def open_dialog() -> None:

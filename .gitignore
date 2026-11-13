@@ -9,3 +9,5 @@ meta.json
 !.claude/skills/
 node_modules/
 tests/fixture/
+# Saved tag indexes: your cards' tags, rebuilt from the collection.
+src/user_files/

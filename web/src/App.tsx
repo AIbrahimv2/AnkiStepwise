@@ -101,6 +101,9 @@ export function App() {
   const [settingsOpen, setSettingsOpen] = useState(false);
   const [keysOpen, setKeysOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
+  // The counts on screen are being brought up to date in the background
+  // (they're from last session, or from before your last changes).
+  const [syncing, setSyncing] = useState(false);
   const [tab, setTab] = useState<Tab>("queue");
   // Which of the two shows when the window is too narrow for both.
   const [pane, setPane] = useState<Pane>("tree");
@@ -293,6 +296,7 @@ export function App() {
       setScope(b.scope);
       applyColors(b.colors);
       setSkim(!!b.skim);
+      setSyncing(!!b.syncing);
       if (b.openSettings) setSettingsOpen(true);
       // Reopen the folders that were open last time (and keep closed the
       // step sections you closed).
@@ -325,9 +329,11 @@ export function App() {
         if (e.type === "toast") toast(e.message);
         else if (e.type === "sync") sync();
         else if (e.type === "settings") setSettingsOpen(true);
+        else if (e.type === "syncing") setSyncing(e.on);
         else if (e.type === "index") {
           setReady(true);
           setRefreshing(false);
+          setSyncing(false);
           call<{ scopes: ScopeOption[]; scope: string }>("scopes")
             .then((r) => {
               setScopes(r.scopes);
@@ -787,7 +793,8 @@ export function App() {
   const pageActions = (
     <PageActions
       options={options}
-      refreshing={refreshing}
+      refreshing={refreshing || syncing}
+      syncing={syncing && !refreshing}
       onRefresh={() => {
         setRefreshing(true);
         call("refresh");

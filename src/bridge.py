@@ -167,6 +167,8 @@ class Bridge:
             "colors": {"queued": cfg["queued_color"], "completed": cfg["completed_color"],
                        "later": cfg["later_color"]},
             "skim": skim_link.available(),
+            # The index on screen is being rebuilt (the window says "Syncing").
+            "syncing": actions.building(),
         }
 
     def cmd_done_page(self, msg: dict) -> dict:

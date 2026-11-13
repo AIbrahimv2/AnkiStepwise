@@ -15,7 +15,7 @@ from aqt.operations.scheduling import suspend_cards, unsuspend_cards  # noqa: F4
 from aqt.qt import QKeySequence
 from aqt.utils import tooltip
 
-from . import colorsync, rollup
+from . import colorsync, index_cache, rollup
 from .config import get_config
 from .counts import (
     TagIndex,
@@ -416,6 +416,20 @@ _membership_dirty = True  # tags edited since the index was built
 _building = False
 _waiters: list[Callable[[TagIndex], None]] = []
 _index_listeners: list[Callable[[TagIndex], None]] = []
+# Hear when a rebuild starts (True) and stops (False): the window shows
+# "Syncing" meanwhile.
+_building_listeners: list[Callable[[bool], None]] = []
+# The index was rebuilt since it was last saved; and whether this session
+# has saved one yet.
+_unsaved = False
+_saved_this_session = False
+_opened_at = 0.0  # when the profile opened (time.monotonic)
+_later_timer = None
+_later_callbacks: list[Callable[[], None]] = []
+# Rebuilding competes with Anki for Python: never in the first seconds of a
+# session, and only after a pause, when it's the deck meter that wants it.
+STARTUP_GRACE = 20.0
+REFRESH_DELAY_MS = 2000
 
 
 def mark_index_dirty(membership: bool = False) -> None:
@@ -427,6 +441,87 @@ def mark_index_dirty(membership: bool = False) -> None:
 
 def cached_index() -> TagIndex | None:
     return _index
+
+
+def building() -> bool:
+    return _building
+
+
+def index_stale() -> bool:
+    """There's an index, but cards or tags changed since it was built (or
+    it was read from disk at startup)."""
+    return _index is not None and _index_dirty
+
+
+def on_building(fn: Callable[[bool], None]) -> None:
+    if fn not in _building_listeners:
+        _building_listeners.append(fn)
+
+
+def off_building(fn: Callable[[bool], None]) -> None:
+    if fn in _building_listeners:
+        _building_listeners.remove(fn)
+
+
+def _tell_building(on: bool) -> None:
+    for fn in list(_building_listeners):
+        try:
+            fn(on)
+        except RuntimeError:  # the listener's Qt object is gone
+            off_building(fn)
+
+
+def load_saved_index() -> bool:
+    """At profile open: the index saved last session, as out of date (so
+    it's shown at once, rebuilt later, and not trusted for which cards sit
+    under which tag until then). Nothing is counted now."""
+    global _index, _index_dirty, _membership_dirty, _opened_at, _unsaved, _saved_this_session
+    _opened_at = time.monotonic()
+    _unsaved, _saved_this_session = False, False
+    if mw.col is None or _index is not None:
+        return _index is not None
+    saved = index_cache.load(mw.col.path, get_config()["count_mode"])
+    if saved is None:
+        return False
+    _index, _index_dirty, _membership_dirty = saved, True, True
+    return True
+
+
+def save_index() -> None:
+    """Keep the index for next session, if it was rebuilt since saved."""
+    global _unsaved, _saved_this_session
+    if _index is None or not _unsaved or mw.col is None:
+        return
+    try:
+        index_cache.save(mw.col.path, _index)
+        _unsaved, _saved_this_session = False, True
+    except OSError as exc:  # a full disk mustn't break Stepwise
+        print(f"Stepwise: couldn't save the tag index: {exc!r}")
+
+
+def refresh_index_later(callback: Callable[[], None] | None = None) -> None:
+    """Rebuild an out-of-date index soon, but not during startup and only
+    while the deck screen shows (the deck meter asks): after a pause, so a
+    burst of changes is one rebuild. `callback` runs once it's current."""
+    global _later_timer
+    if callback and callback not in _later_callbacks:
+        _later_callbacks.append(callback)
+    from aqt.qt import QTimer
+
+    if _later_timer is None:
+        _later_timer = QTimer(mw)
+        _later_timer.setSingleShot(True)
+        _later_timer.timeout.connect(_refresh_now)
+    wait = max(REFRESH_DELAY_MS, int((STARTUP_GRACE - (time.monotonic() - _opened_at)) * 1000))
+    _later_timer.start(wait)
+
+
+def _refresh_now() -> None:
+    callbacks = list(_later_callbacks)
+    _later_callbacks.clear()
+    if mw.col is None or getattr(mw, "state", None) != "deckBrowser":
+        return  # the next time the deck screen shows asks again
+    request_index(lambda _index: [fn() for fn in callbacks])
 
 
 def on_index_built(fn: Callable[[TagIndex], None]) -> None:
@@ -456,12 +551,16 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
     _building = True
     _index_dirty = False
     membership_was_dirty = _membership_dirty
+    _tell_building(True)
 
     def on_done(index: TagIndex) -> None:
-        global _index, _building, _membership_dirty
-        _index, _building = index, False
+        global _index, _building, _membership_dirty, _unsaved
+        _index, _building, _unsaved = index, False, True
         if membership_was_dirty and not _index_dirty:
             _membership_dirty = False
+        if not _saved_this_session:
+            save_index()  # so even a crash leaves next session an index
+        _tell_building(False)
         consolidate()  # card states changed: re-check what's done
         for fn in list(_index_listeners):
             try:
@@ -481,6 +580,7 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
         global _building
         _building = False
         _waiters.clear()
+        _tell_building(False)
         raise exc
 
     QueryOp(parent=mw, op=lambda col: build_index(col, mode), success=on_done).failure(
@@ -490,9 +590,12 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
 
 def reset() -> None:
     """Forget everything tied to the current collection (profile switch)."""
-    global _index, _index_dirty, _membership_dirty, _building
-    _index, _index_dirty, _membership_dirty, _building = None, True, True, False
+    global _index, _index_dirty, _membership_dirty, _building, _unsaved
+    _index, _index_dirty, _membership_dirty, _building, _unsaved = None, True, True, False, False
     _waiters.clear()
+    _later_callbacks.clear()
+    if _later_timer is not None:
+        _later_timer.stop()
 
 
 def on_operation(changes, handler) -> None:

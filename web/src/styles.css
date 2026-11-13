@@ -134,6 +134,16 @@ body {
   padding-top: 16px;
 }
 .page-actions { display: flex; gap: 2px; flex: none; }
+/* The counts are from last session (or before your last changes) and being
+   brought up to date: a quiet word beside the spinning recount button. */
+.page-actions .syncing {
+  align-self: center;
+  margin-right: 2px;
+  font-size: 11.5px;
+  font-weight: 550;
+  color: var(--text-3);
+  animation: fade 0.2s ease-out;
+}
 
 .main {
   flex: 1;

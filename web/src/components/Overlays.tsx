@@ -23,6 +23,9 @@ import { type Anchor, IconButton, Menu, Modal, Switch, anchorBelow, fmt, plural 
 export function PageActions(props: {
   options: Options | null;
   refreshing: boolean;
+  /** Counts are being brought up to date by themselves (not a recount you
+   *  asked for): say so, quietly. */
+  syncing?: boolean;
   onRefresh: () => void;
   onImport: () => void;
   onSettings: () => void;
@@ -33,6 +36,11 @@ export function PageActions(props: {
   const o = props.options;
   return (
     <div className="page-actions">
+      {props.syncing && (
+        <span className="syncing" title="Updating card counts from your collection. What you see is from last time; it changes in a moment.">
+          Syncing
+        </span>
+      )}
       <button type="button" className="icon-btn" title="Recount cards" onClick={props.onRefresh}>
         <RefreshCw size={16} className={props.refreshing ? "spin" : undefined} />
       </button>

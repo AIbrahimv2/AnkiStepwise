@@ -29,14 +29,24 @@ def _install() -> None:
     actions.menu_action = action  # so Settings can change the shortcut live
 
 
-def _prebuild_index() -> None:
-    """Count cards in the background shortly after the profile opens, so
-    the Stepwise window and deck-screen meter are instant later."""
-    QTimer.singleShot(4000, lambda: mw.col is not None and actions.request_index())
+# The window is made (hidden) once Anki's own startup has settled.
+PREWARM_MS = 8000
+
+
+def _on_profile_open() -> None:
+    """Read the tag index saved last session (about 40 ms) and count
+    nothing: startup isn't slowed. The saved index is shown as it is and
+    rebuilt when you open Stepwise (it says "Syncing" meanwhile) or, for
+    the deck meter, once Anki has been running a while. Only the very first
+    time, with nothing saved, is it counted shortly after startup."""
+    if not actions.load_saved_index():
+        QTimer.singleShot(4000, lambda: mw.col is not None and actions.request_index())
+    QTimer.singleShot(PREWARM_MS, ui.prewarm)
 
 
 def _on_profile_close() -> None:
     ui.close_dialog()
+    actions.save_index()  # for next session's startup
     actions.reset()
     history.reset()
 
@@ -50,7 +60,7 @@ def _on_config_saved(_cfg) -> None:
 
 gui_hooks.main_window_did_init.append(_install)
 gui_hooks.operation_did_execute.append(ui.on_operation)
-gui_hooks.profile_did_open.append(_prebuild_index)
+gui_hooks.profile_did_open.append(_on_profile_open)
 gui_hooks.profile_will_close.append(_on_profile_close)
 gui_hooks.deck_browser_will_render_content.append(widget.on_deck_render)
 gui_hooks.webview_did_receive_js_message.append(widget.on_js_message)

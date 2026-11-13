@@ -239,6 +239,9 @@ export interface Boot {
   colors: StatusColors;
   /** Skim (a separate card browser add-on) is installed. */
   skim?: boolean;
+  /** The index on screen (saved last session, or before changes) is being
+   *  rebuilt. */
+  syncing?: boolean;
 }
 
 export interface Bundle {
@@ -272,4 +275,6 @@ export type PushEvent =
   | { type: "index" }
   | { type: "sync" }
   | { type: "settings" }
-  | { type: "toast"; message: string };
+  | { type: "toast"; message: string }
+  /** The index is being rebuilt (true) or done (false): "Syncing". */
+  | { type: "syncing"; on: boolean };
