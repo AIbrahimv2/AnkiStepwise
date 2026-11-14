@@ -27,6 +27,9 @@ import {
   type Tone,
 } from "./components/Overlays";
 import { SettingsDialog } from "./components/Settings";
+import { selfOf, useKitAbout } from "./kit/AddonDialog";
+import type { KitTab } from "./kit/types";
+import { kitCall } from "./kitCall";
 import { SidePanel, type Tab } from "./components/SidePanel";
 import { HideDoneSwitch, MatchBar, ScopePicker, SearchBox } from "./components/Toolbar";
 import { ctrlLetter, DetailsBar, type FlatRow, MORE, Tree } from "./components/Tree";
@@ -98,7 +101,8 @@ export function App() {
   const [menu, setMenu] = useState<{ anchor: Anchor; key: string } | null>(null);
   const [confirm, setConfirm] = useState<ConfirmRequest | null>(null);
   const [importing, setImporting] = useState(false);
-  const [settingsOpen, setSettingsOpen] = useState(false);
+  const [settingsTab, setSettingsTab] = useState<KitTab | null>(null);
+  const [kitAbout] = useKitAbout(kitCall);
   const [keysOpen, setKeysOpen] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   // The counts on screen are being brought up to date in the background
@@ -297,7 +301,7 @@ export function App() {
       applyColors(b.colors);
       setSkim(!!b.skim);
       setSyncing(!!b.syncing);
-      if (b.openSettings) setSettingsOpen(true);
+      if (b.openSettings) setSettingsTab("settings");
       // Reopen the folders that were open last time (and keep closed the
       // step sections you closed).
       const open = new Set(b.tree?.open ?? []);
@@ -328,7 +332,7 @@ export function App() {
       push: (e: PushEvent) => {
         if (e.type === "toast") toast(e.message);
         else if (e.type === "sync") sync();
-        else if (e.type === "settings") setSettingsOpen(true);
+        else if (e.type === "settings") setSettingsTab("settings");
         else if (e.type === "syncing") setSyncing(e.on);
         else if (e.type === "index") {
           setReady(true);
@@ -800,8 +804,10 @@ export function App() {
         call("refresh");
       }}
       onImport={() => setImporting(true)}
-      onSettings={() => setSettingsOpen(true)}
+      onSettings={() => setSettingsTab("settings")}
       onKeys={() => setKeysOpen(true)}
+      onAbout={setSettingsTab}
+      unseen={!!selfOf(kitAbout)?.unseen}
     />
   );
 
@@ -909,7 +915,9 @@ export function App() {
       {menu && <Menu anchor={menu.anchor} entries={menuEntries(menu.key)} onClose={() => setMenu(null)} minWidth={230} />}
       {confirm && <ConfirmDialog request={confirm} onClose={() => setConfirm(null)} />}
       {importing && <ImportDialog onClose={() => setImporting(false)} onImport={doImport} />}
-      {settingsOpen && <SettingsDialog onClose={() => setSettingsOpen(false)} onSaved={settingsSaved} />}
+      {settingsTab && (
+        <SettingsDialog tab={settingsTab} onTab={setSettingsTab} onClose={() => setSettingsTab(null)} onSaved={settingsSaved} />
+      )}
       {keysOpen && <KeysDialog skim={skim} onClose={() => setKeysOpen(false)} />}
       <Toasts toasts={toasts} onDismiss={dismissToast} />
     </div>

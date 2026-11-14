@@ -6,17 +6,20 @@ import {
   Palette,
   RefreshCw,
   Settings2,
+  Sparkles,
   TriangleExclamationPoint,
   X,
 } from "lucide-react";
 import { type ReactNode, useEffect, useRef, useState } from "react";
 import { call } from "../bridge";
+import type { KitTab } from "../kit/types";
 import type { ImportGroup, Options, Status } from "../types";
 import { type Anchor, IconButton, Menu, Modal, Switch, anchorBelow, fmt, plural } from "./ui";
 
 // --- header ------------------------------------------------------------------
 
-/** Recount and the options menu (Colorful Tags import, Settings): the page's
+/** Recount and the options menu (Colorful Tags import, Settings, What's
+ *  new and About): the page's
  *  only controls that aren't about the queue itself. They sit at the end of
  *  the search toolbar, or in a narrow window's top bar. No title or logo:
  *  the window's title bar already names it. */
@@ -30,6 +33,10 @@ export function PageActions(props: {
   onImport: () => void;
   onSettings: () => void;
   onKeys: () => void;
+  /** What's new or About, in the Settings dialog. */
+  onAbout: (tab: KitTab) => void;
+  /** An update you haven't read about yet: a dot on ⋯ and What's new. */
+  unseen: boolean;
 }) {
   const btn = useRef<HTMLButtonElement>(null);
   const [anchor, setAnchor] = useState<Anchor | null>(null);
@@ -52,6 +59,7 @@ export function PageActions(props: {
         onClick={() => setAnchor(btn.current ? anchorBelow(btn.current, true) : null)}
       >
         <Ellipsis size={18} />
+        {props.unseen && <span className="kit-dot" aria-label="What's new" />}
       </button>
       {anchor && o && (
         <Menu
@@ -69,6 +77,9 @@ export function PageActions(props: {
             { separator: true },
             { label: "Keys", icon: <Keyboard size={14} />, hint: "?", onSelect: props.onKeys },
             { label: "Settings…", icon: <Settings2 size={14} />, onSelect: props.onSettings },
+            { separator: true },
+            { label: "What's new", icon: <Sparkles size={14} />, dot: props.unseen, onSelect: () => props.onAbout("news") },
+            { label: "About Stepwise", icon: <Info size={14} />, onSelect: () => props.onAbout("about") },
           ]}
         />
       )}

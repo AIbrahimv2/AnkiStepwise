@@ -7,6 +7,15 @@ All notable changes to this project are documented here. The format is based on
 
 ### Added
 
+- **What's new and About, beside Settings.** Settings now share a window with
+  What's new (this list of changes, with the ones since you last looked marked
+  New) and About (links to the code and to report a problem, whether AnkiWeb
+  has an update, and AIbrahimv2's other Anki add-ons, with an Install button).
+  Open them from ⋯ → What's new or About. A dot on ⋯ says there's an update
+  you haven't read about.
+- **One notice after updates.** When any of AIbrahimv2's add-ons is updated, a
+  card at the bottom of Anki's main window says so once, with a link to
+  what's new.
 - **See a topic's cards in Skim.** If [Skim](https://github.com/AIbrahimv2/AnkiSkim)
   is installed (a fast card browser with vim keys), `b` (or `p`) on a topic,
   or **Browse cards in Skim** in its right-click menu, shows the topic's cards
@@ -44,6 +53,8 @@ All notable changes to this project are documented here. The format is based on
 
 ### Fixed
 
+- Esc in Settings or the list of keys closes just that dialog, not the
+  whole Stepwise window.
 - The deck-screen meter kept showing the numbers from the last count until
   you opened Stepwise (after a study session, say). It now recounts by itself
   shortly after the deck screen shows, never while Anki is starting.

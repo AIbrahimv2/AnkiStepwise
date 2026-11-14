@@ -21,7 +21,7 @@ import traceback
 
 from aqt import mw
 
-from . import actions, colorsync, history, skim_link
+from . import actions, colorsync, history, kit, skim_link
 from .config import check_settings, get_config, update_config
 from .state import COMPLETED, LATER, QUEUED
 from .viewmodel import View
@@ -388,6 +388,10 @@ class Bridge:
         return {}
 
     # --- settings ----------------------------------------------------------
+
+    def cmd_kit(self, msg: dict) -> dict:
+        """What's new, About and the other add-ons (the shared add-on kit)."""
+        return kit.command(msg)
 
     def cmd_settings(self, msg: dict) -> dict:
         return {"settings": self.view().settings()}

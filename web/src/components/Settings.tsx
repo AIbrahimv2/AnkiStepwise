@@ -1,9 +1,13 @@
 import { Plus, X } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { call } from "../bridge";
 import type { CountMode, PinnedResource, Settings, SettingsSaved, SettingsValues, StatusColors } from "../types";
 import { StepChip } from "./Tree";
-import { IconButton, Modal, Switch } from "./ui";
+import { AddonDialog } from "../kit/AddonDialog";
+import { Block, Row, Section, ShortcutField } from "../kit/settings";
+import type { KitTab } from "../kit/types";
+import { kitCall } from "../kitCall";
+import { IconButton, Switch } from "./ui";
 
 const LIMIT_MIN = 1;
 const LIMIT_MAX = 5000;
@@ -33,8 +37,14 @@ const COLOR_ROWS: { key: keyof StatusColors; label: string }[] = [
 
 /** Settings for the add-on, edited here rather than as JSON in Anki's
  *  config editor (Anki's Config button opens this too). Changes apply on
- *  Save. */
-export function SettingsDialog(props: { onClose: () => void; onSaved: (r: SettingsSaved) => void }) {
+ *  Save. The shared add-on kit's dialog holds them, beside What's new and
+ *  About. */
+export function SettingsDialog(props: {
+  tab: KitTab;
+  onTab: (tab: KitTab) => void;
+  onClose: () => void;
+  onSaved: (r: SettingsSaved) => void;
+}) {
   const [loaded, setLoaded] = useState<Settings | null>(null);
   const [v, setV] = useState<SettingsValues | null>(null);
   const [limitText, setLimitText] = useState("");
@@ -78,10 +88,13 @@ export function SettingsDialog(props: { onClose: () => void; onSaved: (r: Settin
 
   if (!loaded || !v) {
     return (
-      <Modal onClose={props.onClose} width={600}>
-        <h2>Settings</h2>
-        <div className="skeleton" style={{ height: 320, borderRadius: 12, marginTop: 16 }} />
-      </Modal>
+      <AddonDialog
+        call={kitCall}
+        tab={props.tab}
+        onTab={props.onTab}
+        onClose={props.onClose}
+        settings={<div className="skeleton" style={{ height: 320, borderRadius: 12 }} />}
+      />
     );
   }
 
@@ -120,8 +133,12 @@ export function SettingsDialog(props: { onClose: () => void; onSaved: (r: Settin
   const d = loaded.defaults;
 
   return (
-    <Modal onClose={props.onClose} width={600}>
-      <h2>Settings</h2>
+    <AddonDialog
+      call={kitCall}
+      tab={props.tab}
+      onTab={props.onTab}
+      onClose={props.onClose}
+      settings={
       <div className="settings">
         <Section title="Daily plan">
           <Row
@@ -270,7 +287,8 @@ export function SettingsDialog(props: { onClose: () => void; onSaved: (r: Settin
           ))}
         </Section>
       </div>
-
+      }
+      settingsFooter={
       <div className="modal-actions settings-actions">
         <button
           type="button"
@@ -292,7 +310,8 @@ export function SettingsDialog(props: { onClose: () => void; onSaved: (r: Settin
           Save
         </button>
       </div>
-    </Modal>
+      }
+    />
   );
 }
 
@@ -310,110 +329,3 @@ function pick(s: SettingsValues): SettingsValues {
 }
 
 const cleanRoots = (roots: string[]) => roots.map((r) => r.trim()).filter(Boolean);
-
-function Section(props: { title: string; children: ReactNode }) {
-  return (
-    <section className="set-section">
-      <h3>{props.title}</h3>
-      <div className="set-card">{props.children}</div>
-    </section>
-  );
-}
-
-/** A setting with its control on the right. */
-function Row(props: { label: string; hint?: string; problem?: string; children: ReactNode }) {
-  return (
-    <div className="set-row">
-      <div className="set-text">
-        <div className="set-label">{props.label}</div>
-        {props.hint && <div className="set-hint">{props.hint}</div>}
-        {props.problem && <div className="set-problem">{props.problem}</div>}
-      </div>
-      <div className="set-control">{props.children}</div>
-    </div>
-  );
-}
-
-/** A setting whose control needs the full width, below its label. */
-function Block(props: { label: string; hint?: string; children: ReactNode }) {
-  return (
-    <div className="set-row set-block">
-      <div className="set-text">
-        <div className="set-label">{props.label}</div>
-        {props.hint && <div className="set-hint">{props.hint}</div>}
-        {props.children}
-      </div>
-    </div>
-  );
-}
-
-// --- shortcut ------------------------------------------------------------------
-
-const IS_MAC = /Mac/i.test(navigator.platform);
-
-/** Qt's names for the modifiers, from a key event. On a Mac Qt's "Ctrl"
- *  is ⌘ and "Meta" is ⌃. */
-function comboFrom(e: KeyboardEvent): string | null {
-  let key: string | null = null;
-  const c = e.code;
-  if (/^Key[A-Z]$/.test(c)) key = c.slice(3);
-  else if (/^Digit\d$/.test(c)) key = c.slice(5);
-  else if (/^F\d{1,2}$/.test(c)) key = c;
-  else if (c === "Space") key = "Space";
-  if (!key) return null;
-  const mods = [
-    (IS_MAC ? e.metaKey : e.ctrlKey) && "Ctrl",
-    (IS_MAC ? e.ctrlKey : e.metaKey) && "Meta",
-    e.altKey && "Alt",
-    e.shiftKey && "Shift",
-  ].filter(Boolean);
-  // Plain letters would fire while typing; F-keys may stand alone.
-  if (!mods.length && !key.startsWith("F")) return null;
-  return [...mods, key].join("+");
-}
-
-function displayShortcut(s: string): string {
-  if (!IS_MAC) return s.replace(/\+/g, " + ");
-  const sym: Record<string, string> = { Ctrl: "⌘", Meta: "⌃", Alt: "⌥", Shift: "⇧" };
-  const parts = s.split("+");
-  const key = parts.pop() ?? "";
-  const order = ["Meta", "Alt", "Shift", "Ctrl"]; // ⌃⌥⇧⌘, the Mac order
-  return order.filter((m) => parts.includes(m)).map((m) => sym[m]).join("") + key;
-}
-
-function ShortcutField(props: { value: string; onChange: (s: string) => void }) {
-  const [recording, setRecording] = useState(false);
-  return (
-    <div className="shortcut-field">
-      <button
-        type="button"
-        className={`keycap-btn${recording ? " recording" : ""}`}
-        onClick={() => setRecording(true)}
-        onBlur={() => setRecording(false)}
-        onKeyDown={(e) => {
-          if (!recording) return;
-          e.preventDefault();
-          e.stopPropagation(); // Escape cancels recording, not the dialog
-          if (e.key === "Escape") return setRecording(false);
-          if (e.key === "Backspace" || e.key === "Delete") {
-            props.onChange("");
-            return setRecording(false);
-          }
-          const combo = comboFrom(e);
-          if (combo) {
-            props.onChange(combo);
-            setRecording(false);
-          }
-        }}
-        title="Click, then press the keys"
-      >
-        {recording ? "Press keys…" : props.value ? displayShortcut(props.value) : "None"}
-      </button>
-      {props.value && !recording && (
-        <IconButton size="sm" label="No shortcut" onClick={() => props.onChange("")}>
-          <X size={14} />
-        </IconButton>
-      )}
-    </div>
-  );
-}
