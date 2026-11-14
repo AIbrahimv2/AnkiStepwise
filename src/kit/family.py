@@ -34,7 +34,7 @@ from . import changelog
 # protocols then keep apart), and KIT_VERSION whenever the kit changes (the
 # newest copy leads).
 PROTOCOL = 1
-KIT_VERSION = 1
+KIT_VERSION = 2
 REGISTRY = f"aibrahimv2_addons_v{PROTOCOL}"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
@@ -78,24 +78,26 @@ def register(
     addon_id: str,
     *,
     open_settings: Callable[[], None] | None = None,
-    schema: list[dict] | None = None,
+    schema: list[dict] | Callable[[], list[dict]] | None = None,
     note: str | None = None,
+    actions: dict[str, Callable[[], str | None]] | None = None,
 ) -> None:
     """Call once from the add-on's __init__.py. `addon_id` is its id in
     catalog.json. Give `open_settings` if it has settings in its own window,
     or `schema` for settings the kit's page shows (see settings.py); `note`
-    is shown under them ("Changes apply after Anki restarts").
+    is shown under them ("Changes apply after Anki restarts"). `actions`
+    are the functions behind the schema's action buttons, by key.
 
     Never raises: a problem in the kit mustn't stop the add-on loading."""
     try:
-        _register(addon_id, open_settings, schema, note)
+        _register(addon_id, open_settings, schema, note, actions)
     except Exception:
         import traceback
 
         traceback.print_exc()
 
 
-def _register(addon_id, open_settings, schema, note) -> None:
+def _register(addon_id, open_settings, schema, note, actions) -> None:
     from . import page  # Anki-only parts, imported lazily
 
     _self["id"] = addon_id
@@ -108,6 +110,7 @@ def _register(addon_id, open_settings, schema, note) -> None:
         "open_settings": open_settings,
         "schema": schema,
         "note": note,
+        "actions": actions or {},
         "open_page": page.open_page,
     }
     own = _own_catalog()
@@ -473,4 +476,6 @@ def _command(msg: dict) -> dict:
         return settings.load(addon_id)
     if op == "save_settings":
         return settings.save(addon_id, msg.get("values") or {})
+    if op == "action":
+        return settings.run(addon_id, str(msg.get("key") or ""))
     raise ValueError(f"Unknown kit command: {op}")

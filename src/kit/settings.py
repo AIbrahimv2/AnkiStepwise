@@ -11,7 +11,14 @@ A schema is a list of sections:
         {"key": "glass_card", "type": "switch", "label": "...", "hint": "..."},
         {"key": "tint_dark", "type": "text", "label": "...", "mono": True},
         {"key": "side", "type": "choice", "label": "...", "options": [...]},
+        {"key": "off_now", "type": "action", "label": "...", "hint": "...",
+         "button": "Turn off"},
     ]}]
+
+An "action" row is a button rather than a setting: it runs the add-on's
+function of that key (register(actions=...)), whose return, if any, is
+shown as a message. A row without "button" is only text. The schema may
+also be a function returning it, so it can follow the add-on's state.
 
 Plain Python: Anki is only asked for the config, so tests can run it.
 Don't edit a vendored copy (src/kit/ in an add-on): change it in
@@ -46,17 +53,26 @@ def _config(dir_name: str) -> tuple[dict, dict]:
     return dict(mgr.getConfig(dir_name) or {}), dict(mgr.addonConfigDefaults(dir_name) or {})
 
 
+def _schema(m: dict) -> list[dict]:
+    s = m["schema"]
+    return s() if callable(s) else s
+
+
 def _fields(schema: list[dict]):
+    """The rows that hold a value (not the action buttons)."""
     for section in schema:
-        yield from section.get("fields", [])
+        for f in section.get("fields", []):
+            if f.get("type") != "action":
+                yield f
 
 
 def load(addon_id: str) -> dict:
     m = _member(addon_id)
     cfg, defaults = _config(m["dir"])
-    keys = [f["key"] for f in _fields(m["schema"])]
+    schema = _schema(m)
+    keys = [f["key"] for f in _fields(schema)]
     return {
-        "schema": m["schema"],
+        "schema": schema,
         "values": {k: cfg.get(k, defaults.get(k)) for k in keys},
         "defaults": {k: defaults.get(k) for k in keys},
         "note": m.get("note"),
@@ -98,7 +114,7 @@ def check(schema: list[dict], values: dict) -> tuple[dict, dict[str, str]]:
 
 def save(addon_id: str, values: dict) -> dict:
     m = _member(addon_id)
-    clean, problems = check(m["schema"], values)
+    clean, problems = check(_schema(m), values)
     if problems:
         return {"problems": problems}
     cfg, _defaults = _config(m["dir"])
@@ -109,3 +125,13 @@ def save(addon_id: str, values: dict) -> dict:
     else:
         mw.addonManager.writeConfig(m["dir"], cfg)
     return {"saved": True, "note": m.get("note")}
+
+
+def run(addon_id: str, key: str) -> dict:
+    """An action row's button: {"message": what to show, if anything}."""
+    m = _member(addon_id)
+    fn = (m.get("actions") or {}).get(key)
+    if fn is None:
+        raise ValueError("That button doesn't do anything here.")
+    message = fn()
+    return {"message": message if isinstance(message, str) else None}
