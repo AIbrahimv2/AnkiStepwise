@@ -293,13 +293,29 @@ assert len(harness.BROWSED) == 3, "b and B on a topic's row"
 qpress("p")
 assert not js("!!document.querySelector('.toast.error')"), "p without Skim is quiet"
 
-# ? shows every key, from either list; Esc closes it.
+# ? shows every key, from either list; Esc closes it. (Earlier steps press
+# Esc with nothing open, which Anki takes to close the window: show it again.)
+d.show()
+pump(10)
+assert d.isVisible()
 js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: '?', bubbles: true, cancelable: true }))")
 assert wait_for("document.querySelector('.modal h2') && document.querySelector('.modal h2').textContent === 'Keys'"), "? shows the keys"
 keys_text = js("document.querySelector('.modal').textContent")
 assert "Its cards in Anki's browser" in keys_text and "Skim" not in keys_text, keys_text
 js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))")
 assert wait_for("!document.querySelector('.overlay')"), "Esc closes it"
+pump(20)  # time for Anki's own Esc handler (pycmd "close") to arrive, if it fired
+assert d.isVisible(), "and only it: Anki's own Esc would close the window"
+
+# Settings share the add-on kit's dialog with What's new and About; Esc
+# closes just the dialog there too.
+d.push({"type": "settings"})
+assert wait_for("[...document.querySelectorAll('.kit-tabs button')].map(b => b.textContent).join() === \"Settings,What's new,About\""), "Settings, What's new and About"
+assert wait_for("document.querySelector('.kit-title h2') && document.querySelector('.kit-title h2').textContent.startsWith('Stepwise')"), "the kit knows it's Stepwise"
+js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))")
+assert wait_for("!document.querySelector('.overlay')"), "Esc closes Settings"
+pump(20)
+assert d.isVisible(), "and keeps the window"
 shift("H")
 actions.unqueue(actions.load_state().queued())
 d.push({"type": "sync"})
