@@ -1,5 +1,6 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import "./kit/kit.css";
 import "./styles.css";
 
 // Anki puts our <script> in <head>, before <div id="root"> exists.

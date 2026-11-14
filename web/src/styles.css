@@ -1,14 +1,9 @@
-/* Stepwise — built on Anki's own theme variables (--canvas, --fg, ...) so it
-   follows Anki's light/dark mode. The fallbacks (for the dev server) are
-   Anki's own values, so the preview matches the real thing. */
+/* Stepwise's own styles. The theme (built on Anki's own colours, so it
+   follows Anki's light and dark modes) and the shared controls come first,
+   from the add-on kit (kit/kit.css, copied from anki-addon-kit); this adds
+   Stepwise's colours and layout. */
 
 :root {
-  --bg: var(--canvas, #f5f5f5);
-  --surface: var(--canvas-elevated, #ffffff);
-  --text: var(--fg, #020202);
-  --text-2: var(--fg-subtle, #737373);
-  --text-3: var(--fg-faint, #afafaf);
-  --ink: var(--fg, #0a0a0a);
   --q-raw: #ff9300;
   --d-raw: #00f900;
   --l-raw: #af52de;
@@ -17,16 +12,6 @@
   --s1: #0d9488;
   --s2: #db2777;
   --s3: #b45309;
-  --danger: #e5484d;
-  --focus: #3b82f6;
-
-  --line: color-mix(in srgb, var(--ink) 9%, transparent);
-  --line-strong: color-mix(in srgb, var(--ink) 15%, transparent);
-  --hover: color-mix(in srgb, var(--ink) 4.5%, transparent);
-  --press: color-mix(in srgb, var(--ink) 8%, transparent);
-  --sunken: color-mix(in srgb, var(--ink) 3%, var(--surface));
-  --select: color-mix(in srgb, var(--focus) 11%, transparent);
-  --select-strong: color-mix(in srgb, var(--focus) 18%, transparent);
 
   /* Status colours: the configured sidebar colours, mixed toward the text
      colour so they stay readable on both light and dark backgrounds. */
@@ -36,36 +21,9 @@
   --d-soft: color-mix(in srgb, var(--d-raw) 13%, transparent);
   --l: color-mix(in srgb, var(--l-raw) 80%, var(--text));
   --l-soft: color-mix(in srgb, var(--l-raw) 13%, transparent);
-  --danger-soft: color-mix(in srgb, var(--danger) 12%, transparent);
-
-  --radius: 14px;
-  --radius-md: 10px;
-  --radius-sm: 7px;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 12px rgb(0 0 0 / 0.04);
-  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -6px rgb(0 0 0 / 0.18);
-  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
-  color-scheme: light;
 }
 
 :root.night-mode {
-  --bg: var(--canvas, #2c2c2c);
-  --surface: var(--canvas-elevated, #363636);
-  --text: var(--fg, #fcfcfc);
-  /* Anki's dark --fg-subtle / --fg-faint are too dim for small text on its
-     panels (3.3:1 and 1.6:1), so the greys are mixed from the text and
-     panel colours instead: about 8:1 and 6:1 on the panel, and 4.5:1 or
-     better on a hovered, selected row. */
-  --text-2: color-mix(in srgb, var(--text) 80%, var(--surface));
-  --text-3: color-mix(in srgb, var(--text) 66%, var(--surface));
-  /* A lighter red, so warnings read on dark panels (5.7:1). */
-  --danger: #ff9592;
-  --ink: #ffffff;
-  --line: rgb(255 255 255 / 0.08);
-  --line-strong: rgb(255 255 255 / 0.13);
-  --hover: rgb(255 255 255 / 0.05);
-  --press: rgb(255 255 255 / 0.09);
-  --sunken: rgb(0 0 0 / 0.16);
-  --focus: #60a5fa;
   --q: color-mix(in srgb, var(--q-raw) 66%, var(--text));
   --d: color-mix(in srgb, var(--d-raw) 70%, var(--text));
   --l: color-mix(in srgb, var(--l-raw) 62%, var(--text));
@@ -73,56 +31,14 @@
   --s1: #2dd4bf;
   --s2: #f472b6;
   --s3: #f59e0b;
-  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
-  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.6);
-  color-scheme: dark;
 }
-
-* { box-sizing: border-box; }
 
 html, body {
-  margin: 0;
   height: 100%;
   overflow: hidden;
-  background: var(--bg);
-}
-
-body {
-  color: var(--text);
-  font: 13px/1.4 var(--font);
-  -webkit-font-smoothing: antialiased;
-  user-select: none;
-}
-
-/* Anki's webview.css styles bare buttons/inputs; start from a clean slate. */
-#root button {
-  appearance: none;
-  margin: 0;
-  padding: 0;
-  border: 0;
-  background: none;
-  color: inherit;
-  font: inherit;
-  cursor: pointer;
-  box-shadow: none;
-  min-width: 0;
-  height: auto;
-}
-#root input {
-  appearance: none;
-  font: inherit;
-  color: inherit;
-  margin: 0;
-}
-#root button:focus-visible,
-#root input:focus-visible {
-  outline: 2px solid color-mix(in srgb, var(--focus) 60%, transparent);
-  outline-offset: 1px;
 }
 
 #root { height: 100%; }
-
-.num { font-variant-numeric: tabular-nums; }
 
 /* --- layout ---------------------------------------------------------------- */
 
@@ -190,52 +106,7 @@ body {
 
 /* --- buttons ---------------------------------------------------------------- */
 
-#root .btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 6px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 8px;
-  font-weight: 550;
-  font-size: 12.5px;
-  white-space: nowrap;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  transition: background 0.12s, opacity 0.12s, border-color 0.12s;
-}
-#root .btn:hover { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
-#root .btn:active { background: color-mix(in srgb, var(--ink) 8%, var(--surface)); }
-#root .btn.primary {
-  background: var(--text);
-  color: var(--surface);
-  border-color: transparent;
-}
-#root .btn.primary:hover { opacity: 0.88; }
-#root .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
-#root .btn.ghost:hover { background: var(--hover); color: var(--text); }
-#root .btn:disabled { opacity: 0.4; pointer-events: none; }
-
-#root .icon-btn {
-  width: 28px;
-  height: 28px;
-  border-radius: 8px;
-  display: inline-grid;
-  place-items: center;
-  color: var(--text-2);
-  transition: background 0.12s, color 0.12s;
-  flex: none;
-}
-#root .icon-btn:hover { background: var(--hover); color: var(--text); }
-#root .icon-btn:active { background: var(--press); }
-#root .icon-btn.sm { width: 24px; height: 24px; border-radius: 6px; }
 #root .icon-btn.good:hover { color: var(--d); background: var(--d-soft); }
-#root .icon-btn.bad:hover { color: var(--danger); background: var(--danger-soft); }
-#root .icon-btn:disabled { opacity: 0.35; pointer-events: none; }
-
-.spin { animation: spin 0.8s linear infinite; }
-@keyframes spin { to { transform: rotate(360deg); } }
 
 /* --- toolbar ---------------------------------------------------------------- */
 
@@ -245,40 +116,6 @@ body {
   gap: 8px;
   padding: 10px 10px 10px;
   border-bottom: 1px solid var(--line);
-}
-
-.search {
-  flex: 1;
-  min-width: 0;
-  position: relative;
-  display: flex;
-  align-items: center;
-}
-.search-icon { position: absolute; left: 10px; color: var(--text-3); display: grid; pointer-events: none; }
-#root .search input {
-  width: 100%;
-  height: 32px;
-  padding: 0 64px 0 32px;
-  border-radius: 9px;
-  border: 1px solid var(--line-strong);
-  background: var(--sunken);
-  outline: none;
-  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
-}
-#root .search input::placeholder { color: var(--text-3); }
-#root .search input:focus {
-  background: var(--surface);
-  border-color: color-mix(in srgb, var(--focus) 55%, transparent);
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 15%, transparent);
-}
-.search-end { position: absolute; right: 6px; display: flex; align-items: center; gap: 2px; }
-.kbd {
-  font: 500 11px/1 var(--font);
-  color: var(--text-3);
-  border: 1px solid var(--line-strong);
-  border-radius: 5px;
-  padding: 3px 5px;
-  margin-right: 4px;
 }
 
 #root .picker {
@@ -298,32 +135,6 @@ body {
 .picker .picker-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .picker-step { color: var(--text-3); font-weight: 500; white-space: nowrap; }
 .picker .muted { color: var(--text-3); display: grid; }
-
-.switch-row { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 12.5px; cursor: pointer; padding: 0 4px; white-space: nowrap; }
-#root .switch {
-  width: 30px;
-  height: 18px;
-  border-radius: 999px;
-  background: var(--line-strong);
-  position: relative;
-  transition: background 0.15s;
-  flex: none;
-}
-#root .switch::after {
-  content: "";
-  position: absolute;
-  top: 2px;
-  left: 2px;
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  background: #fff;
-  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
-  transition: transform 0.15s;
-}
-#root .switch.on { background: var(--text); }
-#root .switch.on::after { transform: translateX(12px); }
-:root.night-mode #root .switch.on::after { background: var(--surface); }
 
 /* --- match bar ------------------------------------------------------------ */
 
@@ -505,14 +316,6 @@ body {
 }
 
 .skeleton-row { height: 30px; display: flex; align-items: center; gap: 10px; padding: 0 12px; }
-.skeleton {
-  height: 10px;
-  border-radius: 6px;
-  background: linear-gradient(90deg, var(--hover) 25%, var(--press) 50%, var(--hover) 75%);
-  background-size: 300% 100%;
-  animation: shimmer 1.4s ease-in-out infinite;
-}
-@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
 
 /* details footer */
 .details {
@@ -712,42 +515,6 @@ body {
 
 /* --- floating layers -------------------------------------------------------- */
 
-.menu {
-  position: fixed;
-  z-index: 40;
-  min-width: 220px;
-  max-width: 340px;
-  max-height: min(440px, calc(100vh - 24px));
-  overflow-y: auto;
-  padding: 5px;
-  background: var(--surface);
-  border: 1px solid var(--line);
-  border-radius: 11px;
-  box-shadow: var(--shadow-pop);
-  animation: pop 0.12s ease-out;
-  scrollbar-width: thin;
-}
-@keyframes pop { from { opacity: 0; transform: scale(0.97) translateY(-2px); } }
-#root .menu-item {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  height: 30px;
-  padding: 0 9px;
-  border-radius: 7px;
-  text-align: left;
-  font-size: 13px;
-}
-#root .menu-item:hover, #root .menu-item.active { background: var(--hover); }
-#root .menu-item:disabled { opacity: 0.4; pointer-events: none; }
-#root .menu-item.danger { color: var(--danger); }
-.menu-item .mi-icon { color: var(--text-2); display: grid; width: 16px; flex: none; }
-.menu-item .mi-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.menu-item .mi-check { color: var(--text); display: grid; }
-.menu-item .mi-hint { color: var(--text-3); font-size: 11.5px; }
-.menu-sep { height: 1px; background: var(--line); margin: 5px 4px; }
-.menu-section { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); padding: 8px 9px 4px; }
 #root .menu-filter {
   width: 100%;
   height: 30px;
@@ -758,32 +525,6 @@ body {
   margin-bottom: 4px;
   outline: none;
 }
-
-.overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 50;
-  background: rgb(0 0 0 / 0.28);
-  backdrop-filter: blur(2px);
-  display: grid;
-  place-items: center;
-  animation: fade 0.15s ease-out;
-}
-@keyframes fade { from { opacity: 0; } }
-.modal {
-  width: min(480px, calc(100vw - 40px));
-  max-height: calc(100vh - 40px);
-  overflow-y: auto;
-  background: var(--surface);
-  border-radius: 16px;
-  box-shadow: var(--shadow-pop);
-  padding: 20px;
-  animation: pop 0.16s ease-out;
-}
-.modal h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
-.modal p { margin: 8px 0 0; color: var(--text-2); line-height: 1.5; }
-.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
-#root .btn.danger { background: var(--danger); color: #fff; border-color: transparent; }
 
 .import-rows { margin-top: 16px; display: grid; grid-template-columns: minmax(0, 1fr); gap: 6px; }
 .import-row {
@@ -796,55 +537,13 @@ body {
 }
 .swatch { width: 14px; height: 14px; border-radius: 4px; flex: none; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.1); }
 .import-info { flex: 1; min-width: 0; }
-/* A switch's label in a dialog wraps rather than running off the edge. */
-.modal .switch-row { white-space: normal; }
+
 .import-info b { font-weight: 600; }
 .import-info div { color: var(--text-3); font-size: 11.5px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.mini-seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sunken); border: 1px solid var(--line); flex: none; }
-#root .mini-seg button { height: 24px; padding: 0 9px; border-radius: 6px; font-size: 12px; font-weight: 550; color: var(--text-2); }
-#root .mini-seg button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / 0.1), 0 0 0 1px var(--line); }
+
 #root .mini-seg button.active.q { color: var(--q); }
 #root .mini-seg button.active.d { color: var(--d); }
 #root .mini-seg button.active.l { color: var(--l); }
-.check-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--text-2); cursor: pointer; }
-
-.toasts {
-  position: fixed;
-  left: 50%;
-  bottom: 18px;
-  transform: translateX(-50%);
-  z-index: 60;
-  display: grid;
-  gap: 8px;
-  justify-items: center;
-  pointer-events: none;
-}
-.toasts .toast { pointer-events: auto; }
-.toast {
-  display: flex;
-  align-items: center;
-  gap: 9px;
-  padding: 9px 14px 9px 12px;
-  border-radius: 12px;
-  background: color-mix(in srgb, var(--text) 92%, transparent);
-  color: var(--surface);
-  font-size: 12.5px;
-  font-weight: 500;
-  box-shadow: var(--shadow-pop);
-  animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
-  max-width: min(560px, calc(100vw - 40px));
-}
-.toast .t-icon { display: grid; }
-.toast .t-text { display: grid; gap: 2px; }
-.toast .t-detail { display: flex; gap: 14px; font-size: 11.5px; opacity: 0.72; }
-.toast.warn .t-icon { color: #ffb224; }
-.toast.error .t-icon { color: #ff6369; }
-.toast.ok .t-icon { color: #4ade80; }
-@keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
-
-@media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { animation: none !important; transition: none !important; }
-}
 
 /* Smaller windows: a narrower queue panel. */
 @media (max-width: 1060px) {
@@ -1156,81 +855,14 @@ body {
    under their white label. */
 :root.night-mode #root .btn.danger { background: #c62f35; }
 :root.night-mode .step-chip { color: color-mix(in srgb, var(--step) 62%, var(--text)); }
-/* Dark mode flips toasts to a light card, so their icons take the deeper
-   shades that read on light (the bright ones were 1.5:1). */
-:root.night-mode .toast.warn .t-icon { color: #b45309; }
-:root.night-mode .toast.error .t-icon { color: #dc2626; }
-:root.night-mode .toast.ok .t-icon { color: #15803d; }
 
 /* --- keys (? or ⋯ → Keys; the same dialog as Skim's) ------------------------ */
 
-.dialog-head { display: flex; align-items: center; justify-content: space-between; }
-.keys-section { margin-top: 16px; }
-.keys-section h3 {
-  margin: 0 0 4px 2px;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
 .keys-table { display: grid; }
-.keys-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 12px; padding: 6px 2px; }
-.keys-row + .keys-row { border-top: 1px solid var(--line); }
-.keys-keys { display: flex; flex-wrap: wrap; gap: 4px; }
-.keys-label { color: var(--text-2); }
-.keys-row kbd {
-  display: inline-block;
-  min-width: 19px;
-  padding: 3px 5px;
-  border-radius: 5px;
-  border: 1px solid var(--line-strong);
-  border-bottom-width: 2px;
-  background: var(--surface);
-  color: var(--text-2);
-  font: 600 11px/1 var(--font);
-  text-align: center;
-}
 
 /* --- settings ------------------------------------------------------------------ */
 
-.settings { display: grid; gap: 18px; margin-top: 16px; }
-.set-section h3 {
-  margin: 0 0 6px 2px;
-  font-size: 11px;
-  font-weight: 650;
-  letter-spacing: 0.05em;
-  text-transform: uppercase;
-  color: var(--text-3);
-}
-.set-card { border: 1px solid var(--line); border-radius: 12px; }
-/* A control drops under its text when there isn't room beside it. */
-.set-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 11px 14px; }
-.set-row + .set-row { border-top: 1px solid var(--line); }
-.set-text { flex: 1 1 160px; min-width: 0; }
-.set-label { font-weight: 600; color: var(--text); }
-.set-hint { margin-top: 2px; font-size: 12px; line-height: 1.45; color: var(--text-2); }
-.set-problem { margin-top: 4px; font-size: 12px; font-weight: 550; color: var(--danger); }
-.set-control { flex: none; display: flex; align-items: center; gap: 10px; }
-.set-control .switch-row { padding: 0; }
-.set-empty { margin-top: 8px; font-size: 12px; color: var(--text-3); }
-
-#root .set-input {
-  height: 30px;
-  padding: 0 10px;
-  border-radius: 8px;
-  border: 1px solid var(--line-strong);
-  background: var(--surface);
-  color: var(--text);
-  font-size: 13px;
-  outline: none;
-}
-#root .set-input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
-#root .set-input.bad { border-color: var(--danger); }
 #root .set-input.num { width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
-#root .set-input.mono, #root .set-input.hex { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; }
-#root .set-input.hex { width: 88px; }
-#root .btn.sm { height: 26px; padding: 0 8px; font-size: 12px; }
 
 .root-list { display: grid; gap: 8px; margin-top: 10px; }
 .root-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 4px; row-gap: 3px; align-items: center; }
@@ -1252,27 +884,6 @@ body {
   font-weight: 550;
 }
 .pin-chip .step-chip { margin: 0; height: 16px; font-size: 10px; padding: 0 6px; }
-
-.swatches { display: flex; gap: 6px; }
-#root .swatch-btn { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14); }
-#root .swatch-btn.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
-
-.shortcut-field { display: flex; align-items: center; gap: 4px; }
-#root .keycap-btn {
-  min-width: 112px;
-  height: 30px;
-  padding: 0 12px;
-  border-radius: 8px;
-  border: 1px solid var(--line-strong);
-  background: var(--sunken);
-  font-weight: 600;
-  font-variant-numeric: tabular-nums;
-  letter-spacing: 0.02em;
-}
-#root .keycap-btn.recording { border-color: var(--focus); color: var(--text-2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
-
-.settings-actions { align-items: center; }
-.settings-actions .spacer { flex: 1; }
 
 /* --- Done paging -------------------------------------------------------------- */
 #root .show-more-done { display: flex; width: calc(100% - 12px); margin: 8px 6px 4px; justify-content: center; }
