@@ -16,10 +16,18 @@ wrong, and the two helper scripts in `scripts/`.
 | 🪜 Stepwise | `~/Documents/Projects/anki-tag-queue` | AIbrahimv2/AnkiStepwise | 1949793886 | `dist/stepwise.ankiaddon` |
 | 📅 Exam Timeline | `~/Documents/Projects/anki-exam-timeline` | AIbrahimv2/AnkiExamTimeline | 341595498 | `dist/anki-exam-timeline.ankiaddon` |
 | 🫧 AnkiGlass | `~/Documents/Projects/anki-glass` | AIbrahimv2/AnkiGlass | 1866406123 | `dist/anki-glass.ankiaddon` |
-| 🐻 AnkiBare | not checked out | AIbrahimv2/AnkiBare | 1505882046 | |
+| 🐻 AnkiBare | `~/Documents/Projects/anki-bare` | AIbrahimv2/AnkiBare | 1505882046 | `dist/anki-bare.ankiaddon` |
+| 👀 Skim | `~/Documents/Projects/anki-skim` | AIbrahimv2/AnkiSkim | not published yet | `dist/skim.ankiaddon` |
 
 The signed-in list of the user's items is https://ankiweb.net/shared/mine.
 Add a row here when a new add-on is published, and fix rows that drift.
+
+**The shared kit:** every add-on carries a copy of
+`~/Documents/Projects/anki-addon-kit` (`src/kit/`, and `web/src/kit/` for
+those with a page): the theme and controls, the Settings / What's new /
+About dialog, and the notice after updates. Its `catalog.json` lists the
+add-ons for About; when one is published (or its AnkiWeb ID changes), update
+it there, bump `updated`, sync, and release an add-on so users see it.
 
 **Where this skill lives:** in the AnkiStepwise repo, at
 `.claude/skills/anki-addon-release/`. On the user's Mac,
@@ -54,15 +62,20 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
 
 1. **Start clean.** `git status -sb` shows nothing uncommitted and isn't behind
    origin (pull first if it is). Run the tests if the repo has them
-   (Stepwise: `./tests/run.sh`).
+   (Stepwise: `./tests/run.sh`). `python3 ../anki-addon-kit/sync.py --check .`
+   says whether the kit copy is current; if not, sync it (and commit that as
+   its own `build(kit): ...` commit) before releasing.
 2. **Version.** In `CHANGELOG.md` (Keep a Changelog), rename `## [Unreleased]`
    to `## [X.Y.Z] - YYYY-MM-DD`: new features bump the minor version, fixes
-   only bump the patch. Commit it as `docs(changelog): release X.Y.Z`. Check
+   only bump the patch. The changelog ships in the package and What's new
+   shows it to users, and its newest version is the add-on's version, so
+   word it for them and never release with changes left under Unreleased. Commit it as `docs(changelog): release X.Y.Z`. Check
    the date with `date +%F`.
 3. **Build.** `find src -name __pycache__ -exec rm -rf {} +`, then `./build.sh`.
    It zips the *contents* of `src/` (no parent folder; AnkiWeb rejects one)
    and leaves out `__pycache__`, `*.pyc`, `meta.json`, `user_files/` and
-   `.DS_Store`. Stepwise builds its web UI first.
+   `.DS_Store`, then adds `CHANGELOG.md` at the top. Stepwise, Skim and Exam
+   Timeline build their web UI first.
 4. **Check the package.**
    `python3 ~/.claude/skills/anki-addon-release/scripts/check_package.py dist/<name>.ankiaddon src`
    confirms the layout and that nothing forbidden is inside. It also checks
