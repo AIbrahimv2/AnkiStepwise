@@ -1,0 +1,112 @@
+/* Theme for AIbrahimv2's Anki add-ons, shared through anki-addon-kit.
+   Don't edit a vendored copy (web/src/kit/ in an add-on): change it in the
+   kit and run its sync.py.
+
+   Built on Anki's own theme variables (--canvas, --fg, ...) so it follows
+   Anki's light and dark modes. The fallbacks (for dev servers) are Anki's
+   own values, so a preview matches the real thing. An add-on adds its own
+   colours (Stepwise's statuses, say) in its own :root block. */
+
+:root {
+  --bg: var(--canvas, #f5f5f5);
+  --surface: var(--canvas-elevated, #ffffff);
+  --text: var(--fg, #020202);
+  --text-2: var(--fg-subtle, #737373);
+  --text-3: var(--fg-faint, #afafaf);
+  --ink: var(--fg, #0a0a0a);
+  --focus: #3b82f6;
+  --accent: var(--focus);
+  --danger: #e5484d;
+  --good: #16a34a;
+
+  --line: color-mix(in srgb, var(--ink) 9%, transparent);
+  --line-strong: color-mix(in srgb, var(--ink) 15%, transparent);
+  --hover: color-mix(in srgb, var(--ink) 4.5%, transparent);
+  --press: color-mix(in srgb, var(--ink) 8%, transparent);
+  --sunken: color-mix(in srgb, var(--ink) 3%, var(--surface));
+  --select: color-mix(in srgb, var(--focus) 11%, transparent);
+  --select-strong: color-mix(in srgb, var(--focus) 18%, transparent);
+  --accent-soft: color-mix(in srgb, var(--focus) 12%, transparent);
+  --danger-soft: color-mix(in srgb, var(--danger) 12%, transparent);
+  --good-soft: color-mix(in srgb, var(--good) 13%, transparent);
+
+  --radius: 14px;
+  --radius-md: 10px;
+  --radius-sm: 7px;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.04), 0 2px 12px rgb(0 0 0 / 0.04);
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.06), 0 12px 32px -6px rgb(0 0 0 / 0.18);
+  --font: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI", system-ui, sans-serif;
+  --mono: ui-monospace, "SF Mono", Menlo, monospace;
+  color-scheme: light;
+}
+
+:root.night-mode {
+  --bg: var(--canvas, #2c2c2c);
+  --surface: var(--canvas-elevated, #363636);
+  --text: var(--fg, #fcfcfc);
+  /* Anki's dark --fg-subtle / --fg-faint are too dim for small text on its
+     panels (3.3:1 and 1.6:1), so the greys are mixed from the text and
+     panel colours instead: about 8:1 and 6:1 on the panel, and 4.5:1 or
+     better on a hovered, selected row. */
+  --text-2: color-mix(in srgb, var(--text) 80%, var(--surface));
+  --text-3: color-mix(in srgb, var(--text) 66%, var(--surface));
+  /* Lighter red and green, so they read on dark panels. */
+  --danger: #ff9592;
+  --good: #4ade80;
+  --ink: #ffffff;
+  --line: rgb(255 255 255 / 0.08);
+  --line-strong: rgb(255 255 255 / 0.13);
+  --hover: rgb(255 255 255 / 0.05);
+  --press: rgb(255 255 255 / 0.09);
+  --sunken: rgb(0 0 0 / 0.16);
+  --focus: #60a5fa;
+  --shadow: 0 1px 2px rgb(0 0 0 / 0.3);
+  --shadow-pop: 0 0 0 1px rgb(255 255 255 / 0.06), 0 16px 40px -8px rgb(0 0 0 / 0.6);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+
+html, body { margin: 0; background: var(--bg); }
+
+body {
+  color: var(--text);
+  font: 13px/1.4 var(--font);
+  -webkit-font-smoothing: antialiased;
+  user-select: none;
+}
+
+/* Anki's webview.css styles bare buttons/inputs; start from a clean slate. */
+#root button {
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  box-shadow: none;
+  min-width: 0;
+  height: auto;
+}
+#root input,
+#root textarea {
+  appearance: none;
+  font: inherit;
+  color: inherit;
+  margin: 0;
+}
+#root button:focus-visible,
+#root input:focus-visible,
+#root textarea:focus-visible,
+#root a:focus-visible {
+  outline: 2px solid color-mix(in srgb, var(--focus) 60%, transparent);
+  outline-offset: 1px;
+}
+
+.num { font-variant-numeric: tabular-nums; }
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}

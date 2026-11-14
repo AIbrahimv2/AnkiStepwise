@@ -1,0 +1,158 @@
+/* The Settings, What's new and About dialog (AddonDialog.tsx), shared by
+   AIbrahimv2's Anki add-ons through anki-addon-kit. Don't edit a vendored
+   copy (web/src/kit/ in an add-on): change it in the kit and run its
+   sync.py. */
+
+/* --- header ------------------------------------------------------------------ */
+
+.kit-head { display: flex; align-items: center; gap: 12px; }
+.kit-tile {
+  width: 40px;
+  height: 40px;
+  flex: none;
+  display: grid;
+  place-items: center;
+  border-radius: 11px;
+  border: 1px solid var(--line);
+  background: var(--sunken);
+  font-size: 21px;
+  line-height: 1;
+}
+.kit-tile.sm { width: 30px; height: 30px; border-radius: 8px; font-size: 16px; }
+.kit-title { flex: 1; min-width: 0; }
+.kit-title h2 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+.kit-version { font-size: 12px; font-weight: 550; color: var(--text-3); font-variant-numeric: tabular-nums; letter-spacing: 0; }
+.kit-tagline { margin-top: 1px; font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A dot for something new to see: on a tab, a menu entry or an add-on. */
+.kit-dot {
+  display: inline-block;
+  width: 7px;
+  height: 7px;
+  margin-left: 6px;
+  border-radius: 50%;
+  background: var(--focus);
+  vertical-align: middle;
+  flex: none;
+}
+
+/* --- tabs -------------------------------------------------------------------- */
+
+.kit-tabs {
+  position: relative;
+  display: grid;
+  grid-template-columns: repeat(var(--tabs, 3), 1fr);
+  margin-top: 16px;
+  padding: 3px;
+  border-radius: 10px;
+  border: 1px solid var(--line);
+  background: var(--sunken);
+}
+#root .kit-tabs button {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 28px;
+  border-radius: 7px;
+  font-size: 12.5px;
+  font-weight: 550;
+  color: var(--text-2);
+}
+#root .kit-tabs button:hover { color: var(--text); }
+#root .kit-tabs button.active { color: var(--text); }
+.kit-tabs .thumb {
+  position: absolute;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--tabs, 3));
+  border-radius: 7px;
+  background: var(--surface);
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.08), 0 0 0 1px var(--line);
+  transform: translateX(calc(100% * var(--i, 0)));
+  transition: transform 0.2s cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+.kit-body { margin-top: 16px; }
+.kit-body > .settings:first-child { margin-top: 0; }
+
+/* The Settings tab's buttons stay in view at the bottom of the dialog. */
+.kit-foot {
+  position: sticky;
+  bottom: -20px;
+  z-index: 2;
+  margin: 20px -20px -20px;
+  padding: 14px 20px 20px;
+  border-top: 1px solid var(--line);
+  background: var(--surface);
+}
+.kit-foot .modal-actions { margin-top: 0; }
+
+/* --- what's new ---------------------------------------------------------------- */
+
+.kit-releases { display: grid; gap: 12px; }
+.kit-release { padding: 12px 14px 14px; border: 1px solid var(--line); border-radius: 12px; }
+.kit-release header { display: flex; align-items: baseline; gap: 8px; }
+.kit-ver { font-weight: 650; }
+.kit-date { font-size: 12px; color: var(--text-3); }
+.kit-badge {
+  align-self: center;
+  margin-left: auto;
+  padding: 2px 7px;
+  border-radius: 999px;
+  background: var(--accent-soft);
+  color: var(--focus);
+  font-size: 10.5px;
+  font-weight: 650;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.kit-rsec h4 {
+  margin: 12px 0 5px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.kit-release header + .kit-rsec:not(:has(h4)) ul { margin-top: 8px; }
+.kit-rsec ul { display: grid; gap: 6px; margin: 0; padding-left: 18px; }
+.kit-rsec li { line-height: 1.5; user-select: text; }
+.kit-rsec li::marker { color: var(--text-3); }
+.kit-panel code {
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: var(--hover);
+  font: 11.5px var(--mono);
+}
+#root .kit-panel a { color: var(--focus); text-decoration: none; }
+#root .kit-panel a:hover { text-decoration: underline; }
+#root .kit-more { justify-self: center; }
+.kit-empty { padding: 28px 0; text-align: center; color: var(--text-3); }
+
+/* --- about --------------------------------------------------------------------- */
+
+.kit-about-text { margin: 0; line-height: 1.5; color: var(--text-2); }
+.kit-links { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 12px; }
+.kit-about .settings { margin-top: 20px; }
+.kit-addon { flex-wrap: nowrap; gap: 12px; }
+.kit-addon .set-text { flex-basis: 0; }
+.kit-addon .set-label { display: flex; align-items: center; }
+#root .kit-name { display: inline-flex; align-items: center; gap: 5px; font-weight: 600; }
+.kit-name .kit-dot { margin-left: 1px; }
+#root .kit-name svg { color: var(--text-3); opacity: 0; transition: opacity 0.12s; }
+#root .kit-name:hover svg { opacity: 1; }
+.kit-status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-3); white-space: nowrap; }
+.kit-status.ok { color: var(--good); }
+
+/* --- the kit's own page (AnkiGlass, AnkiBare, and the update notice) -------------- */
+
+.kit-page { max-width: 640px; margin: 0 auto; padding: 20px 20px 0; }
+.kit-page .kit-foot { bottom: 0; margin-bottom: 0; background: var(--bg); }
+.kit-page .kit-body { padding-bottom: 20px; }
+
+/* On an icon button (an add-on's ⋯ menu), the dot sits in its corner. */
+#root .icon-btn:has(> .kit-dot) { position: relative; }
+.icon-btn > .kit-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; margin: 0; }

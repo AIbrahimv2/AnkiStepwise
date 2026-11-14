@@ -1,0 +1,64 @@
+{
+  "updated": "2026-11-13",
+  "author": {
+    "name": "AIbrahimv2",
+    "github": "https://github.com/AIbrahimv2"
+  },
+  "addons": [
+    {
+      "id": "stepwise",
+      "name": "Stepwise",
+      "emoji": "🪜",
+      "tagline": "Unsuspend AnKing one topic at a time",
+      "about": "A study planner for AnKing and other medical school decks. Tick the topics you're covering today and see how many new cards they add; check a topic off and its cards are unsuspended.",
+      "ankiweb": 1949793886,
+      "github": "AIbrahimv2/AnkiStepwise",
+      "dirs": ["anki-tag-queue", "tag_queue"],
+      "platforms": ["mac", "win", "lin"]
+    },
+    {
+      "id": "skim",
+      "name": "Skim",
+      "emoji": "👀",
+      "tagline": "A card browser that keeps up with your keys",
+      "about": "Search with Anki's own syntax, then move through the cards with vim keys. Each card looks the way it does in review, and on a topic each suspended card says whether to unsuspend it now or wait.",
+      "ankiweb": null,
+      "github": "AIbrahimv2/AnkiSkim",
+      "dirs": ["anki-skim", "skim"],
+      "platforms": ["mac", "win", "lin"]
+    },
+    {
+      "id": "exam-timeline",
+      "name": "Exam Timeline",
+      "emoji": "📅",
+      "tagline": "A countdown to your exams on the deck screen",
+      "about": "Add your upcoming exams and see how far away each one is, right under the deck list and on each deck's overview.",
+      "ankiweb": 341595498,
+      "github": "AIbrahimv2/AnkiExamTimeline",
+      "dirs": ["anki-exam-timeline", "exam_timeline"],
+      "platforms": ["mac", "win", "lin"]
+    },
+    {
+      "id": "glass",
+      "name": "AnkiGlass",
+      "emoji": "🫧",
+      "tagline": "Native macOS Liquid Glass for Anki",
+      "about": "Gives Anki's deck list, deck overview and review screen a frosted, see-through background on your Mac, with the toolbar and bottom bar in matching glass.",
+      "ankiweb": 1866406123,
+      "github": "AIbrahimv2/AnkiGlass",
+      "dirs": ["anki_glass", "anki-glass"],
+      "platforms": ["mac"]
+    },
+    {
+      "id": "bare",
+      "name": "AnkiBare",
+      "emoji": "🐻",
+      "tagline": "Hide Anki's macOS title bar for a clean window",
+      "about": "Removes the title bar and window buttons and gives the space to Anki, while the window keeps its rounded corners. Pairs well with AnkiGlass.",
+      "ankiweb": 1505882046,
+      "github": "AIbrahimv2/AnkiBare",
+      "dirs": ["anki-bare", "ankibare"],
+      "platforms": ["mac"]
+    }
+  ]
+}

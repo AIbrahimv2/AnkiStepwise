@@ -1,0 +1,329 @@
+/* Controls shared by AIbrahimv2's Anki add-ons, through anki-addon-kit:
+   buttons, the search box, switches, menus, dialogs, toasts, the keys list
+   and settings rows. The React side is controls.tsx and settings.tsx.
+   Don't edit a vendored copy (web/src/kit/ in an add-on): change it in the
+   kit and run its sync.py. */
+
+/* --- buttons ------------------------------------------------------------------ */
+
+#root .btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  font-weight: 550;
+  font-size: 12.5px;
+  white-space: nowrap;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  transition: background 0.12s, opacity 0.12s, border-color 0.12s;
+}
+#root .btn:hover { background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
+#root .btn:active { background: color-mix(in srgb, var(--ink) 8%, var(--surface)); }
+#root .btn.primary {
+  background: var(--text);
+  color: var(--surface);
+  border-color: transparent;
+}
+#root .btn.primary:hover { opacity: 0.88; }
+#root .btn.ghost { border-color: transparent; background: transparent; color: var(--text-2); }
+#root .btn.ghost:hover { background: var(--hover); color: var(--text); }
+#root .btn:disabled { opacity: 0.4; pointer-events: none; }
+#root .icon-btn {
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  display: inline-grid;
+  place-items: center;
+  color: var(--text-2);
+  transition: background 0.12s, color 0.12s;
+  flex: none;
+}
+#root .icon-btn:hover { background: var(--hover); color: var(--text); }
+#root .icon-btn:active { background: var(--press); }
+#root .icon-btn.sm { width: 24px; height: 24px; border-radius: 6px; }
+#root .icon-btn.good:hover { color: var(--good); background: var(--good-soft); }
+#root .icon-btn.bad:hover { color: var(--danger); background: var(--danger-soft); }
+#root .icon-btn:disabled { opacity: 0.35; pointer-events: none; }
+
+.spin { animation: spin 0.8s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* --- search box (an icon on the left, keys or buttons on the right) ---------- */
+
+.search {
+  flex: 1;
+  min-width: 0;
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.search-icon { position: absolute; left: 10px; color: var(--text-3); display: grid; pointer-events: none; }
+#root .search input {
+  width: 100%;
+  height: 32px;
+  padding: 0 64px 0 32px;
+  border-radius: 9px;
+  border: 1px solid var(--line-strong);
+  background: var(--sunken);
+  outline: none;
+  transition: border-color 0.12s, background 0.12s, box-shadow 0.12s;
+}
+#root .search input::placeholder { color: var(--text-3); }
+#root .search input:focus {
+  background: var(--surface);
+  border-color: color-mix(in srgb, var(--focus) 55%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 15%, transparent);
+}
+.search-end { position: absolute; right: 6px; display: flex; align-items: center; gap: 2px; }
+
+.kbd {
+  font: 500 11px/1 var(--font);
+  color: var(--text-3);
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
+  padding: 3px 5px;
+  margin-right: 4px;
+}
+
+/* --- switch ------------------------------------------------------------------ */
+
+.switch-row { display: inline-flex; align-items: center; gap: 8px; color: var(--text-2); font-size: 12.5px; cursor: pointer; padding: 0 4px; white-space: nowrap; }
+#root .switch {
+  width: 30px;
+  height: 18px;
+  border-radius: 999px;
+  background: var(--line-strong);
+  position: relative;
+  transition: background 0.15s;
+  flex: none;
+}
+#root .switch::after {
+  content: "";
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+  transition: transform 0.15s;
+}
+#root .switch.on { background: var(--text); }
+#root .switch.on::after { transform: translateX(12px); }
+:root.night-mode #root .switch.on::after { background: var(--surface); }
+
+/* --- loading placeholder ------------------------------------------------------ */
+
+.skeleton {
+  height: 10px;
+  border-radius: 6px;
+  background: linear-gradient(90deg, var(--hover) 25%, var(--press) 50%, var(--hover) 75%);
+  background-size: 300% 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+@keyframes shimmer { from { background-position: 100% 0; } to { background-position: 0 0; } }
+
+/* --- floating layers: menus, dialogs, toasts ----------------------------------- */
+
+.menu {
+  position: fixed;
+  z-index: 40;
+  min-width: 220px;
+  max-width: 340px;
+  max-height: min(440px, calc(100vh - 24px));
+  overflow-y: auto;
+  padding: 5px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 11px;
+  box-shadow: var(--shadow-pop);
+  animation: pop 0.12s ease-out;
+  scrollbar-width: thin;
+}
+@keyframes pop { from { opacity: 0; transform: scale(0.97) translateY(-2px); } }
+#root .menu-item {
+  width: 100%;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  height: 30px;
+  padding: 0 9px;
+  border-radius: 7px;
+  text-align: left;
+  font-size: 13px;
+}
+#root .menu-item:hover, #root .menu-item.active { background: var(--hover); }
+#root .menu-item:disabled { opacity: 0.4; pointer-events: none; }
+#root .menu-item.danger { color: var(--danger); }
+.menu-item .mi-icon { color: var(--text-2); display: grid; width: 16px; flex: none; }
+.menu-item .mi-label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.menu-item .mi-check { color: var(--text); display: grid; }
+.menu-item .mi-hint { color: var(--text-3); font-size: 11.5px; }
+.menu-sep { height: 1px; background: var(--line); margin: 5px 4px; }
+.menu-section { font-size: 11px; font-weight: 600; letter-spacing: 0.04em; text-transform: uppercase; color: var(--text-3); padding: 8px 9px 4px; }
+
+.overlay {
+  position: fixed;
+  inset: 0;
+  z-index: 50;
+  background: rgb(0 0 0 / 0.28);
+  backdrop-filter: blur(2px);
+  display: grid;
+  place-items: center;
+  animation: fade 0.15s ease-out;
+}
+@keyframes fade { from { opacity: 0; } }
+.modal {
+  width: min(480px, calc(100vw - 40px));
+  max-height: calc(100vh - 40px);
+  overflow-y: auto;
+  background: var(--surface);
+  border-radius: 16px;
+  box-shadow: var(--shadow-pop);
+  padding: 20px;
+  animation: pop 0.16s ease-out;
+}
+.modal h2 { margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
+.modal p { margin: 8px 0 0; color: var(--text-2); line-height: 1.5; }
+.modal-actions { display: flex; justify-content: flex-end; gap: 8px; margin-top: 20px; }
+/* A solid red in both modes: white text on dark mode's lighter --danger
+   would be hard to read. */
+#root .btn.danger { background: #e5484d; color: #fff; border-color: transparent; }
+#root .btn.danger:hover { background: #d93d42; }
+/* A switch's label in a dialog wraps rather than running off the edge. */
+.modal .switch-row { white-space: normal; }
+
+/* A small segmented control, for a setting with two or three choices. */
+.mini-seg { display: inline-flex; padding: 2px; border-radius: 8px; background: var(--sunken); border: 1px solid var(--line); flex: none; }
+#root .mini-seg button { height: 24px; padding: 0 9px; border-radius: 6px; font-size: 12px; font-weight: 550; color: var(--text-2); }
+#root .mini-seg button.active { background: var(--surface); color: var(--text); box-shadow: 0 1px 2px rgb(0 0 0 / 0.1), 0 0 0 1px var(--line); }
+.check-row { display: flex; align-items: center; gap: 10px; margin-top: 14px; color: var(--text-2); cursor: pointer; }
+
+.toasts {
+  position: fixed;
+  left: 50%;
+  bottom: 18px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: grid;
+  gap: 8px;
+  justify-items: center;
+  pointer-events: none;
+}
+.toasts .toast { pointer-events: auto; }
+.toast {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  padding: 9px 14px 9px 12px;
+  border-radius: 12px;
+  background: color-mix(in srgb, var(--text) 92%, transparent);
+  color: var(--surface);
+  font-size: 12.5px;
+  font-weight: 500;
+  box-shadow: var(--shadow-pop);
+  animation: toast-in 0.22s cubic-bezier(0.2, 0.8, 0.2, 1);
+  max-width: min(560px, calc(100vw - 40px));
+}
+.toast .t-icon { display: grid; }
+.toast .t-text { display: grid; gap: 2px; }
+.toast .t-detail { display: flex; gap: 14px; font-size: 11.5px; opacity: 0.72; }
+.toast.warn .t-icon { color: #ffb224; }
+.toast.error .t-icon { color: #ff6369; }
+.toast.ok .t-icon { color: #4ade80; }
+@keyframes toast-in { from { opacity: 0; transform: translateY(8px) scale(0.98); } }
+/* Dark mode flips toasts to a light card, so their icons take the deeper
+   shades that read on light (the bright ones were 1.5:1). */
+:root.night-mode .toast.warn .t-icon { color: #b45309; }
+:root.night-mode .toast.error .t-icon { color: #dc2626; }
+:root.night-mode .toast.ok .t-icon { color: #15803d; }
+
+/* --- keys: a dialog listing every key, grouped by where it works --------------- */
+
+.dialog-head { display: flex; align-items: center; justify-content: space-between; }
+.keys-section { margin-top: 16px; }
+.keys-section h3 {
+  margin: 0 0 4px 2px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.keys-row { display: grid; grid-template-columns: 150px minmax(0, 1fr); align-items: center; gap: 12px; padding: 6px 2px; }
+.keys-row + .keys-row { border-top: 1px solid var(--line); }
+.keys-keys { display: flex; flex-wrap: wrap; gap: 4px; }
+.keys-label { color: var(--text-2); }
+.keys-row kbd {
+  display: inline-block;
+  min-width: 19px;
+  padding: 3px 5px;
+  border-radius: 5px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  background: var(--surface);
+  color: var(--text-2);
+  font: 600 11px/1 var(--font);
+  text-align: center;
+}
+
+/* --- settings: sections of rows, each a label, a hint and a control ----------- */
+
+.settings { display: grid; gap: 18px; margin-top: 16px; }
+.set-section h3 {
+  margin: 0 0 6px 2px;
+  font-size: 11px;
+  font-weight: 650;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+.set-card { border: 1px solid var(--line); border-radius: 12px; }
+/* A control drops under its text when there isn't room beside it. */
+.set-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px 16px; padding: 11px 14px; }
+.set-row + .set-row { border-top: 1px solid var(--line); }
+.set-text { flex: 1 1 160px; min-width: 0; }
+.set-label { font-weight: 600; color: var(--text); }
+.set-hint { margin-top: 2px; font-size: 12px; line-height: 1.45; color: var(--text-2); }
+.set-problem { margin-top: 4px; font-size: 12px; font-weight: 550; color: var(--danger); }
+.set-control { flex: none; display: flex; align-items: center; gap: 10px; }
+.set-control .switch-row { padding: 0; }
+.set-empty { margin-top: 8px; font-size: 12px; color: var(--text-3); }
+#root .set-input {
+  height: 30px;
+  padding: 0 10px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: 13px;
+  outline: none;
+}
+#root .set-input:focus { border-color: var(--focus); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+#root .set-input.bad { border-color: var(--danger); }
+#root .set-input.mono, #root .set-input.hex { font-family: ui-monospace, "SF Mono", Menlo, monospace; font-size: 12px; }
+#root .set-input.hex { width: 88px; }
+#root .btn.sm { height: 26px; padding: 0 8px; font-size: 12px; }
+.swatches { display: flex; gap: 6px; }
+#root .swatch-btn { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14); }
+#root .swatch-btn.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+.shortcut-field { display: flex; align-items: center; gap: 4px; }
+#root .keycap-btn {
+  min-width: 112px;
+  height: 30px;
+  padding: 0 12px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--sunken);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+#root .keycap-btn.recording { border-color: var(--focus); color: var(--text-2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
+.settings-actions { align-items: center; }
+.settings-actions .spacer { flex: 1; }

@@ -1,0 +1,7 @@
+/* Everything the kit styles, in order. An add-on imports this first, then its
+   own stylesheet. Don't edit a vendored copy (web/src/kit/ in an add-on):
+   change it in the kit and run its sync.py. */
+
+@import "./tokens.css";
+@import "./controls.css";
+@import "./dialog.css";
