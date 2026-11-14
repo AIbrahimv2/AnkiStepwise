@@ -1,10 +1,11 @@
 # SPDX-License-Identifier: AGPL-3.0-or-later
 # Copyright (C) 2026 AIbrahimv2
-"""anki-addon-kit: what AIbrahimv2's Anki add-ons share.
+"""AnkiAddonKit: what AIbrahimv2's Anki add-ons share.
 
 Vendored into each add-on as src/kit/ (and web/src/kit/ for the page) by
 the kit's sync.py. Don't edit a vendored copy: change it in
-https://github.com/AIbrahimv2/anki-addon-kit and sync it.
+https://github.com/AIbrahimv2/AnkiAddonKit (checked out beside the add-ons
+as anki-addon-kit) and sync it.
 
 In the add-on's __init__.py:
 
