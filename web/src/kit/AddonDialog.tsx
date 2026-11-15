@@ -10,6 +10,7 @@ import { type CSSProperties, type ReactNode, useCallback, useEffect, useRef, use
 import { IconButton, Modal } from "./controls";
 import { Inline } from "./markdown";
 import { Row, Section } from "./settings";
+import { Signature } from "./Signature";
 import type { KitAbout, KitAddon, KitCall, KitRelease, KitTab, KitUpdate } from "./types";
 
 /** Tells every useKitAbout() on the page to fetch again (after "seen"). */
@@ -358,6 +359,11 @@ function AboutTab(props: {
           </Section>
         )}
       </div>
+
+      <footer className="kit-signoff">
+        <p>Thanks for using {self.name}.</p>
+        <Signature className="kit-signature" label={`${about.author.name}'s signature`} />
+      </footer>
     </div>
   );
 }

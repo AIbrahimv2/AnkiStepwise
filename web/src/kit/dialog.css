@@ -147,6 +147,12 @@
 .kit-status { display: inline-flex; align-items: center; gap: 5px; font-size: 12px; color: var(--text-3); white-space: nowrap; }
 .kit-status.ok { color: var(--good); }
 
+/* The sign-off at the end of About: a thank-you and the signature, which
+   takes the text colour (its underline stays red). */
+.kit-signoff { margin-top: 24px; padding: 0 2px 4px; color: var(--text-2); }
+.kit-signoff p { margin: 0; font-size: 12.5px; }
+.kit-signature { display: block; width: 150px; height: auto; margin-top: 6px; color: var(--text); opacity: 0.85; }
+
 /* --- the kit's own page (AnkiGlass, AnkiBare, and the update notice) -------------- */
 
 .kit-page { max-width: 640px; margin: 0 auto; padding: 20px 20px 0; }
