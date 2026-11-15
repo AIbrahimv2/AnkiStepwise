@@ -122,13 +122,24 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
   text. The package stays as it was.
 - **Clipboard:** the listing page copies its install code to the clipboard
   when it loads. Tell the user, so it doesn't surprise them.
-- **Versions:** each branch has a minimum and maximum Anki version. Use the
-  version the add-on was tested on for both, which lists as "26.09.4+". The
-  installed version is in the folder name from `ls
-  /Applications/Anki.app/Contents/Resources/app_packages | grep aqt-`: 26.9.4
-  means "26.09.4". A `-` before the maximum blocks newer versions. Don't keep
-  the form's default 2.1.1: it offers the add-on to Anki versions it was never
-  tested on.
+- **Versions:** each branch has a minimum and maximum Anki version, and the
+  minimum decides who can install it. On an older Anki, pasting the code
+  fails with "Invalid code, or add-on not available for your version of
+  Anki", and people read that as a broken code. Stepwise's listing once
+  required the version the user happened to have (26.09.4, five days old),
+  and the first review said "Anki says code is invalid".
+  - **Minimum:** the oldest version the add-on was tested on, not the
+    installed one. Stepwise tests other versions with
+    `tests/run_on_anki.sh <version>`. Its listed minimum and the reasons are
+    in `docs/ankiweb-listing.md`. Rerun the tests on that version before each
+    release.
+  - **Maximum:** the installed version, from `ls
+    /Applications/Anki.app/Contents/Resources/app_packages | grep aqt-` (26.9.4
+    means "26.09.4"). Without a `-` in front, newer versions still get the
+    add-on. A `-` blocks them.
+  - Don't keep the form's default 2.1.1: it offers the add-on to versions
+    nobody tested.
+  - After saving, check the listing's "Supported Anki versions" line.
 - **Keep the listing in the repo.** Store the title, tags, support page and
   description in `docs/ankiweb-listing.md`, and update it in the same session
   as any change on AnkiWeb, so the next edit starts from what's live.
