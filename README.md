@@ -210,7 +210,7 @@ apply when you save; there's no JSON to edit.
 ### From AnkiWeb
 
 In Anki, open **Tools → Add-ons → Get Add-ons** and paste the code
-`1949793886`. It needs Anki 26.09.4 or newer. See the
+`1949793886`. It needs Anki 24.04 or newer. See the
 [AnkiWeb page](https://ankiweb.net/shared/info/1949793886).
 
 ### Manual

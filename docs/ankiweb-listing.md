@@ -17,6 +17,31 @@ How AnkiWeb's add-on search behaves, tested in November 2026:
 - Wrap an image in `<p>`: on its own, AnkiWeb leaves it inline, so the list
   after it starts with no gap.
 
+## Supported Anki versions
+
+Minimum 24.04, maximum 26.09.4 with no `-`, so newer versions get it too. The
+form turns 24.04 into "24.04.0", and the listing shows "24.04-26.09.4+".
+
+Anki says the code is invalid to anyone below the minimum. Until
+2026-11-14 the minimum was 26.09.4, the version installed when 1.1.1 was
+released, and the first review was "Anki says code is invalid".
+
+Why 24.04:
+
+- It's the first release whose Mac, Windows and Linux builds all ship Qt 6.6,
+  whose web view is Chromium 112. The stylesheet uses `color-mix()`, which
+  needs Chromium 111, so on the Qt 6.5 builds (2.1.66, and 23.12 on Mac) most
+  colours would be missing. The web build targets Chrome 112 to match.
+- Up to 25.02, Anki runs add-ons on Python 3.9. Stepwise works there.
+
+Tested on 2026-11-14 with `tests/run_on_anki.sh`. All 21 tests pass on 24.04,
+24.06.3, 24.11 and 25.02.7 (Python 3.9, Qt 6.6), 25.07.5 and 25.09.4 (Python
+3.13, the launcher's default Qt), and 26.09.4 (the installed app). The 1.1.1
+code, which is what AnkiWeb serves, passes its 19 tests on 24.04 and 25.07.5.
+Not tested: the launcher's optional Qt
+6.7 and 6.8 builds (`QT=qt67`, `QT=qt68`), which sit between versions that
+pass.
+
 ## Title
 
 🪜 Stepwise: unsuspend AnKing one topic at a time
