@@ -11,7 +11,9 @@ export default defineConfig({
     outDir: "../src/web",
     emptyOutDir: true,
     cssCodeSplit: false,
-    target: "chrome118",
+    // Anki 24.04 to 25.02 ship Qt 6.6, whose web view is Chromium 112: the
+    // oldest browser the AnkiWeb listing offers Stepwise to.
+    target: "chrome112",
     rollupOptions: {
       input: "src/main.tsx",
       output: {
