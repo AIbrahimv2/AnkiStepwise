@@ -45,7 +45,8 @@ export interface KitAddon {
 
 export interface KitAbout {
   self: string;
-  author: { name: string; github: string };
+  /** `name` is the GitHub handle; `fullName`, if given, signs About. */
+  author: { name: string; github: string; fullName?: string };
   addons: KitAddon[];
 }
 

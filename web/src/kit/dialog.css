@@ -152,6 +152,7 @@
 .kit-signoff { margin-top: 24px; padding: 0 2px 4px; color: var(--text-2); }
 .kit-signoff p { margin: 0; font-size: 12.5px; }
 .kit-signature { display: block; width: 150px; height: auto; margin-top: 6px; color: var(--text); opacity: 0.85; }
+.kit-signoff .kit-signoff-name { margin-top: 2px; font-size: 12px; font-weight: 600; color: var(--text); }
 
 /* --- the kit's own page (AnkiGlass, AnkiBare, and the update notice) -------------- */
 

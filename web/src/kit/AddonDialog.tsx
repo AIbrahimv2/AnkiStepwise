@@ -362,7 +362,8 @@ function AboutTab(props: {
 
       <footer className="kit-signoff">
         <p>Thanks for using {self.name}.</p>
-        <Signature className="kit-signature" label={`${about.author.name}'s signature`} />
+        <Signature className="kit-signature" label={`${about.author.fullName ?? about.author.name}'s signature`} />
+        {about.author.fullName && <p className="kit-signoff-name">{about.author.fullName}</p>}
       </footer>
     </div>
   );
