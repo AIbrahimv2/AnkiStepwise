@@ -260,6 +260,11 @@ python3 tests/make_fixture.py   # once, or again to test against newer data
 ./tests/run.sh                  # all of them, or name some: ./tests/run.sh test_bridge
 ```
 
+To run them on another Anki version, such as 24.04, the oldest one AnkiWeb
+offers Stepwise to, run `./tests/run_on_anki.sh 24.4`. The first run installs
+that version from PyPI with [uv](https://docs.astral.sh/uv/), into
+`tests/fixture/anki/`.
+
 ## License
 
 [AGPL-3.0-or-later](LICENSE).

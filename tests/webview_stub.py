@@ -7,10 +7,11 @@ import types
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from harness import SRC, app, mw, ui
+from aqt.utils import aqt_data_folder
 
 PORT = 0  # any free port
 PAGES = {}
-ANKI_WEB = "/Applications/Anki.app/Contents/Resources/app_packages/_aqt/data/web"
+ANKI_WEB = os.path.join(aqt_data_folder(), "web")
 
 
 class H(BaseHTTPRequestHandler):

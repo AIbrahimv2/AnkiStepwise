@@ -9,10 +9,11 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 from harness import *  # noqa: F401,F403
 from harness import S, SRC, actions, col, mw, pump, ui, app
+from aqt.utils import aqt_data_folder
 
 PORT = 5198
 PAGES = {}
-ANKI_WEB = "/Applications/Anki.app/Contents/Resources/app_packages/_aqt/data/web"
+ANKI_WEB = os.path.join(aqt_data_folder(), "web")
 
 
 class H(BaseHTTPRequestHandler):

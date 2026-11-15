@@ -4,6 +4,7 @@ a fake `mw`, offscreen Qt and synchronous ops. Imported by the test scripts.
 Run the tests with tests/run.sh. The collection comes from tests/fixture/
 (gitignored), which tests/make_fixture.py fills."""
 
+import importlib.util
 import json
 import os
 import shutil
@@ -18,7 +19,10 @@ if not os.path.exists(os.path.join(FIXTURE, "collection.anki2")):
     sys.exit("No test collection: run tests/make_fixture.py first.")
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
-sys.path.insert(0, "/Applications/Anki.app/Contents/Resources/app_packages")
+# The installed app's Anki, unless this Python has its own (tests/run_on_anki.sh
+# runs the tests on another Anki version that way).
+if importlib.util.find_spec("aqt") is None:
+    sys.path.insert(0, "/Applications/Anki.app/Contents/Resources/app_packages")
 
 # Fresh copy of the collection for every run.
 work = os.path.join(FIXTURE, "work")
