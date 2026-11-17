@@ -1,13 +1,14 @@
 ---
 name: anki-addon-release
-description: Release, publish or update one of the user's Anki add-ons (Stepwise, Exam Timeline, AnkiGlass, AnkiBare, or a new one), and look after its listings. Covers versioning and the changelog, building and checking the .ankiaddon, the GitHub release, uploading to AnkiWeb and editing the listing (title, tags, description, screenshot), and checking how it shows up in AnkiWeb search. Use in any Anki add-on repo (src/manifest.json plus build.sh) whenever the user says publish, release, ship, upload to AnkiWeb, update the listing, or improve its search ranking.
+description: Release, publish or update one of the user's Anki add-ons (Stepwise, Exam Timeline, AnkiGlass, AnkiBare, Skim, or a new one), and look after its listings. Covers what's waiting to be released, versioning and the changelog, building and checking the .ankiaddon, the GitHub release, uploading to AnkiWeb and editing the listing (title, tags, description, screenshot), and checking how it shows up in AnkiWeb search. Use in any Anki add-on repo (src/manifest.json plus build.sh) whenever the user says publish, release, ship, upload to AnkiWeb, what's unreleased, update the listing, or improve its search ranking.
 ---
 
 # Releasing the user's Anki add-ons
 
 The user (GitHub AIbrahimv2) publishes several Anki add-ons on GitHub and
-AnkiWeb, built the same way. This is how a release goes, what's easy to get
-wrong, and the two helper scripts in `scripts/`.
+AnkiWeb, built the same way. This is how changes are tracked until they're
+released, how a release goes, what's easy to get wrong, and the helper
+scripts in `scripts/`.
 
 ## The add-ons
 
@@ -58,7 +59,58 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
   scratchpad, which gets cleaned within days.
 - **UI copy:** no "·" separators. Sentence case.
 
+## Keeping track of what's unreleased
+
+- **Every change users will notice gets a line under `## [Unreleased]`** in
+  the add-on's `CHANGELOG.md`, in their terms, in the session that makes it.
+  A kit change gets one in every add-on it's synced into. That's the list a
+  release is cut from, and What's new shows it.
+- **AnkiWeb's version is recorded** under "Package on AnkiWeb" in each
+  `docs/ankiweb-listing.md`. `release.py --uploaded` updates it.
+- **To see what's waiting**, for every add-on at once:
+  ```bash
+  python3 ~/.claude/skills/anki-addon-release/scripts/release_status.py --fetch -v
+  ```
+  It shows each add-on's newest version, the version AnkiWeb has, the changes
+  under Unreleased with the version they'd make, and what needs doing:
+  commits since the last tag the changelog doesn't mention, uncommitted or
+  unpushed work, a kit copy that's behind, a version without its GitHub
+  release, or AnkiWeb behind GitHub. Run it when the user asks what's
+  unreleased, and before a release.
+
+## Releasing: release.py
+
+`scripts/release.py` does the checklist below, everything but AnkiWeb's Save:
+
+```bash
+R=~/.claude/skills/anki-addon-release/scripts
+python3 $R/release.py ~/Documents/Projects/<repo>            # dry run
+python3 $R/release.py ~/Documents/Projects/<repo> --publish --co-author "Claude ... <noreply@anthropic.com>"
+python3 $R/release.py ~/Documents/Projects/<repo> --uploaded --co-author "..."   # after Save on AnkiWeb
+```
+
+- **Dry run** (no flag): checks the repo is clean, on main, not behind origin
+  and has a current kit copy; runs `tests/run.sh` if there is one; prints the
+  version and the GitHub notes; builds and checks the package. Nothing is
+  committed or published. Show the user the version and notes.
+- **`--publish`** needs the user's go-ahead (see Ground rules). It versions
+  the changelog (features bump the minor version, fixes alone the patch;
+  `--version` overrides), commits it, rebuilds, runs `check_package.py`,
+  pushes main and the tag, creates the GitHub release, and checks GitHub
+  serves the same file. If a step fails, fix it and run `--publish` again:
+  an untagged version is picked up where it stopped.
+- **AnkiWeb:** it then prints the update page, the package path and the
+  Anki version for the form's maximum. From a terminal it opens the page and
+  shows the file in Finder, and asks whether to record the upload. Run by
+  you, do the upload with the user as in the AnkiWeb section, then run
+  `--uploaded` once the listing shows today's date.
+- Pass `--co-author` with the trailer from the system prompt when you run it;
+  leave it out when the user runs it themselves.
+
 ## Release checklist
+
+What `release.py` does, step by step. Follow it by hand where the script
+can't run (a cloud session without the sibling repos, say).
 
 1. **Start clean.** `git status -sb` shows nothing uncommitted and isn't behind
    origin (pull first if it is). Run the tests if the repo has them
@@ -99,6 +151,18 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
 
 ## AnkiWeb
 
+**The upload stays in the browser, with the user.** Don't script it, even if
+asked: AnkiWeb's terms ("Access to the Service") don't allow access from
+browser extensions or other third-party clients. Its staff have said that
+scripts posting to its upload form break them: dae in 2024 on
+[the forum](https://forums.ankiweb.net/t/authentication-with-ankiweb-for-add-on-deploy-from-github/40999),
+and again in June 2026 about a community GitHub Action
+([thread](https://forums.ankiweb.net/t/github-action-to-upload-anki-add-on/70165)).
+Breaking the terms puts the account holding every add-on at risk. A public
+upload API is requested in
+[ankitects/anki#4869](https://github.com/ankitects/anki/issues/4869) (open,
+no work on it as of 2026-11-17). When it ships, `release.py` can call it.
+
 | Page | URL |
 | --- | --- |
 | Update an add-on | `https://ankiweb.net/shared/upload?id=<ID>` |
@@ -116,6 +180,8 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
 4. Saving lands on `/shared/info/<ID>?cb=…`. There, check the title, the
    "Supported Anki versions" line, that images loaded (`naturalWidth > 0`),
    and that links can be clicked.
+5. For a new package (not a description-only edit), record it:
+   `release.py <repo> --uploaded`.
 
 **Things to know:**
 - **Description-only edits:** saving with no file chosen changes only the
