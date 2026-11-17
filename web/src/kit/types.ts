@@ -45,8 +45,9 @@ export interface KitAddon {
 
 export interface KitAbout {
   self: string;
-  /** `name` is the GitHub handle; `fullName`, if given, signs About. */
-  author: { name: string; github: string; fullName?: string };
+  /** `name` is the GitHub handle; `fullName`, if given, signs About, and
+   *  `socials` are linked under it (LinkedIn and Instagram get their icons). */
+  author: { name: string; github: string; fullName?: string; socials?: { name: string; url: string }[] };
   addons: KitAddon[];
 }
 

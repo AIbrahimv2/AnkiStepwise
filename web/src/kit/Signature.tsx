@@ -1,8 +1,18 @@
 // AIbrahimv2's signature, the sign-off at the end of About. Drawn from
 // assets/signature.svg (the strokes follow the text colour; the underline
 // keeps its red). Inline, so no add-on has to serve a file for it.
+//
+// It writes itself on, as in the Ownus app: when it comes into view the
+// strokes are inked one after another, left to right, then the red
+// underline. The pen moves at one steady speed, so each stroke takes its
+// share of DRAW_MS by length. It all runs here (Web Animations), so it needs
+// no stylesheet. With reduced motion, or where the browser can't watch or
+// animate, the finished signature is simply there.
+//
 // Don't edit a vendored copy (web/src/kit/ in an add-on): change it in the
 // kit and run its sync.py.
+
+import { useEffect, useRef, useState } from "react";
 
 const STROKES = [
   "M12 88 C 22 48, 37 24, 51 24 C 65 24, 66 54, 70 88",
@@ -16,14 +26,80 @@ const STROKES = [
 ];
 const UNDERLINE = "M20 94 C 130 102, 280 92, 350 60";
 
-export function Signature(props: { label: string; className?: string }) {
+// The pen's time across the whole signature, underline included.
+const DRAW_MS = 1200;
+// A beat once the signature is in view, before the pen touches down.
+const BEAT_MS = 250;
+
+// Until a stroke's turn it is dashed away (pathLength 1 makes one dash the
+// whole stroke) and transparent: a round cap still paints a dot at the start
+// of a fully dashed-away stroke.
+const UNINKED = { strokeDasharray: "1", strokeDashoffset: "1", opacity: "0" };
+
+type Ink = "waiting" | "writing" | "done";
+
+function canWrite(): boolean {
   return (
-    <svg className={props.className} viewBox="0 0 330 110" fill="none" role="img" aria-label={props.label}>
+    typeof IntersectionObserver === "function" &&
+    typeof Element.prototype.animate === "function" &&
+    !window.matchMedia?.("(prefers-reduced-motion: reduce)").matches
+  );
+}
+
+export function Signature(props: { label: string; className?: string }) {
+  const svg = useRef<SVGSVGElement>(null);
+  const [ink, setInk] = useState<Ink>(() => (canWrite() ? "waiting" : "done"));
+
+  // Start writing once most of it is in view (About may open scrolled above it).
+  useEffect(() => {
+    const el = svg.current;
+    if (ink !== "waiting" || !el) return;
+    const seen = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        seen.disconnect();
+        setInk("writing");
+      },
+      { threshold: 0.6 },
+    );
+    seen.observe(el);
+    return () => seen.disconnect();
+  }, [ink]);
+
+  useEffect(() => {
+    const el = svg.current;
+    if (ink !== "writing" || !el) return;
+    const paths = Array.from(el.querySelectorAll("path"));
+    const lengths = paths.map((p) => p.getTotalLength());
+    const total = lengths.reduce((sum, n) => sum + n, 0) || 1;
+    let at = BEAT_MS;
+    const strokes = paths.map((p, i) => {
+      const duration = (lengths[i] / total) * DRAW_MS;
+      const stroke = p.animate(
+        [
+          { opacity: 1, strokeDashoffset: 1 },
+          { opacity: 1, strokeDashoffset: 0 },
+        ],
+        { duration, delay: at, easing: "linear", fill: "forwards" },
+      );
+      at += duration;
+      return stroke;
+    });
+    strokes[strokes.length - 1].finished.then(
+      () => setInk("done"),
+      () => undefined, // cancelled: About closed or the tab changed mid-stroke
+    );
+    return () => strokes.forEach((s) => s.cancel());
+  }, [ink]);
+
+  const style = ink === "done" ? undefined : UNINKED;
+  return (
+    <svg ref={svg} className={props.className} viewBox="0 0 330 110" fill="none" role="img" aria-label={props.label}>
       <g transform="scale(0.85,1)" strokeLinecap="round" strokeLinejoin="round">
         {STROKES.map((d) => (
-          <path key={d} d={d} stroke="currentColor" strokeWidth={3.1} />
+          <path key={d} d={d} stroke="currentColor" strokeWidth={3.1} pathLength={1} style={style} />
         ))}
-        <path d={UNDERLINE} stroke="#ff2400" strokeWidth={3} />
+        <path d={UNDERLINE} stroke="#ff2400" strokeWidth={3} pathLength={1} style={style} />
       </g>
     </svg>
   );

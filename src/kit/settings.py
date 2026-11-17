@@ -9,7 +9,8 @@ A schema is a list of sections:
         {"key": "glass_screens", "type": "multi", "label": "Glass on",
          "hint": "...", "options": [{"value": "review", "label": "Review"}]},
         {"key": "glass_card", "type": "switch", "label": "...", "hint": "..."},
-        {"key": "tint_dark", "type": "text", "label": "...", "mono": True},
+        {"key": "tint_dark", "type": "color", "label": "...", "alpha": True},
+        {"key": "note", "type": "text", "label": "...", "mono": True},
         {"key": "side", "type": "choice", "label": "...", "options": [...]},
         {"key": "off_now", "type": "action", "label": "...", "hint": "...",
          "button": "Turn off"},
@@ -17,8 +18,11 @@ A schema is a list of sections:
 
 An "action" row is a button rather than a setting: it runs the add-on's
 function of that key (register(actions=...)), whose return, if any, is
-shown as a message. A row without "button" is only text. The schema may
-also be a function returning it, so it can follow the add-on's state.
+shown as a message. A row without "button" is only text. A "color" row
+is the kit's colour picker (web/color.tsx), which writes "#rrggbb", or
+"rgba(r,g,b,a)" with "alpha": True; "swatches" lists colours to offer.
+The schema may also be a function returning it, so it can follow the
+add-on's state.
 
 Plain Python: Anki is only asked for the config, so tests can run it.
 Don't edit a vendored copy (src/kit/ in an add-on): change it in
@@ -27,11 +31,16 @@ anki-addon-kit and run its sync.py.
 
 from __future__ import annotations
 
+import re
 from typing import Any
 
 from . import family
 
 MAX_TEXT = 200
+# What a colour row takes: what the picker writes (#rrggbb, rgba(r,g,b,a)),
+# the other hex and rgb()/hsl() forms, and "transparent". A name such as
+# "teal" never gets here: the box turns it into #rrggbb when you leave it.
+_COLOR = re.compile(r"#(?:[0-9a-f]{3,4}|[0-9a-f]{6}|[0-9a-f]{8})|(?:rgb|hsl)a?\([\w.,%\s/+-]*\)|transparent", re.I)
 _outside: dict[str, dict] = {}  # config outside Anki
 _outside_defaults: dict[str, dict] = {}
 
@@ -107,6 +116,15 @@ def check(schema: list[dict], values: dict) -> tuple[dict, dict[str, str]]:
                 problems[key] = f"Keep it under {MAX_TEXT} characters."
             elif not text and not f.get("optional"):
                 problems[key] = "This can't be empty."
+            else:
+                clean[key] = text
+        elif kind == "color":
+            text = str(v).strip()
+            if not text and f.get("optional"):
+                clean[key] = ""
+            elif len(text) > 60 or not _COLOR.fullmatch(text):
+                example = "rgba(0,0,0,0.4)" if f.get("alpha") else "#ff9300"
+                problems[key] = f"Use a colour like {example}."
             else:
                 clean[key] = text
     return clean, problems

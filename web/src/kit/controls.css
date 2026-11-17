@@ -312,6 +312,74 @@
 .swatches { display: flex; gap: 6px; }
 #root .swatch-btn { width: 18px; height: 18px; border-radius: 5px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.14); }
 #root .swatch-btn.on { box-shadow: 0 0 0 2px var(--surface), 0 0 0 4px var(--text); }
+
+/* A colour setting (color.tsx): a chip that opens the picker, and a box to
+   type the colour in. The checkerboard shows through see-through colours. */
+.color-field { display: flex; align-items: center; gap: 8px; }
+#root .color-chip {
+  width: 30px;
+  height: 30px;
+  flex: none;
+  padding: 3px;
+  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  background: var(--surface);
+  transition: border-color 0.12s;
+}
+#root .color-chip:hover, #root .color-chip.open { border-color: var(--text-3); }
+.color-chip > span { display: block; width: 100%; height: 100%; border-radius: 5px; box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.12); }
+#root .set-input.color-text { width: 88px; }
+#root .set-input.color-text.wide { width: 172px; }
+.color-pop {
+  position: fixed;
+  z-index: 60; /* over dialogs (.overlay is 50) */
+  width: 240px; /* nine swatches to a row */
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: 12px;
+  box-shadow: var(--shadow-pop);
+  animation: pop 0.12s ease-out;
+}
+.color-area {
+  position: relative;
+  height: 136px;
+  border-radius: 8px;
+  background-image: linear-gradient(to top, #000, transparent), linear-gradient(to right, #fff, transparent);
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  cursor: crosshair;
+  touch-action: none;
+  outline: none;
+}
+.color-track {
+  position: relative;
+  height: 12px;
+  margin: 0 7px; /* room for the thumb at either end */
+  border-radius: 6px;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
+  cursor: pointer;
+  touch-action: none;
+  outline: none;
+}
+.color-hue { background: linear-gradient(to right, #f00, #ff0 17%, #0f0 33%, #0ff 50%, #00f 67%, #f0f 83%, #f00); }
+.color-thumb {
+  position: absolute;
+  width: 14px;
+  height: 14px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25), 0 1px 3px rgb(0 0 0 / 0.3);
+  transform: translate(-50%, -50%);
+  pointer-events: none;
+}
+.color-track .color-thumb { top: 50%; }
+.color-area:focus-visible .color-thumb, .color-track:focus-visible .color-thumb {
+  box-shadow: 0 0 0 1px rgb(0 0 0 / 0.25), 0 0 0 4px color-mix(in srgb, var(--focus) 45%, transparent);
+}
+.color-swatches { flex-wrap: wrap; padding: 2px; }
 .shortcut-field { display: flex; align-items: center; gap: 4px; }
 #root .keycap-btn {
   min-width: 112px;

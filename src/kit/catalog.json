@@ -1,9 +1,13 @@
 {
-  "updated": "2026-11-14",
+  "updated": "2026-11-17",
   "author": {
     "name": "AIbrahimv2",
     "fullName": "Abdel-Rahman Ibrahim",
-    "github": "https://github.com/AIbrahimv2"
+    "github": "https://github.com/AIbrahimv2",
+    "socials": [
+      { "name": "LinkedIn", "url": "https://www.linkedin.com/in/abdelrahman-ibrahim-dmv" },
+      { "name": "Instagram", "url": "https://www.instagram.com/i_abdelrahman_i/" }
+    ]
   },
   "addons": [
     {
