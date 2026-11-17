@@ -4,6 +4,7 @@ import { call } from "../bridge";
 import type { CountMode, PinnedResource, Settings, SettingsSaved, SettingsValues, StatusColors } from "../types";
 import { StepChip } from "./Tree";
 import { AddonDialog } from "../kit/AddonDialog";
+import { ColorField } from "../kit/color";
 import { Block, Row, Section, ShortcutField } from "../kit/settings";
 import type { KitTab } from "../kit/types";
 import { kitCall } from "../kitCall";
@@ -23,9 +24,7 @@ const MODES: { value: CountMode; label: string; hint: string }[] = [
   { value: "all", label: "All cards", hint: "Every card under the topic, studied or not." },
 ];
 
-// Colorful Tags' palette. A native colour picker (<input type="color">)
-// would open a macOS panel from the web view, which can crash Anki, so
-// colours are picked from swatches or typed as hex.
+// Colorful Tags' palette, offered in the kit's colour picker.
 const PALETTE = ["#ff9300", "#00f900", "#af52de", "#ff2600", "#0096ff", "#fefb00", "#ff40ff", "#00fdff", "#929292"];
 const HEX = /^#[0-9a-f]{6}$/i;
 
@@ -263,25 +262,12 @@ export function SettingsDialog(props: {
           </Row>
           {COLOR_ROWS.map((c) => (
             <Row key={c.key} label={c.label} problem={problems[`colors.${c.key}`]}>
-              <div className="swatches">
-                {PALETTE.map((hex) => (
-                  <button
-                    key={hex}
-                    type="button"
-                    className={`swatch-btn${v.colors[c.key].toLowerCase() === hex ? " on" : ""}`}
-                    style={{ background: hex }}
-                    aria-label={hex}
-                    title={hex}
-                    onClick={() => setColor(c.key, hex)}
-                  />
-                ))}
-              </div>
-              <input
-                className={`set-input hex${HEX.test(v.colors[c.key]) ? "" : " bad"}`}
+              <ColorField
                 value={v.colors[c.key]}
-                onChange={(e) => setColor(c.key, e.target.value.trim())}
-                aria-label={`${c.label} colour`}
-                maxLength={7}
+                onChange={(x) => setColor(c.key, x.trim())}
+                label={c.label}
+                swatches={PALETTE}
+                bad={!HEX.test(v.colors[c.key]) || !!problems[`colors.${c.key}`]}
               />
             </Row>
           ))}
