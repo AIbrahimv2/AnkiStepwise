@@ -17,6 +17,11 @@ How AnkiWeb's add-on search behaves, tested in November 2026:
 - Wrap an image in `<p>`: on its own, AnkiWeb leaves it inline, so the list
   after it starts with no gap.
 
+## Package on AnkiWeb
+
+Version 1.2.0, uploaded 2026-11-17. The release script (`release.py --uploaded`
+in the `anki-addon-release` skill) updates this line after each upload.
+
 ## Supported Anki versions
 
 Minimum 24.04, maximum 26.09.4 with no `-`, so newer versions get it too. The
