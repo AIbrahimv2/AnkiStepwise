@@ -13,7 +13,7 @@ wrong, and the two helper scripts in `scripts/`.
 
 | Add-on | Local repo | GitHub | AnkiWeb ID | Package |
 | --- | --- | --- | --- | --- |
-| 🪜 Stepwise | `~/Documents/Projects/anki-tag-queue` | AIbrahimv2/AnkiStepwise | 1949793886 | `dist/stepwise.ankiaddon` |
+| 🪜 Stepwise | `~/Documents/Projects/anki-stepwise` | AIbrahimv2/AnkiStepwise | 1949793886 | `dist/stepwise.ankiaddon` |
 | 📅 Exam Timeline | `~/Documents/Projects/anki-exam-timeline` | AIbrahimv2/AnkiExamTimeline | 341595498 | `dist/anki-exam-timeline.ankiaddon` |
 | 🫧 AnkiGlass | `~/Documents/Projects/anki-glass` | AIbrahimv2/AnkiGlass | 1866406123 | `dist/anki-glass.ankiaddon` |
 | 🐻 AnkiBare | `~/Documents/Projects/anki-bare` | AIbrahimv2/AnkiBare | 1505882046 | `dist/anki-bare.ankiaddon` |
