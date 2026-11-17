@@ -241,9 +241,34 @@ with a **Save** button. A saved reply is public, shown under the review as
   qualifiers like "within a daily new-card limit": they belong in the
   description.
 - **Support page:** the GitHub issues URL.
-- **Description:** Markdown and basic HTML.
-  - Open with a sentence or two saying what the add-on does, then the
-    image. Never start the description with an image.
+- **Description:** Markdown and basic HTML, laid out the same in every
+  listing:
+  ```markdown
+  <What it does, in one or two sentences. A Mac-only add-on says so here.>
+
+  **Code: <ID>.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**. Needs Anki <minimum> or newer<, on a Mac>.
+
+  <p><img src="https://raw.githubusercontent.com/AIbrahimv2/<Repo>/main/docs/screenshot.png" alt="…" width="100%"></p>
+  <Or a pair that belongs together: two screens, or **Before** and **After**.>
+
+  <A little more about it, if needed.>
+
+  **Features**
+
+  - …
+
+  <As needed, in this order: how to open and use it, **Settings**,
+  **Good to know**, more images.>
+
+  Source, changelog and issues: [github.com/AIbrahimv2/<Repo>](https://github.com/AIbrahimv2/<Repo>)
+
+  <p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2" width="180"></p>
+  ```
+  - Never start the description with an image: the pitch and the code line
+    come first. The minimum is the one in "Supported Anki versions".
+  - The signature is the kit's (`tools/signature_png.py` renders it), the
+    same file in every listing. Once the add-ons page on
+    abdelrahmanibrahim.com is live, it links there.
   - Bare URLs aren't clickable, so write
     `[github.com/AIbrahimv2/<Repo>](https://github.com/AIbrahimv2/<Repo>)`.
   - Put an image on its own as
