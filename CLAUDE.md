@@ -16,4 +16,7 @@ Stepwise is one of AIbrahimv2's Anki add-ons (AnkiWeb ID 1949793886).
   notice after updates). Don't edit them here: change the kit and run its
   `sync.py`; `build.sh` warns when they're behind. `build.sh` puts
   `CHANGELOG.md` in the package, where What's new shows it to users, so
-  write it in their terms.
+  write it in their terms. Every change users will notice gets a line
+  under `## [Unreleased]` in the session that makes it: that's what the
+  next release is cut from. The release skill's `release_status.py` shows
+  what's waiting in every add-on.
