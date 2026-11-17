@@ -18,6 +18,14 @@ All notable changes to this project are documented here. The format is based on
   to read: each version's changes sit beside its number, and the other
   add-ons are laid out as cards. Settings stay in Stepwise, with What's new
   and About at the top.
+- **The signature at the end of About signs itself**, stroke by stroke, as
+  if written by hand when you scroll to it.
+- Add-on emoji stand on their own now, without a box around them.
+- About ends with links to AIbrahimv2's LinkedIn and Instagram, under the
+  signature.
+- **A colour picker for the tag colours** in Settings: pick any shade from
+  a colour square and a hue slider, with Colorful Tags' colours a click
+  away. You can still type a hex code.
 
 ## [1.2.0] - 2026-11-17
 
