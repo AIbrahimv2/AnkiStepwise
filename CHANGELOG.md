@@ -3,6 +3,15 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- **What's new and About open in a window of their own**, wider and easier
+  to read: each version's changes sit beside its number, and the other
+  add-ons are laid out as cards. Settings stay in Stepwise, with What's new
+  and About at the top.
+
 ## [1.2.0] - 2026-11-17
 
 ### Added
