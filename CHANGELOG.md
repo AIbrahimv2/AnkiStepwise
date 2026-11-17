@@ -7,6 +7,11 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- **The keys you press show on screen**, in a frosted pill over the corner of
+  the list they went to, and fade once you stop, so a screen recording shows
+  what was pressed. Quick presses build a short trail (`1 0 j`), a key pressed
+  again shows with a count (`j ×5`), and a number typed before a move stays
+  until it's used. As in Skim.
 - **What's new and About open in a window of their own**, wider and easier
   to read: each version's changes sit beside its number, and the other
   add-ons are laid out as cards. Settings stay in Stepwise, with What's new

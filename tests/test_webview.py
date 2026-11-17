@@ -156,10 +156,17 @@ assert wait_for(f"document.querySelectorAll('.item').length > {queued}"), "Contr
 press("u")
 assert wait_for(f"document.querySelectorAll('.item').length === {queued}")
 
+CAST = "[...document.querySelectorAll('.keycast .kc-key')].map(k => k.textContent + (k.dataset.n || '')).join(' ')"
 press("4", "2")
-assert js("document.querySelector('.count-pending')?.textContent") == "42", "the number shows while it's pending"
+assert js(CAST).endswith("4 2"), f"the keys you press show, the number among them ({js(CAST)!r})"
+t = time.time()
+while time.time() - t < 1.8:
+    pump(1)
+    time.sleep(0.02)
+assert js(CAST).endswith("4 2"), "and stay while the number waits for its key"
 press("Escape")
-assert not js("document.querySelector('.count-pending')"), "and goes once it's cancelled"
+assert js(CAST).endswith("Esc"), f"Esc shows too ({js(CAST)!r})"
+assert wait_for("!document.querySelector('.keycast')", 5), "and they fade once you stop"
 print("number prefixes work")
 
 # --- the queue list's keys, and Shift+H / Shift+L between the two -----------------

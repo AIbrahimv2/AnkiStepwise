@@ -1,5 +1,6 @@
 import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, SearchX, Star } from "lucide-react";
 import { type CSSProperties, type ReactNode, memo, useEffect, useRef, useState } from "react";
+import { KeyCast, useKeyCastHold } from "../keycast";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
 import { Checkbox, Highlight, fmt, scrollToRow } from "./ui";
@@ -116,6 +117,7 @@ export function Tree(props: TreeProps) {
     countRef.current = n;
     setCount(n);
   };
+  useKeyCastHold("tree", count > 0);
   const onKeyDown = (e: KeyLike) => {
     if (MODIFIER_KEYS.has(e.key)) return;
     if (e.shiftKey && /^[hl]$/i.test(e.key)) return; // Shift+H / Shift+L switch panes (App)
@@ -329,11 +331,7 @@ export function Tree(props: TreeProps) {
             );
           })
         )}
-        {count > 0 && (
-          <div className="count-pending" aria-live="polite">
-            <span>{count}</span>
-          </div>
-        )}
+        <KeyCast pane="tree" />
       </div>
     </>
   );

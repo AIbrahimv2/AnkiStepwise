@@ -18,6 +18,7 @@ import {
 } from "lucide-react";
 import { type ReactNode, useEffect, useLayoutEffect, useRef, useState } from "react";
 import { call } from "../bridge";
+import { KeyCast, useKeyCastHold } from "../keycast";
 import type { DoneRow, LaterPlan, QueueRow, RowGroup, Side } from "../types";
 import { ctrlLetter, StepChip } from "./Tree";
 import { IconButton, fmt, plural, scrollToRow } from "./ui";
@@ -116,6 +117,7 @@ export function SidePanel(props: Props) {
   const cursorAt = useRef(0);
   const countRef = useRef(0);
   const [count, setCountState] = useState(0);
+  useKeyCastHold("queue", count > 0);
   const setCount = (n: number) => {
     countRef.current = n;
     setCountState(n);
@@ -603,11 +605,7 @@ export function SidePanel(props: Props) {
             </Empty>
           )
         )}
-        {count > 0 && (
-          <div className="count-pending" aria-live="polite">
-            <span>{count}</span>
-          </div>
-        )}
+        <KeyCast pane="queue" />
       </div>
 
       <div className="side-footer">

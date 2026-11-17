@@ -1,7 +1,10 @@
 import { createRoot } from "react-dom/client";
 import { App } from "./App";
+import { installKeyCast } from "./keycast";
 import "./kit/kit.css";
 import "./styles.css";
+
+installKeyCast();
 
 // Anki puts our <script> in <head>, before <div id="root"> exists.
 function mount() {
