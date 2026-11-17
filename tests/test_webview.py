@@ -307,11 +307,23 @@ assert wait_for("!document.querySelector('.overlay')"), "Esc closes it"
 pump(20)  # time for Anki's own Esc handler (pycmd "close") to arrive, if it fired
 assert d.isVisible(), "and only it: Anki's own Esc would close the window"
 
-# Settings share the add-on kit's dialog with What's new and About; Esc
-# closes just the dialog there too.
+# Settings are in the add-on kit's dialog, with What's new and About a
+# click away in the kit's own window; Esc closes just the dialog there too.
+import importlib  # noqa: E402
+
+kit_page = importlib.import_module(ui.__package__ + ".kit.page")
+opened = []
+kit_page.open_page = lambda addon_id=None, tab="news": opened.append((addon_id, tab))
 d.push({"type": "settings"})
-assert wait_for("[...document.querySelectorAll('.kit-tabs button')].map(b => b.textContent).join() === \"Settings,What's new,About\""), "Settings, What's new and About"
-assert wait_for("document.querySelector('.kit-title h2') && document.querySelector('.kit-title h2').textContent.startsWith('Stepwise')"), "the kit knows it's Stepwise"
+assert wait_for("document.querySelector('.kit-title h2') && document.querySelector('.kit-title h2').textContent === 'Settings'"), "the Settings dialog"
+assert wait_for("document.querySelector('.kit-tagline') && document.querySelector('.kit-tagline').textContent.startsWith('Stepwise')"), "the kit knows it's Stepwise"
+assert js("[...document.querySelectorAll('.kit-head-links button')].map(b => b.textContent.trim()).join()") == "What's new,About"
+js("[...document.querySelectorAll('.kit-head-links button')].find(b => b.textContent.trim() === 'About').click()")
+deadline = time.time() + 5
+while not opened and time.time() < deadline:
+    pump(5)
+assert opened == [("stepwise", "about")], opened
+assert js("!!document.querySelector('.kit-title')"), "and Settings stays open"
 js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))")
 assert wait_for("!document.querySelector('.overlay')"), "Esc closes Settings"
 pump(20)

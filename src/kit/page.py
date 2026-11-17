@@ -2,11 +2,11 @@
 # Copyright (C) 2026 AIbrahimv2
 """The kit's own window, and the notice after an update.
 
-The window shows the same Settings, What's new and About dialog the add-ons
-with a web page show in it, for add-ons without one (AnkiGlass, AnkiBare)
-and for the notice. Its page is built from anki-addon-kit's standalone/
-into web/page.js and web/page.css, and inlined, so the add-on needn't
-export any files.
+The window shows every add-on's What's new and About, and Settings for an
+add-on whose settings the kit describes (AnkiGlass). Add-ons with a page of
+their own keep their Settings there, in a dialog. Its page is built from
+anki-addon-kit's standalone/ into web/page.js and web/page.css, and
+inlined, so the add-on needn't export any files.
 
 After Anki starts, the leading copy of the kit (see family.py) shows one
 notice for every add-on updated since you last looked: "Stepwise 1.2.0 and
@@ -25,7 +25,9 @@ import os
 from . import family
 
 WEB = os.path.join(family.HERE, "web")
-GEOM_KEY = "aibrahimv2_kit_page"
+# Not the old dialog's key ("aibrahimv2_kit_page"), whose saved size was
+# for a narrower page.
+GEOM_KEY = "aibrahimv2_kit_window"
 NOTICE_DELAY_MS = 2500
 NOTICE_SHOW_MS = 14000
 
@@ -70,10 +72,21 @@ def open_page(addon_id: str | None = None, tab: str = "news") -> None:
     from aqt.qt import QApplication
 
     addon_id = addon_id or family.self_id()
-    if _window is None:
-        parent = QApplication.activeWindow() or mw
-        _window = _make_window(parent)
+    if _window is None or _deleted(_window):
+        # A window of its own over Anki's, not over the add-on's (closing
+        # that would take this with it), unless a modal dialog would keep
+        # it from taking clicks.
+        _window = _make_window(QApplication.activeModalWidget() or mw)
     _window.show_addon(addon_id, tab)
+
+
+def _deleted(window) -> bool:
+    try:
+        from aqt.qt import sip
+
+        return sip.isdeleted(window)
+    except Exception:
+        return False
 
 
 def _make_window(parent):
@@ -84,8 +97,8 @@ def _make_window(parent):
     class KitWindow(QDialog):
         def __init__(self) -> None:
             super().__init__(parent)
-            self.setMinimumSize(420, 420)
-            self.resize(620, 680)
+            self.setMinimumSize(480, 440)
+            self.resize(880, 740)
             restoreGeom(self, GEOM_KEY)
             lay = QVBoxLayout(self)
             lay.setContentsMargins(0, 0, 0, 0)

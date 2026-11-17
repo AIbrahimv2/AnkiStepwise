@@ -37,8 +37,8 @@ const COLOR_ROWS: { key: keyof StatusColors; label: string }[] = [
 
 /** Settings for the add-on, edited here rather than as JSON in Anki's
  *  config editor (Anki's Config button opens this too). Changes apply on
- *  Save. The shared add-on kit's dialog holds them, beside What's new and
- *  About. */
+ *  Save. The shared add-on kit's dialog holds them, with What's new and
+ *  About a click away in the kit's window. */
 export function SettingsDialog(props: {
   tab: KitTab;
   onTab: (tab: KitTab) => void;

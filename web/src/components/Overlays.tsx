@@ -33,7 +33,7 @@ export function PageActions(props: {
   onImport: () => void;
   onSettings: () => void;
   onKeys: () => void;
-  /** What's new or About, in the Settings dialog. */
+  /** What's new or About, in the window the add-ons share. */
   onAbout: (tab: KitTab) => void;
   /** An update you haven't read about yet: a dot on ⋯ and What's new. */
   unseen: boolean;

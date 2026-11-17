@@ -27,7 +27,7 @@ import {
   type Tone,
 } from "./components/Overlays";
 import { SettingsDialog } from "./components/Settings";
-import { selfOf, useKitAbout } from "./kit/AddonDialog";
+import { openKitWindow, selfOf, useKitAbout } from "./kit/AddonDialog";
 import type { KitTab } from "./kit/types";
 import { kitCall } from "./kitCall";
 import { SidePanel, type Tab } from "./components/SidePanel";
@@ -806,7 +806,7 @@ export function App() {
       onImport={() => setImporting(true)}
       onSettings={() => setSettingsTab("settings")}
       onKeys={() => setKeysOpen(true)}
-      onAbout={setSettingsTab}
+      onAbout={(tab) => openKitWindow(kitCall, tab)}
       unseen={!!selfOf(kitAbout)?.unseen}
     />
   );

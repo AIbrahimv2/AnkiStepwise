@@ -34,7 +34,7 @@ from . import changelog
 # protocols then keep apart), and KIT_VERSION whenever the kit changes (the
 # newest copy leads).
 PROTOCOL = 1
-KIT_VERSION = 4
+KIT_VERSION = 5
 REGISTRY = f"aibrahimv2_addons_v{PROTOCOL}"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
