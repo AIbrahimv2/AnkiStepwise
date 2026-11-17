@@ -186,6 +186,12 @@ no work on it as of 2026-11-17). When it ships, `release.py` can call it.
 **Things to know:**
 - **Description-only edits:** saving with no file chosen changes only the
   text. The package stays as it was.
+- **Caching:** the listing's text comes from `/svc/shared/item-info`, which
+  browsers may keep for 10 minutes (`max-age=600`), and images from
+  raw.githubusercontent.com, kept for 5. A browser that opened the listing
+  just before a save shows the old version for that long. Check a save
+  with `?cb=<anything>` on the listing URL, and tell the user a hard
+  refresh shows it.
 - **Clipboard:** the listing page copies its install code to the clipboard
   when it loads. Tell the user, so it doesn't surprise them.
 - **Versions:** each branch has a minimum and maximum Anki version, and the
@@ -236,6 +242,8 @@ with a **Save** button. A saved reply is public, shown under the review as
   description.
 - **Support page:** the GitHub issues URL.
 - **Description:** Markdown and basic HTML.
+  - Open with a sentence or two saying what the add-on does, then the
+    image. Never start the description with an image.
   - Bare URLs aren't clickable, so write
     `[github.com/AIbrahimv2/<Repo>](https://github.com/AIbrahimv2/<Repo>)`.
   - Put an image on its own as
@@ -244,6 +252,8 @@ with a **Save** button. A saved reply is public, shown under the review as
     starts with no gap.
   - Use the same `docs/screenshot.png` in the README, so replacing one file
     updates both.
+  - With more than one image, make them all the same size and show each at
+    `width="100%"` here and in the README, so they line up at one scale.
 
 ## AnkiWeb search
 
