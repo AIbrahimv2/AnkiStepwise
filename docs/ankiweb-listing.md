@@ -57,11 +57,20 @@ anking unsuspend cards study planner usmle comlex step1 medical school checklist
 
 ## Description
 
+Paste as is. AnkiWeb takes Markdown and basic HTML. It follows the layout in
+the `anki-addon-release` skill's listing conventions: what it does, the code
+line and the screenshot first, the signature last.
+
+```markdown
 A study planner for AnKing and other medical school decks. Tick the topics you're covering today (a Boards and Beyond video, a Pixorize set, a First Aid chapter) and Stepwise shows how many new cards that adds against your daily new card limit. When you've covered a topic, check it off and its cards are unsuspended.
+
+**Code: 1949793886.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**. Needs Anki 24.04 or newer.
+
+<p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%"></p>
 
 Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step 2 / Step 3 decks for USMLE and COMLEX, and works with any deck that uses hierarchical tags.
 
-<p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%"></p>
+**Features**
 
 - Tag tree by resource: B&B, Bootcamp, Pixorize, Sketchy, Pathoma, First Aid, Physeo, Osmosis, OME, Ninja Nerd, Dirty Medicine, AMBOSS, UWorld, NBME and the rest, showing the cards left to unsuspend and a progress bar per topic.
 - A meter of today's new cards. It follows Bury new siblings, so a note with three clozes counts once, the way Anki will show it.
@@ -74,3 +83,6 @@ Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step
 Open it from Tools → Stepwise (Cmd/Ctrl+Shift+S). Your queue is saved in your collection, so it syncs with it.
 
 Source, changelog and issues: [github.com/AIbrahimv2/AnkiStepwise](https://github.com/AIbrahimv2/AnkiStepwise)
+
+<p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2" width="180"></p>
+```
