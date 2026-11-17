@@ -102,7 +102,8 @@ export function SidePanel(props: Props) {
   // Like the tree's: j/k move (with a number, 10j), gg/G top and bottom (or
   // row N), Ctrl-d/Ctrl-u half a page, h/l close a resource or go to it / open
   // it. Space does the row's main thing (check off, queue), s saves for later,
-  // x or dd removes, Enter shows it in the tree, gt/gT change tab. The cursor
+  // x or dd removes, Enter shows it in the tree, t/T (or gt/gT) change tab
+  // (as t/T go through Skim's views). The cursor
   // only shows while the list has the keys; Shift+H and Shift+L (in App) move
   // between the topics and this list. Rows are found in the page in display
   // order (each has data-nav), so the keys always follow what's on screen.
@@ -249,7 +250,7 @@ export function SidePanel(props: Props) {
       if (pending) e.preventDefault();
       return;
     }
-    const els = navEls(); // may be empty: gt / gT still change tab
+    const els = navEls(); // may be empty: t / T, gt / gT still change tab
     const handled = () => {
       e.preventDefault();
       if (!focusedHere()) list?.focus({ preventScroll: true });
@@ -290,6 +291,12 @@ export function SidePanel(props: Props) {
       return handled();
     }
     lastG.current = 0;
+    // t / T: next / previous tab (a number first moves that many).
+    if (key === "t" || key === "T") {
+      const next = TABS.indexOf(tab) + (key === "t" ? 1 : -1) * times;
+      props.onTab(TABS[((next % TABS.length) + TABS.length) % TABS.length]);
+      return handled();
+    }
     if (!els.length) return;
     const id = els[i].dataset.nav ?? "";
     if (key === "d") {

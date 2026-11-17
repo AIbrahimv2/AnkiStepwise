@@ -180,7 +180,7 @@ shows:
 | `b` | The topic's cards, in Skim if it's installed, otherwise in Anki's browser (on a resource, all its topics); Skim follows the cursor here too |
 | `Shift+B` | The same in Anki's browser, even with Skim installed |
 | `p` | The same as `b` with Skim installed |
-| `gt` / `gT` | Next / previous tab (`2gt` goes to Later) |
+| `t` / `T` | Next / previous tab (`gt` / `gT` too; `2gt` goes to Later) |
 
 Press `?` anywhere in the window (or **⋯ → Keys**) to see all of these.
 

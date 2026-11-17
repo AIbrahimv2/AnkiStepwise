@@ -7,6 +7,8 @@ All notable changes to this project are documented here. The format is based on
 
 ### Changed
 
+- **`t` and `T` change tab in the queue** (Queue, Later, Done), next and
+  previous, as they go through Skim's views. `gt` and `gT` still work.
 - **The keys you press show on screen**, in a frosted pill over the corner of
   the list they went to, and fade once you stop, so a screen recording shows
   what was pressed. Quick presses build a short trail (`1 0 j`), a key pressed

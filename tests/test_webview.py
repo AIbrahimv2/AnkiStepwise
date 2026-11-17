@@ -267,6 +267,9 @@ qpress(" ")
 assert wait_for("!document.querySelector('[data-nav=\"r:%s\"]')" % later_tag.replace('"', '\\"')), "Space queues it"
 assert has(actions.load_state().queued(), later_tag)
 assert qpress("g", "T")["tab"] == 0, "gT"
+assert qpress("t")["tab"] == 1 and qpress("t")["tab"] == 2, "t: the next tab, and the next"
+assert qpress("t")["tab"] == 0, "round to the first"
+assert qpress("T")["tab"] == 2 and qpress("2", "T")["tab"] == 0, "T the other way, a number first moves that many"
 
 # Enter shows the topic in the tree and hands it the keys; Shift+H and
 # Shift+L go back and forth, and the cursor stays where it was.

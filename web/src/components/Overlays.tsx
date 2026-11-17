@@ -392,7 +392,7 @@ const KEY_SECTIONS: [string, KeyRow[]][] = [
       [["b", "p"], "Its cards in Skim (on a resource, all its topics); Skim follows the cursor", true],
       [["B"], "Its cards in Anki's browser (on a resource, all its topics)", true],
       [["b"], "Its cards in Anki's browser (on a resource, all its topics)", false],
-      [["gt", "gT"], "Next / previous tab"],
+      [["t", "T"], "Next / previous tab (gt / gT too; 2gt goes to Later)"],
     ],
   ],
   [
