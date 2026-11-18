@@ -270,7 +270,7 @@ with a **Save** button. A saved reply is public, shown under the review as
 
   Source, changelog and issues: [github.com/AIbrahimv2/<Repo>](https://github.com/AIbrahimv2/<Repo>)
 
-  <p><a href="https://abdelrahmanibrahim.com/anki/"><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2's Anki add-ons" width="180"></a></p>
+  <p><a href="https://abdelrahmanibrahim.com/anki/"><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2's Anki add-ons" width="260"></a></p>
   ```
   - Never start the description with an image: the pitch and the code line
     come first.
