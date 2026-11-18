@@ -64,7 +64,7 @@ line and the screenshot first, the signature last.
 ```markdown
 A study planner for AnKing and other medical school decks. Tick the topics you're covering today (a Boards and Beyond video, a Pixorize set, a First Aid chapter) and Stepwise shows how many new cards that adds against your daily new card limit. When you've covered a topic, check it off and its cards are unsuspended.
 
-**Code: 1949793886.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**. Needs Anki 24.04 or newer.
+**Code: 1949793886.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**.
 
 <p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%"></p>
 
