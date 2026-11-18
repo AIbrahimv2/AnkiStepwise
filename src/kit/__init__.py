@@ -20,11 +20,16 @@ In its bridge, for a page that shows the kit's dialog:
 To show the kit's own window (What's new, About, schema settings):
 
     kit.open_page(tab="about")
+
+For AnkiGlass's glass behind one of the add-on's windows (when it's
+installed and its setting is on), while making the window:
+
+    kit.glass(self)  # after its web view, before it shows or loads its page
 """
 
 from __future__ import annotations
 
-from .family import KIT_VERSION, about, command, register, self_id
+from .family import KIT_VERSION, about, command, glass, register, self_id
 
 
 def open_page(addon_id: str | None = None, tab: str = "news") -> None:
@@ -33,4 +38,4 @@ def open_page(addon_id: str | None = None, tab: str = "news") -> None:
     _open(addon_id or self_id(), tab)
 
 
-__all__ = ["KIT_VERSION", "about", "command", "open_page", "register"]
+__all__ = ["KIT_VERSION", "about", "command", "glass", "open_page", "register"]

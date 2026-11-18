@@ -1,0 +1,68 @@
+/* AnkiGlass's glass behind an add-on's window. Don't edit a vendored copy
+   (web/src/kit/ in an add-on): change it in the kit and run its sync.py.
+
+   A window asks for it with kit.glass() (py/family.py). When AnkiGlass is
+   installed and puts its glass behind the window, it adds .kit-glass to the
+   page's root as it loads; nothing here applies anywhere else.
+
+   The window's background goes, so AnkiGlass's tinted glass shows behind
+   the page. Panels, buttons and fields turn to the pale glass fill
+   AnkiGlass gives Anki's own bars.
+
+   No blur: on a page with a see-through background, Anki's web view draws
+   no backdrop-filter at all (it does on an opaque one). So nothing can be
+   frosted, and whatever sits over the page's content must hide it itself:
+   - What floats over the page (menus, dialogs, the colour picker) takes
+     --float, all but opaque.
+   - A bar the page scrolls under is the glass while it sits in place and
+     --solid once it sticks, so the rows under it don't show through its
+     text. Make the bar a scroll-state container and give it an underlay:
+
+       :root.kit-glass .bar { container-type: scroll-state; }
+       :root.kit-glass .bar::before {
+         content: ""; position: absolute; inset: 0; z-index: -1; pointer-events: none;
+       }
+       @container scroll-state(stuck: top) {
+         :root.kit-glass .bar::before { background: var(--solid); }
+       }
+
+     (The bar needs a z-index, so the underlay stays behind its text.)
+
+   A page that draws cards in frames of its own (Skim) calls
+   window.kitGlassCard?.(frame.contentWindow) once a card is drawn. AnkiGlass
+   defines it while its "Glass behind the card" is on, and it clears the
+   card's own background the way the reviewer's is cleared. */
+
+:root.kit-glass {
+  --bg: transparent;
+  /* The panel colour, opaque: for text and knobs on a --text fill, which a
+     see-through --surface would wash out, and for bars once they stick. */
+  --solid: var(--canvas-elevated, #ffffff);
+  --surface: rgb(255 255 255 / 0.42);
+  --sunken: rgb(0 0 0 / 0.045);
+  --float: color-mix(in srgb, var(--solid) 95%, transparent);
+  /* A bar at rest (the top of the kit's window): a little more than a panel. */
+  --bar: color-mix(in srgb, var(--solid) 58%, transparent);
+}
+
+:root.kit-glass.night-mode {
+  --solid: var(--canvas-elevated, #363636);
+  --surface: rgb(255 255 255 / 0.07);
+  --sunken: rgb(0 0 0 / 0.16);
+  --float: color-mix(in srgb, var(--solid) 95%, transparent);
+  --bar: color-mix(in srgb, var(--solid) 52%, transparent);
+}
+
+:root.kit-glass,
+:root.kit-glass body { background: transparent; }
+
+/* Text and knobs on a --text fill. */
+:root.kit-glass #root .btn.primary,
+:root.kit-glass .toast { color: var(--solid); }
+:root.kit-glass.night-mode #root .switch.on::after { background: var(--solid); }
+:root.kit-glass #root .swatch-btn.on { box-shadow: 0 0 0 2px var(--solid), 0 0 0 4px var(--text); }
+
+/* Over the page. */
+:root.kit-glass .menu,
+:root.kit-glass .modal,
+:root.kit-glass .color-pop { background: var(--float); }

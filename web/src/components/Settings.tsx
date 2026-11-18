@@ -1,13 +1,11 @@
 import { Plus, X } from "lucide-react";
 import { useEffect, useMemo, useState } from "react";
+import "../settings.css";
 import { call } from "../bridge";
-import type { CountMode, PinnedResource, Settings, SettingsSaved, SettingsValues, StatusColors } from "../types";
+import type { CountMode, PinnedResource, Settings, SettingsValues, StatusColors } from "../types";
 import { StepChip } from "./Tree";
-import { AddonDialog } from "../kit/AddonDialog";
 import { ColorField } from "../kit/color";
-import { Block, Row, Section, ShortcutField } from "../kit/settings";
-import type { KitTab } from "../kit/types";
-import { kitCall } from "../kitCall";
+import { Block, Row, Section, SettingsFoot, ShortcutField } from "../kit/settings";
 import { IconButton, Switch } from "./ui";
 
 const LIMIT_MIN = 1;
@@ -36,14 +34,10 @@ const COLOR_ROWS: { key: keyof StatusColors; label: string }[] = [
 
 /** Settings for the add-on, edited here rather than as JSON in Anki's
  *  config editor (Anki's Config button opens this too). Changes apply on
- *  Save. The shared add-on kit's dialog holds them, with What's new and
- *  About a click away in the kit's window. */
-export function SettingsDialog(props: {
-  tab: KitTab;
-  onTab: (tab: KitTab) => void;
-  onClose: () => void;
-  onSaved: (r: SettingsSaved) => void;
-}) {
+ *  Save. They're a tab of the add-on kit's window, beside What's new and
+ *  About (settings-main.tsx); the Stepwise window hears of a save from
+ *  Python ("settingsSaved"). */
+export function SettingsPanel(props: { onClose: () => void }) {
   const [loaded, setLoaded] = useState<Settings | null>(null);
   const [v, setV] = useState<SettingsValues | null>(null);
   const [limitText, setLimitText] = useState("");
@@ -51,6 +45,7 @@ export function SettingsDialog(props: {
   const [matches, setMatches] = useState<(string[] | null)[]>([]);
   const [problems, setProblems] = useState<Record<string, string>>({});
   const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
 
   useEffect(() => {
     call<{ settings: Settings }>("settings").then((r) => {
@@ -85,25 +80,17 @@ export function SettingsDialog(props: {
     );
   }, [loaded, current, pinned]);
 
-  if (!loaded || !v) {
-    return (
-      <AddonDialog
-        call={kitCall}
-        tab={props.tab}
-        onTab={props.onTab}
-        onClose={props.onClose}
-        settings={<div className="skeleton" style={{ height: 320, borderRadius: 12 }} />}
-      />
-    );
-  }
+  if (!loaded || !v) return <div className="skeleton" style={{ height: 320, marginTop: 28, borderRadius: 12 }} />;
 
   const set = <K extends keyof SettingsValues>(key: K, value: SettingsValues[K]) => {
     setV({ ...v, [key]: value });
     setProblems(({ [key]: _gone, ...rest }) => rest);
+    setSaved(false);
   };
   const setColor = (key: keyof StatusColors, value: string) => {
     setV({ ...v, colors: { ...v.colors, [key]: value } });
     setProblems(({ [`colors.${key}`]: _gone, ...rest }) => rest);
+    setSaved(false);
   };
   const setRoot = (i: number, value: string) =>
     set(
@@ -115,13 +102,17 @@ export function SettingsDialog(props: {
     if (!current) return;
     setSaving(true);
     try {
-      const r = await call<SettingsSaved & { problems?: Record<string, string> }>("save_settings", {
+      const r = await call<{ settings: Settings; problems?: Record<string, string> }>("save_settings", {
         settings: { ...current, pinned: pinned.map((p) => p.tag) },
       });
       if (r.problems) setProblems(r.problems);
       else {
-        props.onSaved(r);
-        props.onClose();
+        // What's saved is the new starting point (Python cleaned it up).
+        setLoaded(r.settings);
+        setV(pick(r.settings));
+        setLimitText(String(r.settings.cardLimit));
+        setPinned(r.settings.pinned);
+        setSaved(true);
       }
     } finally {
       setSaving(false);
@@ -132,12 +123,7 @@ export function SettingsDialog(props: {
   const d = loaded.defaults;
 
   return (
-    <AddonDialog
-      call={kitCall}
-      tab={props.tab}
-      onTab={props.onTab}
-      onClose={props.onClose}
-      settings={
+    <>
       <div className="settings">
         <Section title="Daily plan">
           <Row
@@ -273,31 +259,20 @@ export function SettingsDialog(props: {
           ))}
         </Section>
       </div>
-      }
-      settingsFooter={
-      <div className="modal-actions settings-actions">
-        <button
-          type="button"
-          className="btn ghost"
-          title="Put every setting back to how the add-on ships (pins stay)"
-          onClick={() => {
-            setV(pick(d));
-            setLimitText(String(d.cardLimit));
-            setProblems({});
-          }}
-        >
-          Restore defaults
-        </button>
-        <span className="spacer" />
-        <button type="button" className="btn" onClick={props.onClose}>
-          Cancel
-        </button>
-        <button type="button" className="btn primary" disabled={!dirty || !limitOk || !colorsOk || saving} onClick={save}>
-          Save
-        </button>
-      </div>
-      }
-    />
+      <SettingsFoot
+        onRestore={() => {
+          setV(pick(d));
+          setLimitText(String(d.cardLimit));
+          setProblems({});
+          setSaved(false);
+        }}
+        restoreTitle="Put every setting back to how the add-on ships (pins stay)"
+        saved={saved && !dirty}
+        onClose={props.onClose}
+        onSave={save}
+        saveDisabled={!dirty || !limitOk || !colorsOk || saving}
+      />
+    </>
   );
 }
 

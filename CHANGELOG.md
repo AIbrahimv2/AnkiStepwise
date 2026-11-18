@@ -14,18 +14,21 @@ All notable changes to this project are documented here. The format is based on
   what was pressed. Quick presses build a short trail (`1 0 j`), a key pressed
   again shows with a count (`j ×5`), and a number typed before a move stays
   until it's used. As in Skim.
-- **What's new and About open in a window of their own**, wider and easier
-  to read: each version's changes sit beside its number, and the other
-  add-ons are laid out as cards. Settings stay in Stepwise, with What's new
-  and About at the top.
+- **Settings, What's new and About share one window**, a tab each, instead
+  of a dialog over the queue: wider and easier to read, with each version's
+  changes beside its number and the other add-ons laid out as cards. Save
+  keeps the window open and says Saved; the queue picks up the change at
+  once.
 - **The signature at the end of About signs itself**, stroke by stroke, as
   if written by hand when you scroll to it.
 - Add-on emoji stand on their own now, without a box around them.
 - About ends with links to AIbrahimv2's LinkedIn and Instagram, under the
-  signature.
+  signature, and the signature opens AIbrahimv2's website.
 - **A colour picker for the tag colours** in Settings: pick any shade from
   a colour square and a hue slider, with Colorful Tags' colours a click
   away. You can still type a hex code.
+- **⌘, opens Stepwise's settings** on a Mac while its window is in front,
+  instead of Anki's Preferences. Anywhere else it still opens Anki's.
 
 ### Fixed
 

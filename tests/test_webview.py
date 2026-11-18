@@ -317,27 +317,79 @@ assert wait_for("!document.querySelector('.overlay')"), "Esc closes it"
 pump(20)  # time for Anki's own Esc handler (pycmd "close") to arrive, if it fired
 assert d.isVisible(), "and only it: Anki's own Esc would close the window"
 
-# Settings are in the add-on kit's dialog, with What's new and About a
-# click away in the kit's own window; Esc closes just the dialog there too.
+# Settings are a tab of the add-on kit's window, beside What's new and
+# About, drawn by Stepwise's own panel (settings_page.py, web/settings.js).
 import importlib  # noqa: E402
 
 kit_page = importlib.import_module(ui.__package__ + ".kit.page")
-opened = []
-kit_page.open_page = lambda addon_id=None, tab="news": opened.append((addon_id, tab))
-d.push({"type": "settings"})
-assert wait_for("document.querySelector('.kit-title h2') && document.querySelector('.kit-title h2').textContent === 'Settings'"), "the Settings dialog"
-assert wait_for("document.querySelector('.kit-tagline') && document.querySelector('.kit-tagline').textContent.startsWith('Stepwise')"), "the kit knows it's Stepwise"
-assert js("[...document.querySelectorAll('.kit-head-links button')].map(b => b.textContent.trim()).join()") == "What's new,About"
-js("[...document.querySelectorAll('.kit-head-links button')].find(b => b.textContent.trim() === 'About').click()")
+mw.pm.profile = {}  # where the kit's window keeps its size
+if not hasattr(mw, "progress"):  # its web view's cleanup, on close
+    mw.progress = types.SimpleNamespace(single_shot=lambda ms, fn, *a, **k: fn())
+mw.mediaServer.clear_page_html = lambda pid: PAGES.pop(str(pid), None)
+ui.open_settings()
+kw = kit_page._window
+assert kw is not None and kw.isVisible(), "Settings open the kit's window"
+
+
+def kjs(expr, timeout=8.0):
+    done = []
+    kw.web.evalWithCallback(expr, lambda r: done.append(r))
+    t = time.time()
+    while not done and time.time() - t < timeout:
+        app.processEvents()
+        time.sleep(0.02)
+    return done[0] if done else "<timeout>"
+
+
+def kwait(expr, timeout=20.0):
+    t = time.time()
+    while time.time() - t < timeout:
+        pump(5)
+        v = kjs(expr, 2)
+        if v not in (None, False, 0, "<timeout>"):
+            return v
+        time.sleep(0.2)
+    return None
+
+
+sections = kwait("[...document.querySelectorAll('.kit-hosted .set-section h3')].map(h => h.textContent).join() || null")
+assert sections == "Daily plan,Tag tree,Anki,Colours", f"Stepwise's own Settings, in the kit's window: {sections}"
+assert kjs("[...document.querySelectorAll('.kit-nav [role=tab]')].map(b => b.textContent.trim() + (b.getAttribute('aria-selected') === 'true' ? '*' : '')).join()") \
+    == "What's new,About,Settings*", "as a tab beside What's new and About"
+matches = kwait("(document.querySelector('.kit-hosted .root-matches') || {}).textContent || null")
+assert matches and matches.startswith("Matches"), f"patterns preview through the panel's bridge: {matches}"
+width = kjs("getComputedStyle(document.querySelector('.kit-hosted input[aria-label=\"Daily limit\"]')).width")
+assert width == "84px", f"Stepwise's own styles, not the schema rows' ({width})"
+assert kjs("document.querySelector('.kit-foot .btn.primary').disabled") is True, "nothing to save yet"
+# Type a new daily limit and save it: the config changes, the panel says
+# Saved, and the Stepwise window hears of it.
+ui._dialog = d  # the Stepwise window settings_page.py tells
+d_pushed = []
+real_push = d.push
+d.push = lambda e: (d_pushed.append(e), real_push(e))
+kjs("""(() => {
+  const el = document.querySelector('.kit-hosted input[aria-label="Daily limit"]');
+  Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value').set.call(el, '140');
+  el.dispatchEvent(new Event('input', { bubbles: true }));
+})()""")
+assert kwait("!document.querySelector('.kit-foot .btn.primary').disabled"), "a change to save"
+kjs("document.querySelector('.kit-foot .btn.primary').click()")
+assert kwait("document.querySelector('.kit-foot .kit-status.ok') && document.querySelector('.kit-foot .kit-status.ok').textContent.trim() === 'Saved'"), "Saved"
+assert mw.addonManager.cfg["card_limit"] == 140, mw.addonManager.cfg["card_limit"]
+assert [e["settings"]["cardLimit"] for e in d_pushed if e["type"] == "settingsSaved"] == [140], d_pushed
+d.push = real_push
+# What's new is a click away, in the same window.
+kjs("[...document.querySelectorAll('.kit-nav [role=tab]')].find(b => b.textContent.trim() === \"What's new\").click()")
+assert kwait("!!document.querySelector('.kit-releases, .kit-empty')"), "What's new, in place"
+kjs("[...document.querySelectorAll('.kit-nav [role=tab]')].find(b => b.textContent.trim() === 'Settings').click()")
+assert kwait("!!document.querySelector('.kit-hosted .set-section')"), "and back to Settings"
+kjs("[...document.querySelectorAll('.kit-foot .btn')].find(b => b.textContent.trim() === 'Close').click()")
 deadline = time.time() + 5
-while not opened and time.time() < deadline:
+while kit_page._window is not None and time.time() < deadline:
     pump(5)
-assert opened == [("stepwise", "about")], opened
-assert js("!!document.querySelector('.kit-title')"), "and Settings stays open"
-js("document.body.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true, cancelable: true }))")
-assert wait_for("!document.querySelector('.overlay')"), "Esc closes Settings"
-pump(20)
-assert d.isVisible(), "and keeps the window"
+assert kit_page._window is None, "Close closes the window"
+mw.addonManager.cfg["card_limit"] = 150
+assert d.isVisible(), "and leaves Stepwise's open"
 shift("H")
 actions.unqueue(actions.load_state().queued())
 d.push({"type": "sync"})

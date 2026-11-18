@@ -1,11 +1,9 @@
-/* The Settings dialog over an add-on's own page (AddonDialog.tsx), shared by
-   AIbrahimv2's Anki add-ons through anki-addon-kit. What's new and About are
-   in the kit's own window (standalone/page.css). Don't edit a vendored copy
-   (web/src/kit/ in an add-on): change it in the kit and run its sync.py. */
+/* What add-on pages and the kit's own window share about an add-on: its
+   emoji, its version and tagline, and the dot for something new to see.
+   Settings, What's new and About are in the kit's window
+   (standalone/page.css). Don't edit a vendored copy (web/src/kit/ in an
+   add-on): change it in the kit and run its sync.py. */
 
-/* --- header ------------------------------------------------------------------ */
-
-.kit-head { display: flex; align-items: center; gap: 12px; }
 /* An add-on's emoji, on its own: no box around it. It keeps a fixed width so
    names beside it line up from one add-on to the next. */
 .kit-tile {
@@ -17,12 +15,8 @@
   line-height: 1;
 }
 .kit-tile.sm { width: 24px; font-size: 21px; }
-.kit-title { flex: 1; min-width: 0; }
-.kit-title h2 { display: flex; align-items: baseline; gap: 8px; margin: 0; font-size: 16px; font-weight: 650; letter-spacing: -0.01em; }
 .kit-version { font-size: 12px; font-weight: 550; color: var(--text-3); font-variant-numeric: tabular-nums; letter-spacing: 0; }
 .kit-tagline { margin-top: 1px; font-size: 12.5px; color: var(--text-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.kit-head-links { display: flex; gap: 2px; flex: none; }
-.kit-head-links .kit-dot { margin-left: 2px; }
 
 /* A dot for something new to see: on a tab, a menu entry or an add-on. */
 .kit-dot {
@@ -39,20 +33,3 @@
 /* On an icon button (an add-on's ⋯ menu), the dot sits in its corner. */
 #root .icon-btn:has(> .kit-dot) { position: relative; }
 .icon-btn > .kit-dot { position: absolute; top: 4px; right: 4px; width: 6px; height: 6px; margin: 0; }
-
-/* --- body and footer ------------------------------------------------------------ */
-
-.kit-body { margin-top: 18px; }
-.kit-body > .settings:first-child { margin-top: 0; }
-
-/* The Settings buttons stay in view at the bottom of the dialog. */
-.kit-foot {
-  position: sticky;
-  bottom: -20px;
-  z-index: 2;
-  margin: 20px -20px -20px;
-  padding: 14px 20px 20px;
-  border-top: 1px solid var(--line);
-  background: var(--surface);
-}
-.kit-foot .modal-actions { margin-top: 0; }

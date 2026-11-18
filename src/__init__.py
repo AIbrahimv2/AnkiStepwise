@@ -15,7 +15,7 @@ from __future__ import annotations
 from aqt import gui_hooks, mw
 from aqt.qt import QAction, QKeySequence, QTimer, qconnect
 
-from . import actions, browser_menu, history, kit, ui, widget
+from . import actions, browser_menu, history, kit, settings_page, ui, widget
 from .config import ADDON, get_config
 
 
@@ -66,10 +66,10 @@ gui_hooks.deck_browser_will_render_content.append(widget.on_deck_render)
 gui_hooks.webview_did_receive_js_message.append(widget.on_js_message)
 gui_hooks.browser_sidebar_will_show_context_menu.append(browser_menu.on_sidebar_menu)
 mw.addonManager.setConfigUpdatedAction(ADDON, _on_config_saved)
-# Anki's Config button opens the in-window Settings instead of raw JSON.
+# Anki's Config button opens Settings (in the kit's window) instead of raw JSON.
 mw.addonManager.setConfigAction(ADDON, ui.open_settings)
 # Serve the built web UI (src/web/) to the Stepwise window.
 mw.addonManager.setWebExports(ADDON, r"web/.*\.(js|css|svg|png|woff2?)")
-# The add-on kit shared with AIbrahimv2's other add-ons (src/kit/): What's
-# new and About beside Settings, and one notice after updates.
-kit.register("stepwise", open_settings=ui.open_settings)
+# The add-on kit shared with AIbrahimv2's other add-ons (src/kit/): one window
+# for Settings, What's new and About, and one notice after updates.
+kit.register("stepwise", open_settings=ui.open_settings, settings_page=settings_page.PAGE)

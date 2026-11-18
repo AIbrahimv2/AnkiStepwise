@@ -61,10 +61,6 @@ class Bridge:
     def __init__(self, host):
         self.host = host
         self._toasts: list[str] | None = None
-        # Anki's Config button can ask for Settings before the page has
-        # loaded; the page opens them when it boots.
-        self.booted = False
-        self.settings_on_boot = False
 
     # --- plumbing ----------------------------------------------------------
 
@@ -154,10 +150,7 @@ class Bridge:
         self.host.request_index()
         view = self.view()
         cfg = view.cfg
-        self.booted = True
-        open_settings, self.settings_on_boot = self.settings_on_boot, False
         return {
-            "openSettings": open_settings,
             "tree": self._tree_memory(view),
             "ready": view.index is not None,
             "side": view.side(),
@@ -401,7 +394,7 @@ class Bridge:
         return {"matches": self.view().root_matches(patterns)}
 
     def cmd_save_settings(self, msg: dict) -> dict:
-        """Check and save the Settings dialog, then update whatever depends
+        """Check and save Settings (settings_page.py), then update whatever depends
         on what changed. Problems come back by field and nothing is saved."""
         old = get_config()
         changes, problems = check_settings(msg.get("settings") or {}, old)

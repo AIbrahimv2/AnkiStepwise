@@ -14,7 +14,7 @@ from aqt.qt import QDialog, QTimer, QVBoxLayout, qconnect
 from aqt.utils import restoreGeom, saveGeom
 from aqt.webview import AnkiWebView
 
-from . import actions
+from . import actions, kit
 from .bridge import Bridge
 from .config import ADDON
 from .counts import TagIndex
@@ -84,13 +84,6 @@ class QueueDialog(QDialog):
 
     def _on_building(self, on: bool) -> None:
         self.push({"type": "syncing", "on": on})
-
-    def open_settings(self) -> None:
-        """Show the Settings dialog in the page (now, or as soon as it loads)."""
-        if self.bridge.booted:
-            self.push({"type": "settings"})
-        else:
-            self.bridge.settings_on_boot = True
 
     def push(self, event: dict) -> None:
         if self._loaded:
@@ -169,12 +162,16 @@ def open_dialog() -> None:
     _dialog.activateWindow()
 
 
+def window() -> QueueDialog | None:
+    """The Stepwise window, if it's been made (shown or not)."""
+    return _dialog
+
+
 def open_settings() -> None:
-    """Anki's Config button for the add-on: open the window on Settings
-    rather than Anki's JSON editor."""
-    open_dialog()
-    if _dialog is not None:
-        _dialog.open_settings()
+    """Anki's Config button, ⋯ → Settings and ⌘, (from the Stepwise
+    window): Settings, a tab of the add-on kit's window, rather than Anki's
+    JSON editor (settings_page.py)."""
+    kit.open_page("stepwise", "settings")
 
 
 def close_dialog() -> None:

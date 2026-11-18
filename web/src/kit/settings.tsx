@@ -4,7 +4,7 @@
 // Don't edit a vendored copy (web/src/kit/ in an add-on): change it in the
 // kit and run its sync.py.
 
-import { X } from "lucide-react";
+import { Check, X } from "lucide-react";
 import { type KeyboardEvent, type ReactNode, useState } from "react";
 import { IconButton } from "./controls";
 
@@ -63,6 +63,55 @@ export function Choice<T extends string>(props: {
           {o.label}
         </button>
       ))}
+    </div>
+  );
+}
+
+// --- Save and Close ------------------------------------------------------------
+
+/** The buttons under Settings in the kit's window, kept in view at its
+ *  bottom: Restore defaults, then what happened (a message, or "Saved"
+ *  until you change something), Close and Save. */
+export function SettingsFoot(props: {
+  onRestore: () => void;
+  restoreDisabled?: boolean;
+  restoreTitle?: string;
+  /** A message to show (an action's result, say), over "Saved". */
+  message?: string | null;
+  saved?: boolean;
+  onClose: () => void;
+  onSave: () => void;
+  saveDisabled?: boolean;
+}) {
+  return (
+    <div className="kit-foot">
+      <div className="modal-actions settings-actions">
+        <button
+          type="button"
+          className="btn ghost"
+          disabled={props.restoreDisabled}
+          title={props.restoreTitle}
+          onClick={props.onRestore}
+        >
+          Restore defaults
+        </button>
+        <span className="spacer" />
+        {props.message ? (
+          <span className="kit-status kit-message">{props.message}</span>
+        ) : (
+          props.saved && (
+            <span className="kit-status ok">
+              <Check size={14} strokeWidth={2.5} /> Saved
+            </span>
+          )
+        )}
+        <button type="button" className="btn" onClick={props.onClose}>
+          Close
+        </button>
+        <button type="button" className="btn primary" disabled={props.saveDisabled} onClick={props.onSave}>
+          Save
+        </button>
+      </div>
     </div>
   );
 }

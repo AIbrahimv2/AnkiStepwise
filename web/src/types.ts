@@ -189,7 +189,7 @@ export interface Options {
 
 export type StatusColors = { queued: string; completed: string; later: string };
 
-/** What the Settings dialog edits. */
+/** What Settings (a tab of the kit's window) edits. */
 export interface SettingsValues {
   cardLimit: number;
   countMode: CountMode;
@@ -215,6 +215,7 @@ export interface Settings extends SettingsValues {
   colorSyncAvailable: boolean;
 }
 
+/** After Settings saved (pushed to the window as "settingsSaved"). */
 export interface SettingsSaved {
   settings: Settings;
   options: Options;
@@ -227,8 +228,6 @@ export interface SettingsSaved {
 }
 
 export interface Boot {
-  /** Anki's Config button asked for Settings before the page loaded. */
-  openSettings?: boolean;
   /** Folders open last time, and step sections you closed. */
   tree?: { open: string[]; closed: string[] };
   ready: boolean;
@@ -274,7 +273,8 @@ export interface ImportGroup {
 export type PushEvent =
   | { type: "index" }
   | { type: "sync" }
-  | { type: "settings" }
+  /** Settings were saved, in the kit's window. */
+  | ({ type: "settingsSaved" } & SettingsSaved)
   | { type: "toast"; message: string }
   /** The index is being rebuilt (true) or done (false): "Syncing". */
   | { type: "syncing"; on: boolean };

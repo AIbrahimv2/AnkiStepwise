@@ -2,6 +2,7 @@ import { createRoot } from "react-dom/client";
 import { App } from "./App";
 import { installKeyCast } from "./keycast";
 import "./kit/kit.css";
+import "./steps.css";
 import "./styles.css";
 
 installKeyCast();

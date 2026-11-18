@@ -2,15 +2,17 @@
 # Copyright (C) 2026 AIbrahimv2
 """The kit's own window, and the notice after an update.
 
-The window shows every add-on's What's new and About, and Settings for an
-add-on whose settings the kit describes (AnkiGlass). Add-ons with a page of
-their own keep their Settings there, in a dialog. Its page is built from
+The window shows every add-on's Settings, What's new and About, as tabs.
+Settings are drawn from a schema the kit describes (AnkiGlass), or by the
+add-on's own panel (Stepwise, Skim: register's settings_page), whose
+script and stylesheet come into the page with it. Its page is built from
 anki-addon-kit's standalone/ into web/page.js and web/page.css, and
 inlined, so the add-on needn't export any files.
 
 After Anki starts, the leading copy of the kit (see family.py) shows one
 notice for every add-on updated since you last looked: "Stepwise 1.2.0 and
-Skim 1.1.0 were updated. See what's new". It shows once per version.
+Skim 1.1.0 were updated. See what's new". It shows once per version. It
+also points ⌘, at the settings of the add-on whose window is in front.
 
 Anki is imported inside functions, so the rest of the kit runs outside it.
 Don't edit a vendored copy (src/kit/ in an add-on): change it in
@@ -48,12 +50,49 @@ def install_hooks() -> None:
 
 
 def _on_profile_open() -> None:
+    if not family.is_lead():
+        return
+    route_preferences()
     reg = family.registry()
-    if not family.is_lead() or reg.get("noticed"):
+    if reg.get("noticed"):
         return
     reg["noticed"] = True
     mw = family._mw()
     mw.progress.single_shot(NOTICE_DELAY_MS, _show_notice, False)
+
+
+# --- ⌘, ---------------------------------------------------------------------------
+
+
+def route_preferences() -> None:
+    """Anki's Preferences (⌘, on a Mac, where the menu bar is shared by every
+    window) opens the settings of the add-on whose window is in front, and
+    Anki's own anywhere else (family.preferences). The leading copy does it
+    once; if another add-on has rewired Preferences, it's left alone."""
+    reg = family.registry()
+    if reg.get("prefs_routed"):
+        return
+    mw = family._mw()
+    try:
+        from aqt.qt import QApplication, qconnect
+
+        action = mw.form.actionPreferences
+        action.triggered.disconnect(mw.onPrefs)
+    except Exception:
+        return
+
+    def on_prefs(*_args) -> None:
+        try:
+            if family.preferences(QApplication.activeWindow()):
+                return
+        except Exception:
+            import traceback
+
+            traceback.print_exc()
+        mw.onPrefs()
+
+    qconnect(action.triggered, on_prefs)
+    reg["prefs_routed"] = True
 
 
 # --- the window ------------------------------------------------------------------
@@ -105,21 +144,41 @@ def _make_window(parent):
             self.web = AnkiWebView(self, title="addon kit")
             self.web.set_bridge_command(self._on_bridge, self)
             lay.addWidget(self.web)
+            family.glass(self)  # AnkiGlass's, if it's there
+            self._loaded = False
+            # The add-on whose own Settings panel the page carries, if any.
+            self._hosted: str | None = None
 
         def show_addon(self, addon_id: str, tab: str) -> None:
+            """Show an add-on on a tab: in the page already loaded, or in a
+            new one when the add-on's own Settings panel has to come in."""
             e = family.entry(addon_id) or {}
             self.setWindowTitle(e.get("name", "Add-ons"))
-            boot = json.dumps({"id": addon_id, "tab": tab})
-            # The bundle is inlined; a literal "</script" in it would end the tag.
-            js = _asset("page.js").replace("</script", "<\\/script")
-            self.web.stdHtml(
-                f'<div id="root"></div><script>window.KIT_PAGE = {boot};</script><script>{js}</script>',
-                head=f"<style>{_asset('page.css')}</style>",
-                context=self,
-            )
+            self.setProperty(family.WINDOW_PROPERTY, addon_id)  # for ⌘,
+            assets = family.settings_assets(addon_id)
+            if self._loaded and (assets is None or self._hosted == addon_id):
+                show = json.dumps({"id": addon_id, "tab": tab})
+                self.web.eval(f"window.kitPage && window.kitPage.show({show});")
+            else:
+                self._load(addon_id, tab, assets)
             self.show()
             self.raise_()
             self.activateWindow()
+
+        def _load(self, addon_id: str, tab: str, assets: tuple[str, str] | None) -> None:
+            self._hosted = addon_id if assets else None
+            style, script = assets or ("", "")
+            boot = json.dumps({"id": addon_id, "tab": tab, "hosted": self._hosted})
+            # The bundles are inlined; a literal "</script" in one would end the tag.
+            js = _asset("page.js").replace("</script", "<\\/script")
+            script = script.replace("</script", "<\\/script")
+            panel = f"<script>{script}</script>" if script else ""
+            self.web.stdHtml(
+                f'<div id="root"></div><script>window.KIT_PAGE = {boot};</script><script>{js}</script>{panel}',
+                head=f"<style>{_asset('page.css')}</style>" + (f"<style>{style}</style>" if style else ""),
+                context=self,
+            )
+            self._loaded = True
 
         def _on_bridge(self, raw: str):
             if not isinstance(raw, str) or not raw.startswith("{"):
@@ -128,8 +187,19 @@ def _make_window(parent):
                 msg = json.loads(raw)
             except ValueError:
                 return None
+            if msg.get("cmd") not in (None, "kit"):
+                # The add-on's own Settings panel, talking to its add-on.
+                return family.settings_command(self._hosted, msg)
             if msg.get("op") == "close":
                 self.close()
+                return {}
+            if msg.get("op") == "page":
+                # About's list switches add-on here, once this reply is back
+                # (the page may be replaced, to bring in its Settings).
+                from aqt.qt import QTimer
+
+                addon_id, tab = str(msg.get("id") or ""), str(msg.get("tab") or "news")
+                QTimer.singleShot(0, lambda: self.show_addon(addon_id, tab))
                 return {}
             if msg.get("op") == "open_settings":
                 reply = family.command(msg)

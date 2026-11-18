@@ -36,18 +36,26 @@ export interface KitAddon {
   version: string | null;
   /** Updated since you last opened its What's new. */
   unseen: boolean;
-  /** Where its settings live: in its own window ("window", opened by the
-   *  "open_settings" command), in the kit's page ("page", described by a
-   *  schema), or nowhere (null). */
-  settings: "window" | "page" | null;
+  /** Where its settings live: a tab of the kit's window, drawn from a
+   *  schema ("page") or by the add-on's own panel ("hosted"); in its own
+   *  window ("window", an older copy of the add-on, opened by the
+   *  "open_settings" command); or nowhere (null). */
+  settings: "window" | "page" | "hosted" | null;
   changes: KitRelease[];
 }
 
 export interface KitAbout {
   self: string;
-  /** `name` is the GitHub handle; `fullName`, if given, signs About, and
-   *  `socials` are linked under it (LinkedIn and Instagram get their icons). */
-  author: { name: string; github: string; fullName?: string; socials?: { name: string; url: string }[] };
+  /** `name` is the GitHub handle; `fullName`, if given, signs About; the
+   *  signature opens `website`; and `socials` are linked under it (LinkedIn
+   *  and Instagram get their icons). */
+  author: {
+    name: string;
+    github: string;
+    fullName?: string;
+    website?: string;
+    socials?: { name: string; url: string }[];
+  };
   addons: KitAddon[];
 }
 
@@ -56,3 +64,26 @@ export type KitTab = "settings" | "news" | "about";
 /** Sends one of the kit's commands through the add-on's own bridge, as
  *  `{cmd: "kit", op, ...args}`. */
 export type KitCall = <T = Record<string, unknown>>(op: string, args?: Record<string, unknown>) => Promise<T>;
+
+/** What an add-on's own Settings panel gets from the kit's window. */
+export interface KitSettingsHost {
+  /** Closes the window. */
+  close(): void;
+}
+
+/** An add-on's Settings panel, as its script hands it to the kit's window
+ *  (provideSettings, in hosted.tsx). */
+export interface KitSettingsPanel {
+  id: string;
+  /** Draws the panel in `el`; returns how to take it away. */
+  mount(el: HTMLElement, host: KitSettingsHost): () => void;
+}
+
+declare global {
+  interface Window {
+    kitSettings?: KitSettingsPanel;
+  }
+}
+
+/** Sent on window when a panel has been provided. */
+export const KIT_SETTINGS_EVENT = "kit:settings";

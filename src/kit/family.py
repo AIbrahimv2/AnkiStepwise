@@ -34,8 +34,14 @@ from . import changelog
 # protocols then keep apart), and KIT_VERSION whenever the kit changes (the
 # newest copy leads).
 PROTOCOL = 1
-KIT_VERSION = 6
+KIT_VERSION = 8
 REGISTRY = f"aibrahimv2_addons_v{PROTOCOL}"
+# Set on a window whose class doesn't say which add-on it's for (the kit's
+# window, which any add-on's copy may have opened): that add-on's id.
+WINDOW_PROPERTY = "aibrahimv2_addon"
+# On the root of a page whose window has AnkiGlass's glass behind it (see
+# glass()): the theme (web/glass.css) turns its background see-through.
+GLASS_CLASS = "kit-glass"
 
 HERE = os.path.dirname(os.path.abspath(__file__))
 ADDON_PATH = os.path.dirname(HERE)  # addons21/<folder>, links not followed
@@ -81,23 +87,38 @@ def register(
     schema: list[dict] | Callable[[], list[dict]] | None = None,
     note: str | None = None,
     actions: dict[str, Callable[[], str | None]] | None = None,
+    settings_page: dict | None = None,
+    glass_window: Callable[[Any], bool] | None = None,
 ) -> None:
     """Call once from the add-on's __init__.py. `addon_id` is its id in
-    catalog.json. Give `open_settings` if it has settings in its own window,
-    or `schema` for settings the kit's page shows (see settings.py); `note`
-    is shown under them ("Changes apply after Anki restarts"). `actions`
-    are the functions behind the schema's action buttons, by key.
+    catalog.json. An add-on's Settings are a tab of the kit's window, either:
+
+    - `schema`, rows the kit draws (see settings.py), with `note` under them
+      ("Changes apply after Anki restarts") and `actions`, the functions
+      behind the schema's action buttons, by key; or
+    - `settings_page`, a panel the add-on draws itself:
+      {"script": "web/settings.js", "style": "web/settings.css",
+       "bridge": handle}. The script and stylesheet (paths in the add-on's
+      folder) are put in the kit's window, where the script calls the kit's
+      provideSettings() (web/hosted.tsx). `bridge(msg)` answers the panel's
+      own commands ({"cmd": ..., ...}, as its pycmd sends them).
+
+    `open_settings` opens them from older copies of the kit, whose window
+    shows a Settings button for it (or settings in the add-on's own window).
+
+    `glass_window` is AnkiGlass's: it puts glass behind a window that asks
+    for it with glass().
 
     Never raises: a problem in the kit mustn't stop the add-on loading."""
     try:
-        _register(addon_id, open_settings, schema, note, actions)
+        _register(addon_id, open_settings, schema, note, actions, settings_page, glass_window)
     except Exception:
         import traceback
 
         traceback.print_exc()
 
 
-def _register(addon_id, open_settings, schema, note, actions) -> None:
+def _register(addon_id, open_settings, schema, note, actions, settings_page=None, glass_window=None) -> None:
     from . import page  # Anki-only parts, imported lazily
 
     _self["id"] = addon_id
@@ -112,6 +133,8 @@ def _register(addon_id, open_settings, schema, note, actions) -> None:
         "note": note,
         "actions": actions or {},
         "open_page": page.open_page,
+        "settings_page": settings_page,
+        "glass_window": glass_window,
     }
     own = _own_catalog()
     if own:
@@ -292,6 +315,8 @@ def _addons(with_changes: bool = True) -> list[dict]:
         settings = None
         if m and m.get("schema"):
             settings = "page"
+        elif m and m.get("settings_page"):
+            settings = "hosted"
         elif m and m.get("open_settings"):
             settings = "window"
         out.append({
@@ -342,6 +367,131 @@ def updated_unnoticed() -> list[dict]:
 def mark_notified(addons: list[dict]) -> None:
     for a in addons:
         set_kit_state(a["dir"], notified=a["version"])
+
+
+# --- ⌘, (Anki's Preferences) ------------------------------------------------------------
+
+
+def _tag(window) -> str | None:
+    try:
+        value = window.property(WINDOW_PROPERTY)
+    except Exception:
+        return None
+    return value if isinstance(value, str) and value else None
+
+
+def window_owner(window) -> str | None:
+    """The add-on whose window `window` is, or sits over (a message box over
+    Skim's window is Skim's): tagged with WINDOW_PROPERTY, or of a class from
+    the add-on's own package. None for Anki's and other add-ons' windows."""
+    members = registry()["members"]
+    by_dir = {m.get("dir"): m.get("id") for m in members.values() if isinstance(m, dict)}
+    for _ in range(50):  # a parent chain is short; never loop on a bad one
+        if window is None:
+            return None
+        tag = _tag(window)
+        if tag in members:
+            return tag
+        module = type(window).__module__.split(".")
+        # A kit's window is any add-on's; an older copy's has no tag to say whose.
+        if module[0] in by_dir and module[1:2] != ["kit"]:
+            return by_dir[module[0]]
+        try:
+            window = window.parentWidget()
+        except Exception:
+            return None
+    return None
+
+
+def preferences(window) -> bool:
+    """Anki's Preferences (⌘, on a Mac) with `window` in front: open the
+    settings of the add-on it belongs to, the way its Settings button does.
+    False when there's none to open, for Anki's own Preferences."""
+    owner = window_owner(window)
+    m = registry()["members"].get(owner) if owner else None
+    if not isinstance(m, dict):
+        return False
+    if m.get("schema") or m.get("settings_page"):
+        if _tag(window) == owner and hasattr(window, "show_addon"):
+            window.show_addon(owner, "settings")  # the kit's window: switch its tab
+        elif m.get("open_page"):
+            m["open_page"](owner, "settings")
+        else:
+            return False
+        return True
+    if m.get("open_settings"):
+        m["open_settings"]()
+        return True
+    return False
+
+
+# --- an add-on's own Settings panel, in the kit's window ----------------------------------
+
+
+def _settings_page(addon_id: str | None) -> tuple[dict, dict] | None:
+    m = registry()["members"].get(addon_id or "")
+    page = m.get("settings_page") if isinstance(m, dict) else None
+    return (m, page) if isinstance(page, dict) and page.get("script") else None
+
+
+def settings_assets(addon_id: str | None) -> tuple[str, str] | None:
+    """(stylesheet, script) of the add-on's Settings panel, read from its
+    folder, or None when it has none (or they can't be read)."""
+    found = _settings_page(addon_id)
+    if not found:
+        return None
+    m, page = found
+
+    def read(rel: str | None) -> str:
+        if not rel:
+            return ""
+        with open(os.path.join(m["path"], rel), encoding="utf-8") as f:
+            return f.read()
+
+    try:
+        return read(page.get("style")), read(page["script"])
+    except OSError:
+        return None
+
+
+def settings_command(addon_id: str | None, msg: dict) -> dict:
+    """One of the panel's own commands, for the add-on to answer. Never
+    raises: a problem comes back as {"error": ...}."""
+    found = _settings_page(addon_id)
+    handle = found[1].get("bridge") if found else None
+    if not callable(handle):
+        return {"error": "Its settings aren't available."}
+    try:
+        reply = handle(msg)
+    except Exception as exc:
+        import traceback
+
+        traceback.print_exc()
+        return {"error": str(exc) or type(exc).__name__}
+    return reply if isinstance(reply, dict) else {}
+
+
+# --- AnkiGlass's glass, behind an add-on's window ------------------------------------
+
+
+def glass(window) -> bool:
+    """Glass behind `window`, one of the add-on's own top-level windows, when
+    AnkiGlass is installed (on a Mac) and its "Glass on add-on windows" is on.
+    Call it while making the window, after its web view and before the
+    window first shows or its page loads: only a window not yet shown can be
+    made see-through, and AnkiGlass marks the page as it loads. Its page's
+    root then gets GLASS_CLASS, which the kit's theme turns see-through
+    (web/glass.css). True if AnkiGlass took the window. Never raises."""
+    try:
+        for m in registry()["members"].values():
+            put_glass = m.get("glass_window") if isinstance(m, dict) else None
+            if callable(put_glass):
+                return bool(put_glass(window))
+    except Exception:
+        import traceback
+
+        traceback.print_exc()
+    return False
 
 
 # --- AnkiWeb -------------------------------------------------------------------------

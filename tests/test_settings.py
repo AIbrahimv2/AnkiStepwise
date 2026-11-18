@@ -1,11 +1,11 @@
-"""The in-window Settings dialog's bridge: read, preview, validate, save and
-the side effects of each change."""
+"""Settings' bridge (a tab of the kit's window, settings_page.py): read,
+preview, validate, save and the side effects of each change."""
 import json
 
 from harness import *  # noqa: F401,F403
 from harness import FakeDeckBrowser, actions, load_colorful_tags_copy, mw
 
-from tq import ui
+from tq import settings_page, ui
 from tq.bridge import Bridge
 from aqt.qt import QAction, QKeySequence, QWidget
 
@@ -55,13 +55,8 @@ def check(cond, msg):
 
 
 # Anki's Config button opens these Settings, not the JSON editor.
-check(mw.addonManager.open_config is ui.open_settings, "Config button opens in-window Settings")
-
-# Asked for before the page loaded: boot opens them, once.
-bridge.settings_on_boot = True
-check(call("boot")["openSettings"] is True, "boot opens Settings when asked early")
-check(call("boot")["openSettings"] is False, "only once")
-check(bridge.booted, "booted")
+check(mw.addonManager.open_config is ui.open_settings, "Config button opens Settings")
+check("openSettings" not in call("boot"), "the window doesn't open Settings itself")
 
 s = call("settings")["settings"]
 check(s["cardLimit"] == 150 and s["countMode"] == "new" and s["resourceRoots"] == ["#AK_Step*"], s)
@@ -130,9 +125,28 @@ check(mw.addonManager.cfg["pinned_resources"] == ["#AK_Step1_v12::#Bootcamp"], "
 call("save_settings", settings={"shortcut": ""})
 check(mw.addonManager.cfg["shortcut"] == "" and actions.menu_action.shortcut().isEmpty(), "shortcut cleared")
 
-# A pushed request once booted.
-w = types.SimpleNamespace(bridge=bridge, pushed=[])
-ui.QueueDialog.open_settings(types.SimpleNamespace(bridge=bridge, push=lambda e: w.pushed.append(e)))
-check(w.pushed == [{"type": "settings"}], "open Settings pushes once the page is up")
+# The kit's window: its panel's commands, with no Stepwise window open.
+ui._dialog = None
+r = settings_page.handle({"cmd": "settings"})
+check(r["settings"]["shortcut"] == "" and "error" not in r, "panel reads Settings without the window")
+check(settings_page.handle({"cmd": "root_matches", "patterns": ["#AK_Step*"]})["matches"][0], "panel previews patterns")
+check("error" in settings_page.handle({"cmd": "queue", "tags": ["x"]}), "only Settings' commands")
+r = settings_page.handle({"cmd": "save_settings", "settings": {"cardLimit": 0}})
+check(r.get("problems", {}).get("cardLimit"), "problems come back")
+
+# ...and an open window hears a save, to update itself.
+w = types.SimpleNamespace(pushed=[], requests=0)
+w.push = w.pushed.append
+w.request_index = lambda: setattr(w, "requests", w.requests + 1)
+ui._dialog = w
+r = settings_page.handle({"cmd": "save_settings", "settings": {"cardLimit": 120}})
+check(r["settings"]["cardLimit"] == 120 and mw.addonManager.cfg["card_limit"] == 120, "saved from the panel")
+check([e["type"] for e in w.pushed] == ["settingsSaved"] and w.pushed[0]["settings"]["cardLimit"] == 120
+      and "toasts" not in w.pushed[0], w.pushed)
+settings_page.handle({"cmd": "save_settings", "settings": {"cardLimit": 120}})
+check(len(w.pushed) == 2, "a save with no change still says so")
+check(settings_page.PAGE["bridge"] is settings_page.handle and settings_page.PAGE["script"] == "web/settings.js",
+      "kit.register gets the panel")
+ui._dialog = None
 
 print(f"SETTINGS TESTS PASSED ({n} checks)")
