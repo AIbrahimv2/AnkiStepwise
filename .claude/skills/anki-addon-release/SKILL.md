@@ -192,6 +192,13 @@ no work on it as of 2026-11-17). When it ships, `release.py` can call it.
   just before a save shows the old version for that long. Check a save
   with `?cb=<anything>` on the listing URL, and tell the user a hard
   refresh shows it.
+- **No dark theme:** AnkiWeb's pages are always light (checked
+  2026-11-17: no theme switch in its code or HTML, white with the system
+  in dark mode). A dark listing is the visitor's browser darkening it (an
+  extension or forced dark mode), which the page can't see, so an image
+  can't follow it. (Untested: whether the description's HTML keeps
+  `<picture>`; AnkiWeb cleans it server-side, adding `rel` to links.)
+  raw.githubusercontent.com serves SVG as plain text.
 - **Clipboard:** the listing page copies its install code to the clipboard
   when it loads. Tell the user, so it doesn't surprise them.
 - **Versions:** each branch has a minimum and maximum Anki version, and the
