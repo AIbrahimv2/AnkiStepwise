@@ -322,7 +322,7 @@ python3 tools/screenshots.py      # writes docs/*.png
 | Exam Timeline | `screenshot.png`, `editor.png` | deck screen with the timeline; the editor (its dev server) |
 | Stepwise | `screenshot.png` | its window, from `tests/fixture/` via its dev server |
 | AnkiGlass | `screenshot.png`, `review.png` | deck list; a real AnKing card under review (760×690, so it shows whole) |
-| AnkiBare | `before.png`, `after.png` | the same window with and without its title bar |
+| AnkiBare | `screenshot.png` | the window with and without its title bar, side by side, labelled Before and After on the image |
 
 - **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
   dark mode, with AnkiGlass's CSS and glass on the main window, framed as a
@@ -340,6 +340,8 @@ python3 tools/screenshots.py      # writes docs/*.png
   openly licensed images (the card's credit says so) that show whole, with
   their credit, in the window; avoid clinical photos that are graphic or
   sensitive.
+- **Comparisons:** show them as one image, side by side (`Session.side_by_side`),
+  with their labels written on it, not as headings above separate images.
 - **New add-on:** write its `tools/screenshots.py` on `shots.Session`
   (`main_window`, `capture`, `frames`), copying the closest one above.
 - **Native Qt parts** with no page to render: ask for computer-use access to
