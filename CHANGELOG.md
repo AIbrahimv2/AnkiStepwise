@@ -11,6 +11,8 @@ All notable changes to this project are documented here. The format is based on
 - Checking a topic in the tree is instant. Its box, and its subtopics' and
   parents', change the moment you click instead of after a pause that grew
   with your Done list, and the queue's totals catch up faster too.
+- Taking a topic off Queue, Later or Done (x, dd or its remove button) is
+  instant too: the row goes as you press, so you can clear several in a row.
 
 ## [1.4.0] - 2026-11-17
 

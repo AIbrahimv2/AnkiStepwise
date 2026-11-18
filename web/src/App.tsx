@@ -105,6 +105,36 @@ function withQueueChange(nodes: Record<string, AnyNode>, n: TagNode, on: boolean
   return next;
 }
 
+type SideList = "queued" | "later" | "completed";
+
+/** The side panel without rows on their way off a list (Python hasn't
+ *  answered yet). Their tabs' counts drop with them; card totals wait for
+ *  the reply, which knows which cards other topics share. */
+function withoutRows(side: Side, leaving: { list: SideList; key: string }[]): Side {
+  if (!leaving.length) return side;
+  const out = (list: SideList) => new Set(leaving.filter((e) => e.list === list).map((e) => e.key));
+  const q = out("queued"), l = out("later"), d = out("completed");
+  const groups = <G extends { rows: { key: string }[]; count: number }>(gs: G[], gone: Set<string>) =>
+    gs
+      .map((g) => {
+        const rows = g.rows.filter((r) => !gone.has(r.key));
+        return rows.length === g.rows.length ? g : { ...g, rows, count: rows.length };
+      })
+      .filter((g) => g.rows.length);
+  const queued = side.queued.filter((r) => !q.has(r.key));
+  const completed = side.completed.filter((r) => !d.has(r.key));
+  return {
+    ...side,
+    queued,
+    toWatch: side.toWatch - (side.queued.length - queued.length),
+    queueGroups: groups(side.queueGroups, q),
+    later: side.later.filter((r) => !l.has(r.key)),
+    laterGroups: groups(side.laterGroups, l),
+    completed,
+    doneTotal: side.doneTotal - (side.completed.length - completed.length),
+  };
+}
+
 export function App() {
   const [ready, setReady] = useState(false);
   const [side, setSide] = useState<Side | null>(null);
@@ -225,9 +255,12 @@ export function App() {
     });
   }, []);
 
+  // Rows taken off Queue, Later or Done whose replies haven't come back:
+  // kept hidden from any reply that lands meanwhile (see removeFromList).
+  const leaving = useRef<{ list: SideList; key: string }[]>([]);
   const applyBundle = useCallback(
     (b: Bundle) => {
-      setSide(b.side);
+      setSide(withoutRows(b.side, leaving.current));
       setOptions(b.options);
       if (b.nodes) mergeNodes(b.nodes, true);
       if (b.summary !== undefined) setSummary(b.summary);
@@ -631,6 +664,26 @@ export function App() {
     [act, sync, warnIfOver, showPendingQueue],
   );
 
+  /** x, dd or a row's remove button in Queue, Later or Done: the row goes
+   *  at once (and the cursor to the next), and stays gone while Python
+   *  catches up, so removing several in a row doesn't make them blink back.
+   *  A queued topic showing in the tree is unchecked there at once too. */
+  const removeFromList = async (list: SideList, tag: string) => {
+    const entry = { list, key: tag.toLowerCase() };
+    leaving.current.push(entry);
+    setSide((s) => (s ? withoutRows(s, [entry]) : s));
+    const n = nodes[entry.key];
+    try {
+      if (list === "queued" && n && !isGroup(n) && n.status === "queued" && !n.inherited) await setQueued(n, false);
+      else await act(list === "queued" ? "unqueue" : list === "later" ? "unlater" : "clear", { tags: [tag] });
+    } catch {
+      // The error has its toast; bring the row back.
+      sync();
+    } finally {
+      leaving.current = leaving.current.filter((e) => e !== entry);
+    }
+  };
+
   const toggleQueue = useCallback(
     (n: TagNode) => {
       if (n.locked) {
@@ -936,9 +989,9 @@ export function App() {
             onComplete={complete}
             onFinishSession={finishSession}
             onUnwatch={(tag) => act("unwatch", { tags: [tag] })}
-            onUnqueue={(tag) => act("unqueue", { tags: [tag] })}
+            onUnqueue={(tag) => removeFromList("queued", tag)}
             onLater={(tag) => act("later", { tags: [tag] })}
-            onUnlater={(tag) => act("unlater", { tags: [tag] })}
+            onUnlater={(tag) => removeFromList("later", tag)}
             onQueue={async (tag) => warnIfOver(await act("queue", { tags: [tag] }), [tag])}
             onQueueMany={async (tags) => warnIfOver(await act("queue", { tags }), tags)}
             onLaterMany={(tags) => act("later", { tags })}
@@ -953,7 +1006,7 @@ export function App() {
               })
             }
             onFill={() => act("fill_from_later")}
-            onClear={(tag) => act("clear", { tags: [tag] })}
+            onClear={(tag) => removeFromList("completed", tag)}
             onUnsuspend={() => act("unsuspend", { tags: [] })}
             onBrowse={() => call("browse", { tags: [] })}
             onBrowseTags={(tags, title, anki) => void call("browse", { tags, title, skim: !anki })}
