@@ -324,6 +324,7 @@ python3 tools/screenshots.py      # writes docs/*.png
 | Stepwise | `screenshot.png` | its window, from `tests/fixture/` via its dev server |
 | AnkiGlass | `screenshot.png`, `review.png` | deck list; a real AnKing card under review (760×690, so it shows whole) |
 | AnkiBare | `screenshot.png` | the window with and without its title bar, side by side, labelled Before and After on the image |
+| Skim | `screenshot.png` | its window on a real B&B topic, at a card it would unsuspend now, from a copy of a collection via its dev server |
 
 - **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
   dark mode, with AnkiGlass's CSS and glass on the main window, framed as a
