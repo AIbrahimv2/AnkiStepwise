@@ -5,6 +5,14 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- **Liquid Glass with AnkiGlass.** On a Mac with AnkiGlass installed, the
+  Stepwise window and its Settings, What's new and About window get the
+  same glass as Anki's main window. The tree's and the queue's headers turn
+  solid while the list scrolls under them, so it doesn't show through.
+  **Glass on add-on windows** in AnkiGlass's Settings turns it off.
+
 ### Changed
 
 - **`t` and `T` change tab in the queue** (Queue, Later, Done), next and

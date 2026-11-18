@@ -50,6 +50,7 @@ class QueueDialog(QDialog):
         self.web = AnkiWebView(self, title="stepwise")
         self.web.set_bridge_command(self.bridge.handle, self)
         lay.addWidget(self.web)
+        kit.glass(self)  # AnkiGlass's glass behind the window, if it's there
 
         self._index_timer = QTimer(self)
         self._index_timer.setSingleShot(True)

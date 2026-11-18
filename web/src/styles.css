@@ -883,3 +883,42 @@ html, body {
 @container side (max-width: 320px) {
   .side-footer .btn:not(.browse) svg { display: none; }
 }
+
+/* --- with AnkiGlass's glass behind the window (kit/glass.css) ----------------- */
+
+/* The headers that stick while the tree and the queue scroll. Anki's web
+   view draws no blur on the glass, so a see-through header would show the
+   rows under it. Each is the panel's glass while it sits in place, and
+   solid once it sticks: an underlay behind its text (::before) that's
+   opaque while stuck, with its hover and selection colours mixed into the
+   panel colour. A resource row keeps those on its ::after, above the
+   underlay. */
+:root.kit-glass :is(.tree-head, .row.section, .row.group, .group-head, .col-head, .row.stick) {
+  container-type: scroll-state;
+}
+:root.kit-glass :where(.tree-head, .row.section, .row.group, .group-head, .col-head)::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  border-radius: inherit;
+  pointer-events: none;
+}
+/* Over the column titles' bottom border too, which the rows would show through. */
+:root.kit-glass .tree-head::before { bottom: -1px; }
+:root.kit-glass .row.stick::before { background: transparent; }
+@container scroll-state(stuck: top) {
+  :root.kit-glass :is(.tree-head, .row.section, .row.group, .group-head, .col-head, .row.stick)::before {
+    background: var(--solid);
+  }
+  /* The column titles' bottom border, which the underlay covers. */
+  :root.kit-glass .tree-head::before { box-shadow: inset 0 -1px 0 var(--line); }
+  :root.kit-glass :is(.row.section, .row.group):hover::before { background: color-mix(in srgb, var(--ink) 3%, var(--solid)); }
+  :root.kit-glass :is(.row.section, .row.group).selected::before { background: color-mix(in srgb, var(--focus) 9%, var(--solid)); }
+  :root.kit-glass .tree:focus :is(.row.section, .row.group).selected::before { background: color-mix(in srgb, var(--focus) 15%, var(--solid)); }
+  :root.kit-glass .group-head:hover::before { background: color-mix(in srgb, var(--ink) 3.5%, var(--solid)); }
+  :root.kit-glass .list:focus .group-head.cursor::before { background: color-mix(in srgb, var(--focus) 15%, var(--solid)); }
+}
+
+/* The keys you press, over the rows: all but opaque, as nothing blurs. */
+:root.kit-glass .keycast-pill { background: var(--float); }
