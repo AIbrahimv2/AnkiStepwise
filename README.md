@@ -14,7 +14,7 @@ It's built for the AnKing workflow of "cover the resource, unsuspend its cards",
 and works with any hierarchical tags. The window is a web UI (React) that follows
 Anki's light and dark themes, with vim-style keyboard navigation.
 
-![Stepwise: the tag tree by resource on the left, today's queue on the right](docs/screenshot.png)
+<img src="docs/screenshot.png" width="100%" alt="Stepwise: the tag tree by resource on the left, today's queue on the right">
 
 ## Features
 
@@ -250,6 +250,11 @@ cd web && npm run dev   # http://localhost:5173 (add ?theme=dark for dark mode)
 
 Run `./build.sh` to build the UI and produce a distributable `.ankiaddon` in
 `dist/`.
+
+`python3 tools/screenshots.py` renders `docs/screenshot.png` (used here and on
+AnkiWeb) with the add-ons' shared screenshot tools in the kit
+(`../anki-addon-kit/screenshots`): the window from a copy of the test snapshot
+(`tests/fixture/`, or `--collection`), framed on macOS Tahoe's dark wallpaper.
 
 The tests in `tests/` run with Anki's own Python against a snapshot of a real
 collection (an AnKing deck, with Colorful Tags installed). The snapshot stays
