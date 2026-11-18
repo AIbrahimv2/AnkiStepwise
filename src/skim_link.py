@@ -70,9 +70,10 @@ def _connect(skim) -> None:
 
 def plan_changed() -> None:
     """Something was queued, saved for later or done: Skim reads statuses
-    again (only while it's open)."""
+    again, at once if it's open, or else when it next opens (it keeps what
+    it has read, so it has to hear even while it's closed)."""
     skim = _skim()
-    if skim is not None and hasattr(skim, "context_changed") and skim.is_open():
+    if skim is not None and hasattr(skim, "context_changed"):
         skim.context_changed()
 
 

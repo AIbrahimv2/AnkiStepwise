@@ -123,9 +123,16 @@ class FakeSkim2(FakeSkim):
     def __init__(self):
         super().__init__()
         self.context, self.topics = None, []
+        self.window_open, self.changes = True, 0
 
     def set_context(self, factory):
         self.context = factory
+
+    def is_open(self):
+        return self.window_open
+
+    def context_changed(self):
+        self.changes += 1
 
     def open(self, *, search, card_ids, title, source, topic):
         self.topics.append(topic)
@@ -144,6 +151,16 @@ check(plan.status(tag) is None, "a plan is a snapshot")
 check(skim2.context().status(tag) == "queued", "a fresh one sees the topic queued")
 check(skim2.context().status(tag + "::Some_Video") == "queued", "and its children, through it")
 actions.unqueue([tag])
+# Skim hears when the plan changes, whether it's open or not: closed, it
+# reads the plan again when it next opens, instead of showing the old one.
+for window_open in (True, False):
+    skim2.window_open, changes = window_open, skim2.changes
+    actions.queue([tag])
+    check(skim2.changes > changes, f"Skim hears a topic was queued ({'open' if window_open else 'closed'})")
+    changes = skim2.changes
+    actions.unqueue([tag])
+    check(skim2.changes > changes, f"and taken out ({'open' if window_open else 'closed'})")
+skim2.window_open = True
 from tq.config import update_config  # noqa: E402
 
 step1 = next(k for k in index.kids("") if k.startswith("#ak_step1"))

@@ -27,6 +27,13 @@ All notable changes to this project are documented here. The format is based on
   a colour square and a hue slider, with Colorful Tags' colours a click
   away. You can still type a hex code.
 
+### Fixed
+
+- **Skim shows your plan as it is now.** Topics you queue, finish or save
+  for later while Skim is closed show that way the next time you open it,
+  along with its "Again in" colours and its verdicts. Until now, Skim could
+  show your plan as it was when you last had Skim open.
+
 ## [1.2.0] - 2026-11-17
 
 ### Added
