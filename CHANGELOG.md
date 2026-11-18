@@ -8,6 +8,9 @@ All notable changes to this project are documented here. The format is based on
 ### Changed
 
 - About lists Skim with an Install button, now that it's on AnkiWeb.
+- Checking a topic in the tree is instant. Its box, and its subtopics' and
+  parents', change the moment you click instead of after a pause that grew
+  with your Done list, and the queue's totals catch up faster too.
 
 ## [1.4.0] - 2026-11-17
 

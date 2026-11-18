@@ -76,6 +76,35 @@ function applyColors(colors: StatusColors) {
   root.setProperty("--l-raw", colors.later);
 }
 
+/** The tree once `n` is queued (`on`) or taken out of the queue, as far as
+ *  the page can tell before Python answers: the topic's own check, the
+ *  ticks its subtopics take from it, and the partial mark on its parents.
+ *  `queued` holds the topics queued on their own (keys). */
+function withQueueChange(nodes: Record<string, AnyNode>, n: TagNode, on: boolean, queued: string[]) {
+  const under = (key: string, parent: string) => key.startsWith(parent + "::");
+  const others = queued.filter((q) => q !== n.key);
+  const next = { ...nodes };
+  for (const [key, x] of Object.entries(nodes)) {
+    if (isGroup(x)) continue;
+    if (key === n.key) {
+      const check = on ? "on" : others.some((q) => under(q, key)) ? "partial" : "off";
+      const status = on ? "queued" : null;
+      next[key] = { ...x, check, locked: false, status, inherited: false, source: null, since: null, auto: false };
+    } else if (under(key, n.key)) {
+      // Queued along with it (a topic completed in its own right stays
+      // done), or no longer.
+      if (on && !(x.status === "completed" && !x.auto))
+        next[key] = { ...x, check: "on", locked: true, status: "queued", inherited: true, source: n.label, since: null, auto: false };
+      else if (!on && x.locked)
+        next[key] = { ...x, check: "off", locked: false, status: null, inherited: false, source: null, since: null };
+    } else if (under(n.key, key)) {
+      if (on && x.check === "off") next[key] = { ...x, check: "partial" };
+      else if (!on && x.check === "partial" && !others.some((q) => under(q, key))) next[key] = { ...x, check: "off" };
+    }
+  }
+  return next;
+}
+
 export function App() {
   const [ready, setReady] = useState(false);
   const [side, setSide] = useState<Side | null>(null);
@@ -120,6 +149,8 @@ export function App() {
   expandedRef.current = expanded;
   const kidsRef = useRef(kids);
   kidsRef.current = kids;
+  const sideRef = useRef(side);
+  sideRef.current = side;
   // Step sections start open; remember the ones you close.
   const collapsedRef = useRef(new Set<string>());
 
@@ -568,19 +599,47 @@ export function App() {
     [toast, applyBundle],
   );
 
+  // Queuing a topic shows in the tree at once: Python takes a moment to
+  // work out the new totals, and its reply then brings the exact rows.
+  // When one reply lands while later clicks still wait on theirs, those
+  // are laid back over it, so ticking several in a row never flickers.
+  const pendingQueue = useRef<{ n: TagNode; on: boolean }[]>([]);
+  const showPendingQueue = useCallback(() => {
+    const changes = pendingQueue.current;
+    if (!changes.length) return;
+    // Topics queued on their own: they keep their parents partly checked.
+    const queued = (sideRef.current?.queued ?? []).filter((r) => !r.watched).map((r) => r.key);
+    setNodes((prev) => changes.reduce((acc, c) => withQueueChange(acc, c.n, c.on, queued), prev));
+  }, []);
+
+  const setQueued = useCallback(
+    async (n: TagNode, on: boolean) => {
+      const change = { n, on };
+      pendingQueue.current.push(change);
+      showPendingQueue();
+      try {
+        const b = await act(on ? "queue" : "unqueue", { tags: [n.tag] });
+        if (on) warnIfOver(b, [n.tag]);
+      } catch {
+        // The error has its toast; put the tree back the way Python has it.
+        sync();
+      } finally {
+        pendingQueue.current = pendingQueue.current.filter((c) => c !== change);
+        showPendingQueue();
+      }
+    },
+    [act, sync, warnIfOver, showPendingQueue],
+  );
+
   const toggleQueue = useCallback(
-    async (n: TagNode) => {
+    (n: TagNode) => {
       if (n.locked) {
         toast(`Already queued as part of ${n.source}`, "info");
         return;
       }
-      if (n.check === "on") {
-        await act("unqueue", { tags: [n.tag] });
-      } else {
-        warnIfOver(await act("queue", { tags: [n.tag] }), [n.tag]);
-      }
+      setQueued(n, n.check !== "on");
     },
-    [act, toast, warnIfOver],
+    [setQueued, toast],
   );
 
   const toggleLater = useCallback(
@@ -731,14 +790,14 @@ export function App() {
     if (!n || isGroup(n)) return [];
     const own = n.inherited ? null : n.status;
     const entries: MenuEntry[] = [];
-    if (own === "queued") entries.push({ label: "Remove from queue", icon: <ListMinus size={14} />, onSelect: () => act("unqueue", { tags: [n.tag] }) });
+    if (own === "queued") entries.push({ label: "Remove from queue", icon: <ListMinus size={14} />, onSelect: () => setQueued(n, false) });
     else
       entries.push({
         label: "Add to queue",
         icon: <ListPlus size={14} />,
         disabled: n.status === "queued",
         hint: "Space",
-        onSelect: async () => warnIfOver(await act("queue", { tags: [n.tag] }), [n.tag]),
+        onSelect: () => setQueued(n, true),
       });
     if (own === "later")
       entries.push({ label: "Remove from Later", icon: <BookmarkMinus size={14} />, hint: "s", onSelect: () => act("unlater", { tags: [n.tag] }) });
