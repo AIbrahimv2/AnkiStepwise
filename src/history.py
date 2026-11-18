@@ -12,8 +12,6 @@ the session and is cleared when the profile closes.
 
 from __future__ import annotations
 
-import copy
-
 from anki.utils import ids2str
 from aqt import mw
 
@@ -26,7 +24,10 @@ _redo: list[dict] = []
 
 
 def snapshot() -> dict:
-    return copy.deepcopy(actions.load_state().to_dict())
+    # A freshly loaded state shares nothing (load builds every entry anew),
+    # so no copy: deep-copying thousands of Done entries twice per click
+    # was a noticeable part of the wait.
+    return actions.load_state().to_dict()
 
 
 def record(label: str, before: dict, after: dict, unsuspended: list[int]) -> None:

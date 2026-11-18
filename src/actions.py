@@ -80,16 +80,23 @@ def _announce(message: str) -> None:
 _done_cache: tuple | None = None
 
 
-def done_info() -> tuple[set[str], dict[str, int]]:
+def done_info(state: QueueState | None = None) -> tuple[set[str], dict[str, int]]:
     """Done tags and done-leaf counts for the current index and completions
-    (see rollup.py), cached until either changes."""
-    global _done_cache
+    (see rollup.py), cached until either changes. Pass the state if you
+    have it loaded already."""
     idx = _index
     if idx is None:
         return set(), {}
-    completed = frozenset(t.lower() for t in load_state().completed())
-    if _done_cache is None or _done_cache[0] is not idx or _done_cache[1] != completed:
-        _done_cache = (idx, completed, rollup.done_tags(idx, completed))
+    return _done_for(idx, (state or load_state()).completed())
+
+
+def _done_for(idx: TagIndex, completed: list[str]) -> tuple[set[str], dict[str, int]]:
+    """rollup.done_tags, cached for one index and set of completions: it
+    walks the whole tree, and queuing a topic changes neither."""
+    global _done_cache
+    key = frozenset(t.lower() for t in completed)
+    if _done_cache is None or _done_cache[0] is not idx or _done_cache[1] != key:
+        _done_cache = (idx, key, rollup.done_tags(idx, key))
     return _done_cache[2]
 
 
@@ -126,8 +133,9 @@ def _consolidate(state: QueueState) -> tuple[dict, bool]:
         now = int(time.time())
         for key in swept:
             changes.update(state.complete_rollup(idx.name(key), _finished_at(idx, key, first) or now))
-    done, _leaves = rollup.done_tags(idx, state.completed())
-    tops = rollup.roll_up(state.completed(), done, roots)
+    completed = state.completed()
+    done, _leaves = _done_for(idx, completed)
+    tops = rollup.roll_up(completed, done, roots)
     # Parents that weren't complete yet (vs. just tidying entries under one).
     newly = [t for t in tops if state.status(idx.name(t)) != COMPLETED]
     for top, covered in tops.items():

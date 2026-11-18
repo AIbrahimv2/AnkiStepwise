@@ -63,7 +63,7 @@ class View:
         self.queued_l = [q.lower() for q in self.state.queued()]
         self.later_l = [q.lower() for q in self.state.later()]
         # Done = completed, or nothing left to unsuspend (see rollup.py).
-        self.done, self.done_leaves = actions.done_info() if index else (set(), {})
+        self.done, self.done_leaves = actions.done_info(self.state) if index else (set(), {})
         self._queue_ids: set[int] | None = None
 
     def status_of(self, key: str) -> tuple[str | None, str | None, bool]:
