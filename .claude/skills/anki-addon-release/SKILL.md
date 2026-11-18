@@ -309,23 +309,39 @@ Record what you learn in `docs/ankiweb-listing.md`.
 
 ## Screenshots
 
-- **Content:** show the real UI with realistic state, in dark mode (the
-  user's own setting) unless they ask otherwise. Render at 2x and commit it
-  as `docs/screenshot.png`.
-- **Add-ons with a web UI and a dev server:** Stepwise runs
-  `tools/devserver.py` on a copy of a collection. Set up the state you want
-  through its bridge, then render it with headless Chromium:
-  ```bash
-  /Applications/Chromium.app/Contents/MacOS/Chromium --headless=new \
-    --user-data-dir=<scratch>/chromium-profile --hide-scrollbars \
-    --force-device-scale-factor=2 --window-size=1280,800 \
-    --virtual-time-budget=12000 --screenshot=<scratch>/shot.png "http://localhost:<port>/?theme=dark"
-  ```
-- **Native Qt add-ons:** these need a screenshot of the real Anki window. Ask
-  for computer-use access to Anki, or ask the user for a screenshot (they may
-  decline access).
-- **Staging:** only change state in a copy of the collection, never the
-  user's real one.
+Every add-on's screenshots are made one way, with the kit's shared tools
+(`anki-addon-kit/screenshots/shots.py`, whose docstring has the details).
+Each add-on has a `tools/screenshots.py` that describes its scenes:
+
+```bash
+python3 tools/screenshots.py      # writes docs/*.png
+```
+
+| Add-on | Images | Scene |
+| --- | --- | --- |
+| Exam Timeline | `screenshot.png`, `editor.png` | deck screen with the timeline; the editor (its dev server) |
+| Stepwise | `screenshot.png` | its window, from `tests/fixture/` via its dev server |
+| AnkiGlass | `screenshot.png`, `review.png` | deck list; a real AnKing card under review |
+| AnkiBare | `before.png`, `after.png` | the same window with and without its title bar |
+
+- **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
+  dark mode, with AnkiGlass's CSS and glass on the main window, framed as a
+  macOS window on macOS Tahoe's dark wallpaper (top-left crop, chosen for
+  the contrast of the text over it), at 2x. Add-on windows stay solid, as
+  AnkiGlass leaves them. Where AnkiGlass isn't the subject, the image is
+  credited "Shown with AnkiGlass" in the README and the listing.
+- **Size:** all of one add-on's images are the same size (its largest
+  window plus the wallpaper around it), so they're shown at `width="100%"`.
+  Main-window shots are 760×622 points, so those add-ons share 1776×1556.
+- **Data:** made up (the kit's demo decks), or a copy of a collection, never
+  the user's own. AnkiGlass's card is a real AnKing card (note
+  1487643760880) with a public-domain image, rendered by Anki from a copy
+  of the collection: prefer openly licensed images (the card's credit says
+  so) for anything public.
+- **New add-on:** write its `tools/screenshots.py` on `shots.Session`
+  (`main_window`, `capture`, `frames`), copying the closest one above.
+- **Native Qt parts** with no page to render: ask for computer-use access to
+  Anki, or ask the user for a screenshot.
 
 ## After a release
 
