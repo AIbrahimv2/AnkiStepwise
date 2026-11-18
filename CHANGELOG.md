@@ -3,6 +3,18 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Added
+
+- **⌘S saves Settings** (Ctrl+S on Windows and Linux).
+
+### Fixed
+
+- With AnkiGlass, Save and Close sit in a bar across the bottom of the
+  Settings window, like the tabs across its top, instead of a narrower panel
+  partway down it.
+
 ## [1.3.0] - 2026-11-17
 
 ### Added

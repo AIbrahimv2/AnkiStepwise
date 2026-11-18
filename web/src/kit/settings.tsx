@@ -5,7 +5,7 @@
 // kit and run its sync.py.
 
 import { Check, X } from "lucide-react";
-import { type KeyboardEvent, type ReactNode, useState } from "react";
+import { type KeyboardEvent, type ReactNode, useEffect, useRef, useState } from "react";
 import { IconButton } from "./controls";
 
 export function Section(props: { title: string; children: ReactNode }) {
@@ -71,7 +71,8 @@ export function Choice<T extends string>(props: {
 
 /** The buttons under Settings in the kit's window, kept in view at its
  *  bottom: Restore defaults, then what happened (a message, or "Saved"
- *  until you change something), Close and Save. */
+ *  until you change something), Close and Save. ⌘S (Ctrl+S off a Mac)
+ *  saves, as Save does. */
 export function SettingsFoot(props: {
   onRestore: () => void;
   restoreDisabled?: boolean;
@@ -83,6 +84,19 @@ export function SettingsFoot(props: {
   onSave: () => void;
   saveDisabled?: boolean;
 }) {
+  const latest = useRef(props);
+  latest.current = props;
+  useEffect(() => {
+    const onKey = (e: globalThis.KeyboardEvent) => {
+      // A shortcut being recorded has the keys first, and takes them.
+      if (e.defaultPrevented || e.isComposing || e.altKey || e.shiftKey) return;
+      if (!(IS_MAC ? e.metaKey && !e.ctrlKey : e.ctrlKey && !e.metaKey) || e.key.toLowerCase() !== "s") return;
+      e.preventDefault();
+      if (!latest.current.saveDisabled) latest.current.onSave();
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, []);
   return (
     <div className="kit-foot">
       <div className="modal-actions settings-actions">
@@ -108,7 +122,13 @@ export function SettingsFoot(props: {
         <button type="button" className="btn" onClick={props.onClose}>
           Close
         </button>
-        <button type="button" className="btn primary" disabled={props.saveDisabled} onClick={props.onSave}>
+        <button
+          type="button"
+          className="btn primary"
+          disabled={props.saveDisabled}
+          title={IS_MAC ? "⌘S" : "Ctrl+S"}
+          onClick={props.onSave}
+        >
           Save
         </button>
       </div>
