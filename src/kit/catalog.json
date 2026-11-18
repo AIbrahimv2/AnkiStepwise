@@ -1,5 +1,5 @@
 {
-  "updated": "2026-11-17",
+  "updated": "2026-11-18",
   "author": {
     "name": "AIbrahimv2",
     "fullName": "Abdel-Rahman Ibrahim",
@@ -28,7 +28,7 @@
       "emoji": "👀",
       "tagline": "A card browser that keeps up with your keys",
       "about": "Search with Anki's own syntax, then move through the cards with vim keys. Each card looks the way it does in review, and on a topic each suspended card says whether to unsuspend it now or wait.",
-      "ankiweb": null,
+      "ankiweb": 2141626960,
       "github": "AIbrahimv2/AnkiSkim",
       "dirs": ["anki-skim", "skim"],
       "platforms": ["mac", "win", "lin"]

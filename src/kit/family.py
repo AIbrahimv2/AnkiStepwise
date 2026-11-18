@@ -34,7 +34,7 @@ from . import changelog
 # protocols then keep apart), and KIT_VERSION whenever the kit changes (the
 # newest copy leads).
 PROTOCOL = 1
-KIT_VERSION = 10
+KIT_VERSION = 11
 REGISTRY = f"aibrahimv2_addons_v{PROTOCOL}"
 # Set on a window whose class doesn't say which add-on it's for (the kit's
 # window, which any add-on's copy may have opened): that add-on's id.
