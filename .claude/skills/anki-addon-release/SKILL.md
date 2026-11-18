@@ -321,7 +321,7 @@ python3 tools/screenshots.py      # writes docs/*.png
 | --- | --- | --- |
 | Exam Timeline | `screenshot.png`, `editor.png` | deck screen with the timeline; the editor (its dev server) |
 | Stepwise | `screenshot.png` | its window, from `tests/fixture/` via its dev server |
-| AnkiGlass | `screenshot.png`, `review.png` | deck list; a real AnKing card under review |
+| AnkiGlass | `screenshot.png`, `review.png` | deck list; a real AnKing card under review (760×690, so it shows whole) |
 | AnkiBare | `before.png`, `after.png` | the same window with and without its title bar |
 
 - **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
@@ -335,9 +335,11 @@ python3 tools/screenshots.py      # writes docs/*.png
   Main-window shots are 760×622 points, so those add-ons share 1776×1556.
 - **Data:** made up (the kit's demo decks), or a copy of a collection, never
   the user's own. AnkiGlass's card is a real AnKing card (note
-  1487643760880) with a public-domain image, rendered by Anki from a copy
-  of the collection: prefer openly licensed images (the card's credit says
-  so) for anything public.
+  1486608813182, goblet cells) with a CC0 image, rendered by Anki from a
+  copy of the collection (`shots.export_cards`). For anything public, use
+  openly licensed images (the card's credit says so) that show whole, with
+  their credit, in the window; avoid clinical photos that are graphic or
+  sensitive.
 - **New add-on:** write its `tools/screenshots.py` on `shots.Session`
   (`main_window`, `capture`, `frames`), copying the closest one above.
 - **Native Qt parts** with no page to render: ask for computer-use access to
