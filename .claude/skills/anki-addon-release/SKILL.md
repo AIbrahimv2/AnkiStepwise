@@ -244,12 +244,13 @@ with a **Save** button. A saved reply is public, shown under the review as
 - **Description:** Markdown and basic HTML, laid out the same in every
   listing:
   ```markdown
-  <What it does, in one or two sentences. A Mac-only add-on says so here.>
+  <What it does, in one or two sentences.>
 
-  **Code: <ID>.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**. Needs Anki <minimum> or newer<, on a Mac>.
+  <A Mac-only add-on: **macOS only.** On Windows and Linux it does nothing.>
+
+  **Code: <ID>.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**.
 
   <p><img src="https://raw.githubusercontent.com/AIbrahimv2/<Repo>/main/docs/screenshot.png" alt="…" width="100%"></p>
-  <Or a pair that belongs together: two screens, or **Before** and **After**.>
 
   <A little more about it, if needed.>
 
@@ -265,7 +266,11 @@ with a **Save** button. A saved reply is public, shown under the review as
   <p><a href="https://abdelrahmanibrahim.com/anki/"><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2's Anki add-ons" width="180"></a></p>
   ```
   - Never start the description with an image: the pitch and the code line
-    come first. The minimum is the one in "Supported Anki versions".
+    come first.
+  - No "Needs Anki <version> or newer": AnkiWeb's Supported versions
+    already decide who can install it.
+  - A Mac-only add-on says so in bold, on its own line before the code
+    line, and not again under Good to know.
   - The signature is the kit's (`tools/signature_png.py` renders it), the
     same file in every listing, and it links to the add-ons page on the
     personal site, https://abdelrahmanibrahim.com/anki/, which lists them
@@ -278,8 +283,9 @@ with a **Save** button. A saved reply is public, shown under the review as
     starts with no gap.
   - Use the same `docs/screenshot.png` in the README, so replacing one file
     updates both.
-  - With more than one image, make them all the same size and show each at
-    `width="100%"` here and in the README, so they line up at one scale.
+  - Two screens that belong together go in one image, side by side
+    (`Session.side_by_side`), not one above the other. A second image
+    further down only when it shows something else.
 
 ## AnkiWeb search
 
@@ -320,9 +326,9 @@ python3 tools/screenshots.py      # writes docs/*.png
 
 | Add-on | Images | Scene |
 | --- | --- | --- |
-| Exam Timeline | `screenshot.png`, `editor.png` | deck screen with the timeline; the editor (its dev server) |
+| Exam Timeline | `screenshot.png` | the deck screen with the timeline beside the editor (its dev server), side by side |
 | Stepwise | `screenshot.png` | its window, from `tests/fixture/` via its dev server |
-| AnkiGlass | `screenshot.png`, `review.png` | deck list; a real AnKing card under review (760×690, so it shows whole) |
+| AnkiGlass | `screenshot.png` | the deck list beside a real AnKing card under review, side by side (760×690 each, so the card shows whole) |
 | AnkiBare | `screenshot.png` | the window with and without its title bar, side by side, labelled Before and After on the image |
 | Skim | `screenshot.png` | its window on a real B&B topic, at a card it would unsuspend now, from a copy of a collection via its dev server |
 
@@ -332,9 +338,8 @@ python3 tools/screenshots.py      # writes docs/*.png
   the contrast of the text over it), at 2x. Add-on windows stay solid, as
   AnkiGlass leaves them. Where AnkiGlass isn't the subject, the image is
   credited "Shown with AnkiGlass" in the README and the listing.
-- **Size:** all of one add-on's images are the same size (its largest
-  window plus the wallpaper around it), so they're shown at `width="100%"`.
-  Main-window shots are 760×622 points, so those add-ons share 1776×1556.
+- **Size:** one window and the wallpaper around it; main-window shots are
+  760×622 points, so 1776×1556. Shown at `width="100%"`.
 - **Data:** made up (the kit's demo decks), or a copy of a collection, never
   the user's own. AnkiGlass's card is a real AnKing card (note
   1486608813182, goblet cells) with a CC0 image, rendered by Anki from a
@@ -342,8 +347,11 @@ python3 tools/screenshots.py      # writes docs/*.png
   openly licensed images (the card's credit says so) that show whole, with
   their credit, in the window; avoid clinical photos that are graphic or
   sensitive.
-- **Comparisons:** show them as one image, side by side (`Session.side_by_side`),
-  with their labels written on it, not as headings above separate images.
+- **Side by side:** two windows that belong together are one image, side
+  by side (`Session.side_by_side`), never one above the other. Leave the
+  labels out (`labels=None`) when the windows speak for themselves; label
+  only a comparison (Before, After), written on the image, not as headings
+  above separate images.
 - **New add-on:** write its `tools/screenshots.py` on `shots.Session`
   (`main_window`, `capture`, `frames`), copying the closest one above.
 - **Native Qt parts** with no page to render: ask for computer-use access to
