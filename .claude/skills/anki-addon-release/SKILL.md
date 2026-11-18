@@ -262,13 +262,14 @@ with a **Save** button. A saved reply is public, shown under the review as
 
   Source, changelog and issues: [github.com/AIbrahimv2/<Repo>](https://github.com/AIbrahimv2/<Repo>)
 
-  <p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2" width="180"></p>
+  <p><a href="https://abdelrahmanibrahim.com/anki/"><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiAddonKit/main/assets/signature.png" alt="AIbrahimv2's Anki add-ons" width="180"></a></p>
   ```
   - Never start the description with an image: the pitch and the code line
     come first. The minimum is the one in "Supported Anki versions".
   - The signature is the kit's (`tools/signature_png.py` renders it), the
-    same file in every listing. Once the add-ons page on
-    abdelrahmanibrahim.com is live, it links there.
+    same file in every listing, and it links to the add-ons page on the
+    personal site, https://abdelrahmanibrahim.com/anki/, which lists them
+    all.
   - Bare URLs aren't clickable, so write
     `[github.com/AIbrahimv2/<Repo>](https://github.com/AIbrahimv2/<Repo>)`.
   - Put an image on its own as
