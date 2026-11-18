@@ -18,7 +18,7 @@ scripts in `scripts/`.
 | 📅 Exam Timeline | `~/Documents/Projects/anki-exam-timeline` | AIbrahimv2/AnkiExamTimeline | 341595498 | `dist/anki-exam-timeline.ankiaddon` |
 | 🫧 AnkiGlass | `~/Documents/Projects/anki-glass` | AIbrahimv2/AnkiGlass | 1866406123 | `dist/anki-glass.ankiaddon` |
 | 🐻 AnkiBare | `~/Documents/Projects/anki-bare` | AIbrahimv2/AnkiBare | 1505882046 | `dist/anki-bare.ankiaddon` |
-| 👀 Skim | `~/Documents/Projects/anki-skim` | AIbrahimv2/AnkiSkim | not published yet | `dist/skim.ankiaddon` |
+| 👀 Skim | `~/Documents/Projects/anki-skim` | AIbrahimv2/AnkiSkim | 2141626960 | `dist/skim.ankiaddon` |
 
 The signed-in list of the user's items is https://ankiweb.net/shared/mine.
 Add a row here when a new add-on is published, and fix rows that drift.
