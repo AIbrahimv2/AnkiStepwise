@@ -1,5 +1,6 @@
 import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, SearchX, Star } from "lucide-react";
 import { type CSSProperties, type ReactNode, memo, useEffect, useRef, useState } from "react";
+import { ResourceIcon } from "../kit/resources";
 import { KeyCast, useKeyCastHold } from "../keycast";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
 import { isGroup } from "../types";
@@ -422,6 +423,8 @@ const TreeRow = memo(function TreeRow(props: {
             <Star size={12} fill="currentColor" />
           </span>
         )}
+        {/* A resource's logo (the kit's), or its room, so names line up. */}
+        {node.top && <ResourceIcon name={node.label} keepRoom />}
         <span className="label">
           <Highlight text={node.label} words={props.words} />
         </span>

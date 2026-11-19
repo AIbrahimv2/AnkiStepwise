@@ -10,6 +10,11 @@ All notable changes to this project are documented here. The format is based on
 - Make everything in the window bigger or smaller: Cmd+= and Cmd+− (Ctrl on
   Windows and Linux) zoom it in steps, Cmd+0 puts it back to 100%, and
   Stepwise opens at the size you leave it. It's in Settings too, as Size.
+- Resources show their logos (B&B, Bootcamp, First Aid, Sketchy, UWorld,
+  AMBOSS, Pixorize and the rest) in the tag tree and the resource picker,
+  so you can tell them apart at a glance.
+  AnKing's own folders (^Systems, Subjects, ...) show AnKing's, and
+  textbooks a book.
 
 ### Changed
 

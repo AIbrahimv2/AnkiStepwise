@@ -21,7 +21,8 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 - **Tag tree by resource, split by step.** Resources sit under colour-coded
   **Step 1 / Step 2 / Step 3** sections that stay pinned to the top while you
   scroll, and the resource you're scrolling through stays pinned just under its
-  step, so you can always tell which one a topic belongs to. Checkboxes queue
+  step, so you can always tell which one a topic belongs to. Resources show
+  their logos (Bootcamp, Sketchy, UWorld, ...) where they have one. Checkboxes queue
   topics. Each topic shows how many cards are
   **Left** to unsuspend and a **Progress** bar of its cards (hover it for the
   numbers); Later topics get a bookmark there instead and done ones a check
@@ -274,4 +275,6 @@ that version from PyPI with [uv](https://docs.astral.sh/uv/), into
 
 ## License
 
-[AGPL-3.0-or-later](LICENSE).
+[AGPL-3.0-or-later](LICENSE). The logos of the resources (Bootcamp, Sketchy,
+UWorld, AMBOSS and the others) belong to their owners, who aren't affiliated
+with Stepwise; they're there only to show which resource is which.

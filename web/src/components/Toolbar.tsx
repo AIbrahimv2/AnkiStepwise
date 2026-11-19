@@ -1,5 +1,6 @@
 import { BookmarkPlus, ChevronsUpDown, Layers, ListPlus, Search, Star, X } from "lucide-react";
 import { forwardRef, useMemo, useRef, useState } from "react";
+import { ResourceIcon } from "../kit/resources";
 import type { ScopeOption, Summary } from "../types";
 import { type Anchor, Menu, type MenuEntry, Switch, anchorBelow, fmt, plural } from "./ui";
 
@@ -104,6 +105,7 @@ export function ScopePicker(props: {
         ) : (
           <Layers size={14} />
         )}
+        {current?.kind === "resource" && <ResourceIcon name={current.label} />}
         <span className="picker-label">{current?.label ?? "All resources"}</span>
         {current?.kind === "resource" && manySteps && <span className="picker-step">{current.group}</span>}
         <span className="muted">
