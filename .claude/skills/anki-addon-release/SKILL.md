@@ -334,10 +334,10 @@ python3 tools/screenshots.py      # writes docs/*.png
 | Add-on | Images | Scene |
 | --- | --- | --- |
 | Exam Timeline | `screenshot.png` | the deck screen with the timeline beside the editor (its dev server), side by side |
-| Stepwise | `screenshot.png` | its window, from `tests/fixture/` via its dev server |
+| Stepwise | `screenshot.png` | its window at 120%, on pinned resources in Steps 1 to 3 (each with its logo) with one open, from `tests/fixture/` via its dev server |
 | AnkiGlass | `screenshot.png` | the deck list beside a real AnKing card under review, side by side (760×690 each, so the card shows whole) |
 | AnkiBare | `screenshot.png` | the window with and without its title bar, side by side, labelled Before and After on the image |
-| Skim | `screenshot.png` | its window (1180×970, so the card's diagram and its credit show whole) on a real B&B topic full of verdicts, at a card with an openly licensed diagram it would unsuspend now, from a copy of a collection via its dev server |
+| Skim | `screenshot.png` | its window (1180×1040 at 108%, so the card's diagram and its credit show whole and the card pane stays) on a real B&B topic full of verdicts, at a card with an openly licensed diagram it would unsuspend now, from a copy of a collection via its dev server |
 
 - **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
   dark mode, with AnkiGlass's CSS and glass on the main window, framed as a
@@ -347,6 +347,11 @@ python3 tools/screenshots.py      # writes docs/*.png
   credited "Shown with AnkiGlass" in the README and the listing.
 - **Size:** one window and the wallpaper around it; main-window shots are
   760×622 points, so 1776×1556. Shown at `width="100%"`.
+- **Zoom:** an add-on's own window can be drawn bigger in the same size
+  (capture's `"zoom"`, as its ⌘= does), so it reads at the listing's width:
+  Stepwise at 120%. What decides how big it looks is the page's width (the
+  window's width over the zoom), so keep it above the add-on's narrow
+  layout (Skim's is 1080px, where it hides the card).
 - **Data:** made up (the kit's demo decks), or a copy of a collection, never
   the user's own. AnkiGlass's card is a real AnKing card (note
   1486608813182, goblet cells) with a CC0 image, rendered by Anki from a
