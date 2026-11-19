@@ -200,6 +200,8 @@ export interface SettingsValues {
   colors: StatusColors;
   /** Qt shortcut text, e.g. "Ctrl+Alt+Q" ("Ctrl" is ⌘ on a Mac); "" for none. */
   shortcut: string;
+  /** How big the window draws, in percent (Cmd+= / Cmd+-). */
+  size: number;
 }
 
 export interface PinnedResource {

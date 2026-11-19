@@ -353,7 +353,7 @@ def kwait(expr, timeout=20.0):
 
 
 sections = kwait("[...document.querySelectorAll('.kit-hosted .set-section h3')].map(h => h.textContent).join() || null")
-assert sections == "Daily plan,Tag tree,Anki,Colours", f"Stepwise's own Settings, in the kit's window: {sections}"
+assert sections == "Daily plan,Tag tree,Window,Anki,Colours", f"Stepwise's own Settings, in the kit's window: {sections}"
 assert kjs("[...document.querySelectorAll('.kit-nav [role=tab]')].map(b => b.textContent.trim() + (b.getAttribute('aria-selected') === 'true' ? '*' : '')).join()") \
     == "What's new,About,Settings*", "as a tab beside What's new and About"
 matches = kwait("(document.querySelector('.kit-hosted .root-matches') || {}).textContent || null")

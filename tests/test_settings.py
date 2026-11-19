@@ -62,6 +62,8 @@ s = call("settings")["settings"]
 check(s["cardLimit"] == 150 and s["countMode"] == "new" and s["resourceRoots"] == ["#AK_Step*"], s)
 check(s["defaults"]["cardLimit"] == 150 and s["defaults"]["shortcut"] == "Ctrl+Shift+S", s["defaults"])
 check(s["colorSyncAvailable"] is True and s["colors"]["queued"] == "#ff9300", "colours")
+check(s["size"] == 100 and s["defaults"]["size"] == 100, "the window's size, 100% to start")
+check(call("save_settings", settings={"size": 300}).get("problems", {}).get("size"), "a size over 200% is refused")
 
 m = call("root_matches", patterns=["#AK_Step*", "#nothing*", ""])["matches"]
 check(len(m[0]) >= 2 and all(t.lower().startswith("#ak_step") for t in m[0]), m[0])

@@ -401,6 +401,7 @@ const KEY_SECTIONS: [string, KeyRow[]][] = [
       [["Shift-L", "Shift-H"], "To the queue / back to the topics"],
       [["u", "Cmd-Z"], "Undo"],
       [["Ctrl-r", "Cmd-Shift-Z"], "Redo"],
+      [["Cmd-=", "Cmd--"], "Make everything bigger / smaller (Cmd-0: back to 100%)"],
       [["?"], "These keys"],
     ],
   ],

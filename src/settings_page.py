@@ -40,6 +40,11 @@ class _Host:
         if window is not None:
             window.push(event)
 
+    def apply_zoom(self, percent: int) -> None:
+        window = ui.window()
+        if window is not None:
+            window.apply_zoom(percent)
+
 
 def handle(msg: dict) -> dict:
     cmd = str(msg.get("cmd"))

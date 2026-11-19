@@ -26,6 +26,8 @@ DEFAULTS: dict = {
     "completed_color": "#00f900",
     "later_color": "#af52de",
     "shortcut": "Ctrl+Shift+S",
+    # How big the window draws (Cmd+= / Cmd+-, the kit's zoom.py).
+    "zoom_percent": 100,
     "import_offered": False,
     "config_version": 3,
 }
@@ -33,6 +35,8 @@ DEFAULTS: dict = {
 
 COUNT_MODES = ("new", "suspended", "all")
 LIMIT_RANGE = (1, 5000)
+# The sizes the window can take (the kit's zoom.py: MIN, MAX).
+ZOOM_RANGE = (50, 200)
 _HEX = re.compile(r"^#[0-9a-fA-F]{6}$")
 
 
@@ -86,6 +90,14 @@ def check_settings(values: dict, cfg: dict) -> tuple[dict, dict]:
             problems["shortcut"] = "Anki can't use that shortcut."
         else:
             changes["shortcut"] = normal if text else ""
+    if "size" in values:
+        try:
+            pct = int(values["size"])
+            if not ZOOM_RANGE[0] <= pct <= ZOOM_RANGE[1]:
+                raise ValueError
+            changes["zoom_percent"] = pct
+        except (TypeError, ValueError):
+            problems["size"] = f"Enter a percentage from {ZOOM_RANGE[0]} to {ZOOM_RANGE[1]}."
     return changes, problems
 
 
@@ -109,6 +121,7 @@ def get_config() -> dict:
         if not isinstance(cfg.get(key), type(value)):
             cfg[key] = list(value) if isinstance(value, list) else value
     cfg["card_limit"] = max(1, cfg["card_limit"])
+    cfg["zoom_percent"] = max(ZOOM_RANGE[0], min(ZOOM_RANGE[1], cfg["zoom_percent"]))
     return cfg
 
 

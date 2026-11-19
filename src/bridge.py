@@ -412,6 +412,8 @@ class Bridge:
             actions.recolor_all()
         if "shortcut" in changed:
             actions.set_shortcut(cfg["shortcut"])
+        if "zoom_percent" in changed and hasattr(self.host, "apply_zoom"):
+            self.host.apply_zoom(cfg["zoom_percent"])
         if changed:
             actions.notify()
             self.toast("Settings saved")

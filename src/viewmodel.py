@@ -561,6 +561,7 @@ class View:
                 "colors": {"queued": c["queued_color"], "completed": c["completed_color"],
                            "later": c["later_color"]},
                 "shortcut": c["shortcut"],
+                "size": c["zoom_percent"],
             }
 
         pinned = []

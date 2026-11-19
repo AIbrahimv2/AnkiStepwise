@@ -5,6 +5,12 @@ All notable changes to this project are documented here. The format is based on
 
 ## [Unreleased]
 
+### Added
+
+- Make everything in the window bigger or smaller: Cmd+= and Cmd+− (Ctrl on
+  Windows and Linux) zoom it in steps, Cmd+0 puts it back to 100%, and
+  Stepwise opens at the size you leave it. It's in Settings too, as Size.
+
 ### Changed
 
 - About lists Skim with an Install button, now that it's on AnkiWeb.

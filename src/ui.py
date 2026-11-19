@@ -16,7 +16,7 @@ from aqt.webview import AnkiWebView
 
 from . import actions, kit
 from .bridge import Bridge
-from .config import ADDON
+from .config import ADDON, get_config, update_config
 from .counts import TagIndex
 
 GEOM_KEY = "tag_queue_web"
@@ -51,6 +51,9 @@ class QueueDialog(QDialog):
         self.web.set_bridge_command(self.bridge.handle, self)
         lay.addWidget(self.web)
         kit.glass(self)  # AnkiGlass's glass behind the window, if it's there
+        # Cmd+= / Cmd+- / Cmd+0: the window's size, kept in the config.
+        self.apply_zoom = kit.zoom(self, self.web, read=lambda: get_config()["zoom_percent"],
+                                   write=lambda p: update_config(zoom_percent=p))
 
         self._index_timer = QTimer(self)
         self._index_timer.setSingleShot(True)

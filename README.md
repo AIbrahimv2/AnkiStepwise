@@ -164,6 +164,7 @@ soon as the window opens, and from anywhere on the page except text fields:
 | `n` / `N` | Next / previous search match (`3n` goes three matches on) |
 | `Esc` | Cancel a number you've typed; leave the search box (results stay); again to clear the search |
 | `Shift+L` / `Shift+H` | Move to the queue panel / back to the topics (in a narrow window, switch which one shows) |
+| `Cmd+=` / `Cmd+-` (`Ctrl` elsewhere) | Make everything in the window bigger / smaller; `Cmd+0` back to 100% |
 
 The queue panel has vim keys too, once `Shift+L` (or a click on the list)
 gives it the keys. They act on the row under the cursor, in whichever tab
@@ -201,8 +202,9 @@ are left alone.
 add-on opens the same thing) covers the daily limit and what counts toward
 it, unsuspending on check-off, which top-level tags hold your resources
 (with a live list of what each pattern matches), pinned resources, the
-deck-screen meter, the keyboard shortcut (press the keys to record it), and
-the queued/done/later colours used here and in the Browser sidebar. Changes
+deck-screen meter, the keyboard shortcut (press the keys to record it), the
+window's size, and the queued/done/later colours used here and in the
+Browser sidebar. Changes
 apply when you save; there's no JSON to edit.
 
 ## Installation

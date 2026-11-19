@@ -3,6 +3,7 @@
    rows. */
 
 #root .set-input.num { width: 84px; text-align: right; font-variant-numeric: tabular-nums; }
+.pct-field { display: inline-flex; align-items: center; gap: 6px; color: var(--text-2); }
 
 .root-list { display: grid; gap: 8px; margin-top: 10px; }
 .root-item { display: grid; grid-template-columns: minmax(0, 1fr) auto; column-gap: 4px; row-gap: 3px; align-items: center; }

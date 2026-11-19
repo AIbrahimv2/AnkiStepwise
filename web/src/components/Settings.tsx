@@ -10,6 +10,8 @@ import { IconButton, Switch } from "./ui";
 
 const LIMIT_MIN = 1;
 const LIMIT_MAX = 5000;
+/** Cmd on a Mac, Ctrl elsewhere, as the size keys are. */
+const MOD = typeof navigator !== "undefined" && /Mac/.test(navigator.platform) ? "⌘" : "Ctrl+";
 
 const MODES: { value: CountMode; label: string; hint: string }[] = [
   {
@@ -222,6 +224,25 @@ export function SettingsPanel(props: { onClose: () => void }) {
           </Block>
         </Section>
 
+        <Section title="Window">
+          <Row
+            label="Size"
+            hint={`How big everything in the window draws. ${MOD}= and ${MOD}− change it in steps as you work; ${MOD}0 puts it back to 100%.`}
+            problem={problems.size}
+          >
+            <span className="pct-field">
+              <input
+                className={`set-input num${problems.size ? " bad" : ""}`}
+                inputMode="numeric"
+                value={String(v.size)}
+                onChange={(e) => set("size", Number(e.target.value.replace(/\D/g, "")) || 0)}
+                aria-label="Percentage"
+              />
+              %
+            </span>
+          </Row>
+        </Section>
+
         <Section title="Anki">
           <Row label="Meter on the deck screen" hint="A small queue meter under your deck list. Click it to open Stepwise.">
             <Switch checked={v.showOnDeck} label="" onChange={(x) => set("showOnDeck", x)} />
@@ -286,6 +307,7 @@ function pick(s: SettingsValues): SettingsValues {
     colorSync: s.colorSync,
     colors: { ...s.colors },
     shortcut: s.shortcut,
+    size: s.size,
   };
 }
 
