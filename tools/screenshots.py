@@ -3,7 +3,7 @@
 
     python3 tools/screenshots.py [--collection PATH] [--capture-wallpaper | --wallpaper PATH]
 
-Writes docs/screenshot.png: the Stepwise window at its default size, drawn
+Writes docs/screenshot.png: the Stepwise window at its default width, drawn
 at 120% (ZOOM, as Cmd+= draws it) so it reads at the listing's width: the
 tag tree on your pinned resources (PINS: a few in each of Step 1, 2 and 3,
 each with its logo), one of them open (OPEN) with its first topic selected,
@@ -35,12 +35,12 @@ KIT = os.environ.get("ANKI_ADDON_KIT", os.path.join(os.path.dirname(ROOT), "anki
 sys.path.insert(0, os.path.join(KIT, "screenshots"))
 import shots  # noqa: E402
 
-SIZE = (1140, 760)  # the window's default size (src/ui.py)
+SIZE = (1140, 800)  # the window's default width (src/ui.py), a little taller for the pinned resources
 ZOOM = 1.2  # how big it draws in that size (the kit's zoom.py, Cmd+=)
 # Pinned, so the tree shows Steps 1, 2 and 3 in one window, a few resources
 # each (and their logos).
-PINS = ["#AK_Step1_v12::#B&B", "#AK_Step1_v12::#Bootcamp", "#AK_Step1_v12::#FirstAid",
-        "#AK_Step2_v12::#SketchyFM", "#AK_Step2_v12::#UWorld",
+PINS = ["#AK_Step1_v12::#B&B", "#AK_Step1_v12::#Bootcamp", "#AK_Step1_v12::#FirstAid", "#AK_Step1_v12::#Pathoma",
+        "#AK_Step2_v12::#AMBOSS", "#AK_Step2_v12::#SketchyFM", "#AK_Step2_v12::#UWorld",
         "#AK_Step3_v12::#NBME", "#AK_Step3_v12::#OME", "#AK_Step3_v12::#UWorld"]
 OPEN = (3, "NBME")  # the resource shown open (Step 3's): two forms, the first small enough to fit the day
 SETUP = """(async () => {
