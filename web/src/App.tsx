@@ -206,32 +206,40 @@ export function App() {
   // --- visible rows --------------------------------------------------------
 
   const hideDone = options?.hideCompleted ?? false;
-  const rows = useMemo<FlatRow[]>(() => {
+  // Hide done also leaves out topics whose cards are all in the queue
+  // already. Those can come back (uncheck what covered them), so they're
+  // kept in `offscreen`, with whatever is open under them, for replies to
+  // refresh.
+  const { rows, offscreen } = useMemo(() => {
     const out: FlatRow[] = [];
+    const off: string[] = [];
     const kidMap = search ? search.kids : kids;
     const totalMap = search ? search.totals : totals;
     const open = search ? search.expanded : expanded;
-    const walk = (keys: string[], depth: number, parent: string | null) => {
+    const walk = (keys: string[], depth: number, parent: string | null, under: boolean) => {
       for (const key of keys) {
         const n = nodes[key];
         if (!n) continue;
-        if (hideDone && !isGroup(n) && n.status === "completed") continue;
-        out.push({ key, depth, parent });
+        const group = isGroup(n);
+        if (hideDone && !group && n.status === "completed") continue;
+        const hide = under || (hideDone && !group && n.covered && n.check === "off");
+        if (hide) off.push(key);
+        else out.push({ key, depth, parent });
         if (open.has(key) && kidMap[key]) {
-          walk(kidMap[key], depth + 1, key);
-          const hidden = (totalMap[key] ?? 0) - kidMap[key].length;
-          if (hidden > 0) out.push({ key: MORE + key, depth: depth + 1, parent: key, more: hidden });
+          walk(kidMap[key], depth + 1, key, hide);
+          const more = (totalMap[key] ?? 0) - kidMap[key].length;
+          if (more > 0 && !hide) out.push({ key: MORE + key, depth: depth + 1, parent: key, more });
         }
       }
     };
-    walk(search ? search.roots : (kids[""] ?? []), 0, null);
-    return out;
+    walk(search ? search.roots : (kids[""] ?? []), 0, null, false);
+    return { rows: out, offscreen: off };
   }, [nodes, kids, totals, expanded, search, hideDone]);
 
   // What every mutating command needs to send back a full refresh.
   const ctx = useRef({ visible: [] as string[], matches: null as string[] | null, truncated: false, selected: null as string | null });
   ctx.current = {
-    visible: rows.map((r) => r.key).filter((k) => nodes[k] && !isGroup(nodes[k])),
+    visible: [...rows.map((r) => r.key), ...offscreen].filter((k) => nodes[k] && !isGroup(nodes[k])),
     matches: search ? search.matches : null,
     truncated: search?.truncated ?? false,
     selected: selected && !isGroup(nodes[selected]) ? selected : null,
@@ -280,26 +288,51 @@ export function App() {
 
   const sync = useCallback(() => act("sync").catch(() => undefined), [act]);
 
+  /** Run a search. `again` runs the one on screen again for fresh
+   *  results without losing your place: rows you closed stay closed, and
+   *  ones you opened keep what they loaded. */
   const runSearch = useCallback(
-    async (q: string) => {
+    async (q: string, again = false) => {
       const seq = ++searchSeq.current;
       const r = await call<SearchResult>("search", { query: q });
       if (seq !== searchSeq.current) return;
       mergeNodes(r.nodes, false);
-      setSearch({
-        query: q,
-        roots: r.roots,
-        kids: r.children,
-        totals: {},
-        expanded: new Set(Object.keys(r.children)),
-        matches: r.matches,
-        terms: r.terms ?? [],
-        truncated: r.truncated,
+      setSearch((prev) => {
+        const fresh = {
+          query: q,
+          roots: r.roots,
+          kids: r.children,
+          totals: {},
+          expanded: new Set(Object.keys(r.children)),
+          matches: r.matches,
+          terms: r.terms ?? [],
+          truncated: r.truncated,
+        };
+        if (!again || !prev || prev.query !== q) return fresh;
+        const expanded = new Set([...prev.expanded, ...fresh.expanded]);
+        for (const k of Object.keys(prev.kids)) if (!prev.expanded.has(k)) expanded.delete(k);
+        return { ...fresh, kids: { ...prev.kids, ...r.children }, totals: prev.totals, expanded };
       });
       setSummary(r.summary ?? null);
     },
     [mergeNodes],
   );
+
+  // With Hide done on, a search leaves out topics whose cards are all in
+  // the queue already. When what's queued changes, run it again so they
+  // go, or come back.
+  const queuedKeys = side?.queued.map((r) => r.key).join("\n") ?? "";
+  const hideDoneRef = useRef(hideDone);
+  hideDoneRef.current = hideDone;
+  const lastQueued = useRef(queuedKeys);
+  useEffect(() => {
+    if (lastQueued.current === queuedKeys) return;
+    lastQueued.current = queuedKeys;
+    const q = queryRef.current.trim();
+    if (!hideDoneRef.current || !q) return;
+    const t = setTimeout(() => runSearch(q, true), 250);
+    return () => clearTimeout(t);
+  }, [queuedKeys, runSearch]);
 
   /** (Re)load the browse tree: top level plus every expanded row. Step
    *  sections open by default (unless you closed them), and so does a lone

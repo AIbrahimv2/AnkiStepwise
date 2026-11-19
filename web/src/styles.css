@@ -223,6 +223,9 @@ html, body {
 }
 .row.top .label { font-weight: 600; }
 .row.done .label { color: var(--text-3); }
+/* Its cards are all queued already: shown (Hide done is off), but quiet. */
+.row.covered .label,
+.row.covered .cell-num { color: var(--text-3); }
 .row.group .label { color: var(--text-2); font-weight: 550; }
 .label mark { background: color-mix(in srgb, var(--q-raw) 26%, transparent); color: inherit; border-radius: 3px; padding: 0 1px; }
 .root-tag { color: var(--text-3); font-weight: 450; margin-left: 6px; font-size: 12px; }

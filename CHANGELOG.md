@@ -15,6 +15,11 @@ All notable changes to this project are documented here. The format is based on
   so you can tell them apart at a glance.
   AnKing's own folders (^Systems, Subjects, ...) show AnKing's, and
   textbooks a book.
+- Hide done also hides topics that would add no cards, because every card
+  they have is already in your queue through another resource's topic (say,
+  Physeo's Female Ligaments once First Aid's Repro anatomy is queued). They
+  come back if you uncheck what covered them. With Hide done off they show
+  greyed out, and hovering one says why.
 
 ### Changed
 

@@ -65,6 +65,7 @@ class View:
         # Done = completed, or nothing left to unsuspend (see rollup.py).
         self.done, self.done_leaves = actions.done_info(self.state) if index else (set(), {})
         self._queue_ids: set[int] | None = None
+        self._covered: dict[str, bool] = {}
 
     def status_of(self, key: str) -> tuple[str | None, str | None, bool]:
         """(status, tag it comes from, automatic). A tag with no status of
@@ -74,6 +75,47 @@ class View:
         if status is None and key in self.done:
             return COMPLETED, None, True
         return status, source, False
+
+    def nested_queued(self, key: str) -> bool:
+        return any(q.startswith(key + SEP) for q in self.queued_l)
+
+    def covered(self, key: str) -> bool:
+        """Whether queuing `key` would add nothing because every card of
+        it that counts is already in this session's queue, through other
+        topics (resources often tag the same notes). False when it has no
+        such cards at all: then there's nothing to overlap."""
+        found = self._covered.get(key)
+        if found is not None:
+            return found
+        found = self._covered[key] = self._all_queued(key)
+        return found
+
+    def _all_queued(self, key: str) -> bool:
+        idx = self.index
+        if idx is None or idx.mode != self.mode:
+            return False
+        n = idx.fresh.get(key, 0)
+        if not n:
+            return False
+        queue = self.queue_ids()
+        # A topic with more cards than the whole queue can't fit inside it,
+        # so big folders cost nothing to rule out.
+        if n > len(queue):
+            return False
+        mask, unit, tag_cards = idx.fresh_mask, idx.unit, idx.tag_cards
+        for k in idx.subtree(key):
+            for i in tag_cards.get(k, ()):
+                if mask[i] and unit[i] not in queue:
+                    return False
+        return True
+
+    def hidden_by_hide_done(self, key: str) -> bool:
+        """What Hide done leaves out: done topics, and untouched ones whose
+        cards are all in the queue already."""
+        status = self.status_of(key)[0]
+        if status == COMPLETED:
+            return True
+        return status is None and not self.nested_queued(key) and self.covered(key)
 
     # --- steps (resource roots) --------------------------------------------
 
@@ -182,7 +224,7 @@ class View:
         name = idx.name(key)
         status, source, auto = self.status_of(key)
         inherited = status is not None and not auto and source.lower() != key
-        nested = any(q.startswith(key + SEP) for q in self.queued_l)
+        nested = self.nested_queued(key)
         if status == QUEUED:
             check, locked = "on", inherited
         else:
@@ -218,6 +260,8 @@ class View:
             "since": fmt_day(self.state.since(source)) if status and not auto else None,
             # Done only because nothing under it is suspended any more.
             "auto": auto,
+            # Untouched, and queuing it would add no cards (see covered).
+            "covered": status is None and not nested and self.covered(key),
         }
 
     def nodes(self, keys: list[str]) -> list[dict]:
@@ -320,10 +364,10 @@ class View:
             and self.in_scope(k, scope)
             and q.matches(k)
         ]
-        # With Hide done on, done topics aren't matches at all, so the count,
-        # the rows and n/N agree.
+        # With Hide done on, the topics it hides (done, or nothing to add)
+        # aren't matches at all, so the count, the rows and n/N agree.
         if self.cfg["hide_completed"]:
-            matches = [k for k in matches if self.status_of(k)[0] != COMPLETED]
+            matches = [k for k in matches if not self.hidden_by_hide_done(k)]
         mset = set(matches)
 
         def has_matched_ancestor(k: str) -> bool:

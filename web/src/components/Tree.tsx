@@ -373,6 +373,8 @@ const TreeRow = memo(function TreeRow(props: {
 
   if (isGroup(node)) return <GroupRow {...props} node={node} chevron={chevron} indent={indent} />;
 
+  // Every card it has is queued already, through other topics.
+  const covered = node.covered && node.check === "off";
   const cls = [
     "row",
     node.top && "top",
@@ -381,6 +383,7 @@ const TreeRow = memo(function TreeRow(props: {
     node.top && depth === 0 && "stick-root",
     node.status === "completed" && "done",
     node.status === "later" && "later",
+    covered && "covered",
     selected && "selected",
     props.pulse && "pulse",
   ]
@@ -395,7 +398,7 @@ const TreeRow = memo(function TreeRow(props: {
       role="treeitem"
       aria-expanded={node.hasKids ? open : undefined}
       aria-selected={selected}
-      title={node.tag}
+      title={covered ? `${node.tag}\nIts cards are all in the queue already` : node.tag}
       onClick={() => props.onSelect(node.key)}
       onDoubleClick={() => node.hasKids && props.onToggleExpand(node.key)}
       onContextMenu={(e) => {
@@ -414,7 +417,9 @@ const TreeRow = memo(function TreeRow(props: {
               ? `Queued as part of ${node.source}`
               : node.check === "on"
                 ? "Remove from queue"
-                : "Add to queue"
+                : covered
+                  ? "Add to queue (adds no cards: they're all queued already)"
+                  : "Add to queue"
           }
           onToggle={() => props.onToggleQueue(node)}
         />

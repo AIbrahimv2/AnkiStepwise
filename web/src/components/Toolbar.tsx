@@ -145,7 +145,12 @@ export function ScopePicker(props: {
 }
 
 export function HideDoneSwitch(props: { checked: boolean; onChange: (v: boolean) => void }) {
-  return <Switch checked={props.checked} label="Hide done" onChange={props.onChange} />;
+  return (
+    // `contents` keeps the switch laid out as the toolbar's own item.
+    <span style={{ display: "contents" }} title="Hide topics that are done, and ones whose cards are all in the queue already">
+      <Switch checked={props.checked} label="Hide done" onChange={props.onChange} />
+    </span>
+  );
 }
 
 export function MatchBar(props: { summary: Summary; at: number; onQueueAll: () => void; onLaterAll: () => void }) {

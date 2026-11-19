@@ -33,7 +33,9 @@ Anki's light and dark themes, with vim-style keyboard navigation.
   (`cardio` finds Cardiology), another ending (`developmental` finds
   Development), a typo (`pyschiatry`), or a common abbreviation (`msk`, `peds`,
   `heme`, `gi`). Words like "and" and "of" are skipped. With **Hide done** on,
-  finished topics are left out of the results too. A dropdown next
+  finished topics are left out of the results too, and so are topics whose
+  cards are all in your queue already through another resource's topic
+  (with it off, those show greyed out). A dropdown next
   to the search box limits the tree and the search to **all resources**, your
   **pinned resources**, or a **single resource**.
 - **Queue all matches.** One click queues every topic the search found that

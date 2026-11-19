@@ -32,6 +32,9 @@ export interface TagNode {
   since: string | null;
   /** Done only because every card under it has been studied. */
   auto: boolean;
+  /** Untouched, but every card it has is in the queue already (through
+   *  other topics), so queuing it adds nothing. Hide done hides it. */
+  covered: boolean;
 }
 
 /** A section header in the tree: a step ("Step 1", holding its resources)
