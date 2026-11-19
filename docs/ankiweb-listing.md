@@ -19,7 +19,7 @@ How AnkiWeb's add-on search behaves, tested in November 2026:
 
 ## Package on AnkiWeb
 
-Version 1.4.0, uploaded 2026-11-17. The release script (`release.py --uploaded`
+Version 1.5.0, uploaded 2026-11-19. The release script (`release.py --uploaded`
 in the `anki-addon-release` skill) updates this line after each upload.
 
 ## Supported Anki versions
