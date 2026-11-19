@@ -66,7 +66,7 @@ A study planner for AnKing and other medical school decks. Tick the topics you'r
 
 **Code: 1949793886.** Paste it in Anki under **Tools → Add-ons → Get Add-ons**.
 
-<p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree by resource on the left, today's queue on the right" width="100%"></p>
+<p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree on your pinned resources in Steps 1, 2 and 3, each with its logo, beside today's queue" width="100%"></p>
 
 Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step 2 / Step 3 decks for USMLE and COMLEX, and works with any deck that uses hierarchical tags.
 

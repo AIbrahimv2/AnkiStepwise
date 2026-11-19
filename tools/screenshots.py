@@ -3,11 +3,15 @@
 
     python3 tools/screenshots.py [--collection PATH] [--capture-wallpaper | --wallpaper PATH]
 
-Writes docs/screenshot.png: the Stepwise window at its default size, the
-tag tree with B&B open and today's queue, from a copy of a collection
+Writes docs/screenshot.png: the Stepwise window at its default size, drawn
+at 120% (ZOOM, as Cmd+= draws it) so it reads at the listing's width: the
+tag tree on your pinned resources (PINS: a few in each of Step 1, 2 and 3,
+each with its logo), one of them open (OPEN) with its first topic selected,
+and today's queue. From a copy of a collection
 (tests/fixture/collection.anki2 unless --collection names another) served
 by tools/devserver.py with Anki's own Python (ANKI_PYTHON, or the
-launcher's). The collection itself is never touched.
+launcher's). The collection itself is never touched; the pins and the scope
+are set in the dev server's config, which it keeps in memory.
 
 It's made with the add-ons' shared screenshot tools, in the kit's checkout
 next to this one (../anki-addon-kit/screenshots/shots.py, or set
@@ -18,9 +22,11 @@ from __future__ import annotations
 
 import argparse
 import glob
+import json
 import os
 import subprocess
 import sys
+import urllib.request
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 DOCS = os.path.join(ROOT, "docs")
@@ -30,22 +36,57 @@ sys.path.insert(0, os.path.join(KIT, "screenshots"))
 import shots  # noqa: E402
 
 SIZE = (1140, 760)  # the window's default size (src/ui.py)
+ZOOM = 1.2  # how big it draws in that size (the kit's zoom.py, Cmd+=)
+# Pinned, so the tree shows Steps 1, 2 and 3 in one window, a few resources
+# each (and their logos).
+PINS = ["#AK_Step1_v12::#B&B", "#AK_Step1_v12::#Bootcamp", "#AK_Step1_v12::#FirstAid",
+        "#AK_Step2_v12::#SketchyFM", "#AK_Step2_v12::#UWorld",
+        "#AK_Step3_v12::#NBME", "#AK_Step3_v12::#OME", "#AK_Step3_v12::#UWorld"]
+OPEN = (3, "NBME")  # the resource shown open (Step 3's): two forms, the first small enough to fit the day
 SETUP = """(async () => {
   const sleep = (ms) => new Promise((r) => setTimeout(r, ms));
-  let row;
-  for (let i = 0; i < 100 && !row; i++) {
-    row = [...document.querySelectorAll('.row.top')].find((r) => r.querySelector('.label')?.textContent.trim() === 'B&B');
-    if (!row) await sleep(100);
-  }
-  if (!row) throw new Error('no B&B row in the tag tree');
+  const tops = () => [...document.querySelectorAll('.row.top')];
+  for (let i = 0; i < 100 && !tops().length; i++) await sleep(100);
+  if (!tops().length) throw new Error('no resources in the tag tree');
   // The offer to import Colorful Tags' colours: answered once, in the copy.
   const notNow = [...document.querySelectorAll('button')].find((b) => b.textContent.trim() === 'Not now');
   if (notNow) { notNow.click(); await sleep(300); }
+  for (const open of document.querySelectorAll('.row.top[aria-expanded="true"]')) {
+    open.querySelector('.chev').click();
+    await sleep(200);
+  }
+  // The steps' rows in order: OPEN is the one under its step's header.
+  const rows = () => [...document.querySelectorAll('.tree .row')];
+  const find = () => {
+    let step = null;
+    for (const r of rows()) {
+      // A step's header is classed by its index: step-0 for Step 1.
+      if (r.classList.contains('section')) step = [...r.classList].find((c) => c.startsWith('step-'));
+      else if (step === %(step)s && r.classList.contains('top') && r.querySelector('.label')?.textContent.trim() === %(name)s) return r;
+    }
+    return null;
+  };
+  const row = find();
+  if (!row) throw new Error('no ' + %(name)s + ' under ' + %(step)s);
   row.querySelector('.chev').click();
+  for (let i = 0; i < 30 && row.getAttribute('aria-expanded') !== 'true'; i++) await sleep(100);
   await sleep(400);
-  if (row.getAttribute('aria-expanded') !== 'true') throw new Error("B&B didn't open");
-  return true;
-})()"""
+  // Its first topic selected, so the bar under the tree says what it adds.
+  const all = rows();
+  const topic = all[all.indexOf(find()) + 1];
+  if (!topic || topic.classList.contains('top')) throw new Error(%(name)s + ' has no topics showing');
+  topic.click();
+  await sleep(500);
+  return [...document.querySelectorAll('.tree .row')].map((r) => r.querySelector('.label')?.textContent.trim()).join(', ');
+})()""" % {"step": json.dumps(f"step-{OPEN[0] - 1}"), "name": json.dumps(OPEN[1])}
+
+
+def bridge(port: int, cmd: str, **args) -> dict:
+    """One of the page's commands, sent to the dev server's bridge."""
+    req = urllib.request.Request(f"http://127.0.0.1:{port}/bridge", data=json.dumps({"cmd": cmd, **args}).encode(),
+                                 method="POST")
+    with urllib.request.urlopen(req, timeout=60) as r:
+        return json.load(r)
 
 
 def anki_python() -> str:
@@ -74,10 +115,16 @@ def main() -> None:
         dev = subprocess.Popen(cmd, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
         try:
             shots.wait_for(f"http://127.0.0.1:{port}/", timeout=60)
+            for tag in PINS:
+                bridge(port, "toggle_pin", tag=tag)
+            bridge(port, "set_scope", value="pinned")
             s.capture([{"url": f"http://127.0.0.1:{port}/?theme=dark", "width": SIZE[0], "height": SIZE[1],
-                        "setup": SETUP, "wait": 800, "out": "stepwise.png"}])
+                        "setup": SETUP, "zoom": ZOOM, "wait": 800, "out": "stepwise.png",
+                        "result": s.path("rows.json")}])
         finally:
             dev.terminate()
+        with open(s.path("rows.json")) as f:
+            print("tree:", json.load(f))
         written = s.frames([{"image": "stepwise.png", "size": SIZE, "title": "Stepwise", "out": "screenshot.png"}],
                            shots.wallpaper_for(args, s), DOCS)
     for out in written:
