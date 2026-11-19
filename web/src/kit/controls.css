@@ -395,3 +395,24 @@
 #root .keycap-btn.recording { border-color: var(--focus); color: var(--text-2); box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 22%, transparent); }
 .settings-actions { align-items: center; }
 .settings-actions .spacer { flex: 1; }
+
+/* --- a resource's logo (resources.tsx) ------------------------------------- */
+
+/* The brand's own icon, as it is; --kit-res-size sets its size. One that's
+   all one dark colour is drawn in the text's colour instead, through its
+   shape (--kit-res-src), so it shows in dark mode too. */
+.kit-res {
+  display: inline-block;
+  width: var(--kit-res-size, 18px);
+  height: var(--kit-res-size, 18px);
+  flex: none;
+  object-fit: contain;
+  vertical-align: -4px;
+}
+.kit-res-mono {
+  background-color: currentColor;
+  -webkit-mask: var(--kit-res-src) center / contain no-repeat;
+  mask: var(--kit-res-src) center / contain no-repeat;
+}
+/* Its room, for a resource with no logo in a list of ones with. */
+.kit-res-gap { display: inline-block; width: var(--kit-res-size, 18px); flex: none; }

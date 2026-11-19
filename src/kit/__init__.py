@@ -25,11 +25,17 @@ For AnkiGlass's glass behind one of the add-on's windows (when it's
 installed and its setting is on), while making the window:
 
     kit.glass(self)  # after its web view, before it shows or loads its page
+
+For Cmd+= / Cmd+- / Cmd+0 on one of the add-on's windows, a size it keeps
+(zoom.py):
+
+    apply = kit.zoom(self, self.web, read=..., write=...)
 """
 
 from __future__ import annotations
 
 from .family import KIT_VERSION, about, command, glass, register, self_id
+from .zoom import zoom
 
 
 def open_page(addon_id: str | None = None, tab: str = "news") -> None:
