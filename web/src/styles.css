@@ -589,7 +589,7 @@ html, body {
   background: var(--surface);
   box-shadow: 0 1px 0 var(--line);
 }
-.tree-head + .row.section { margin-top: 0; }
+.tree-head + .tree-section > .row.section { margin-top: 0; }
 .row.section .cell-name { padding-left: 14px !important; }
 .row.section:hover { background: color-mix(in srgb, var(--ink) 3%, var(--surface)); }
 .row.section.selected { background: color-mix(in srgb, var(--focus) 9%, var(--surface)); }
@@ -630,6 +630,10 @@ html, body {
 .tree:focus .row.stick.selected::after { background: var(--select-strong); }
 .row.stick.pulse { animation: none; }
 .row.stick.pulse::after { animation: pulse 1.3s ease-out; }
+/* The rows' groups (Tree.tsx's groupRows, SidePanel.tsx's UnderHeader) have
+   no box, so the rows are one list and every resource sticks. On AnkiGlass's
+   glass they're boxes. */
+.tree-section, .tree-resource, .tree-rows, .tree-rows > div, .under-header, .under-header > div { display: contents; }
 
 /* Moving the selection keeps it clear of the sticky titles, step and resource. */
 .tree .row { scroll-margin: 94px 0 8px; }
@@ -889,39 +893,78 @@ html, body {
 
 /* --- with AnkiGlass's glass behind the window (kit/glass.css) ----------------- */
 
-/* The headers that stick while the tree and the queue scroll. Anki's web
-   view draws no blur on the glass, so a see-through header would show the
-   rows under it. Each is the panel's glass while it sits in place, and
-   solid once it sticks: an underlay behind its text (::before) that's
-   opaque while stuck, with its hover and selection colours mixed into the
-   panel colour. A resource row keeps those on its ::after, above the
-   underlay. */
-:root.kit-glass :is(.tree-head, .row.section, .row.group, .group-head, .col-head, .row.stick) {
-  container-type: scroll-state;
-}
-:root.kit-glass :where(.tree-head, .row.section, .row.group, .group-head, .col-head)::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  z-index: -1;
-  border-radius: inherit;
+/* The headers that stick while the tree and the queue scroll stay glass.
+   Anki's web view draws no blur on the glass, so a header can't hide what
+   scrolls under it: instead, the rows are cut off at its lower edge, and a
+   header sticks only within its group (a step's rows, a resource's:
+   Tree.tsx's groupRows; the queue's are sections already), so the next one
+   pushes it out, fading as it goes, rather than sliding over it.
+
+   Both run on the compositor, as scrolling and sticking do, so they keep up
+   however fast you scroll (a clip-path would be redrawn a frame or more
+   behind). The rows under a header are a box pinned at its edge, with the
+   rows moved back up inside it by as much: translate, from a view timeline
+   whose scrollport is inset to that edge, over the box's exit-crossing range
+   (its top at the edge, then its bottom). A pushed header fades over the
+   start of its group's exit range.
+
+   In the tree those edges are 30px down (the column titles), 68px (a step's
+   header) and 98px (a resource's); a resource with no step above it sticks
+   at 30px, so its rows go under at 60px. In the queue they're 26px (the
+   column title) and 60px (a resource's header). */
+@keyframes glass-pin { to { translate: 0 100%; } }
+@keyframes glass-unpin { to { translate: 0 -100%; } }
+@keyframes glass-fade { to { opacity: 0; } }
+
+:root.kit-glass :is(.tree-section, .tree-resource, .tree-rows, .tree-rows > div, .under-header, .under-header > div) { display: block; }
+:root.kit-glass .tree-section { view-timeline: --step block; view-timeline-inset: 30px calc(100% - 68px); }
+:root.kit-glass .tree-resource { view-timeline: --resource block; view-timeline-inset: 68px calc(100% - 98px); }
+:root.kit-glass .tree > .tree-resource { view-timeline-inset: 30px calc(100% - 60px); }
+:root.kit-glass .list .group { view-timeline: --group block; view-timeline-inset: 26px calc(100% - 60px); }
+
+:root.kit-glass :is(.tree-rows, .under-header) {
+  overflow: visible clip;
   pointer-events: none;
+  view-timeline: --rows block;
+  view-timeline-inset: 98px 0px;
+  animation: glass-pin linear both;
 }
-/* Over the column titles' bottom border too, which the rows would show through. */
-:root.kit-glass .tree-head::before { bottom: -1px; }
-:root.kit-glass .row.stick::before { background: transparent; }
-@container scroll-state(stuck: top) {
-  :root.kit-glass :is(.tree-head, .row.section, .row.group, .group-head, .col-head, .row.stick)::before {
-    background: var(--solid);
-  }
-  /* The column titles' bottom border, which the underlay covers. */
-  :root.kit-glass .tree-head::before { box-shadow: inset 0 -1px 0 var(--line); }
-  :root.kit-glass :is(.row.section, .row.group):hover::before { background: color-mix(in srgb, var(--ink) 3%, var(--solid)); }
-  :root.kit-glass :is(.row.section, .row.group).selected::before { background: color-mix(in srgb, var(--focus) 9%, var(--solid)); }
-  :root.kit-glass .tree:focus :is(.row.section, .row.group).selected::before { background: color-mix(in srgb, var(--focus) 15%, var(--solid)); }
-  :root.kit-glass .group-head:hover::before { background: color-mix(in srgb, var(--ink) 3.5%, var(--solid)); }
-  :root.kit-glass .list:focus .group-head.cursor::before { background: color-mix(in srgb, var(--focus) 15%, var(--solid)); }
+:root.kit-glass :is(.tree-rows, .under-header) > div {
+  pointer-events: auto;
+  animation: glass-unpin linear both;
 }
+:root.kit-glass :is(.tree-rows, .under-header),
+:root.kit-glass :is(.tree-rows, .under-header) > div {
+  animation-timeline: --rows;
+  animation-range: exit-crossing 0% exit-crossing 100%;
+}
+:root.kit-glass .tree > .tree-resource > .tree-rows { view-timeline-inset: 60px 0px; }
+:root.kit-glass .tree-section > .tree-rows { view-timeline-inset: 68px 0px; }
+:root.kit-glass .tree > .tree-rows { view-timeline-inset: 30px 0px; }
+:root.kit-glass .group > .under-header { view-timeline-inset: 60px 0px; }
+:root.kit-glass .list > .under-header { view-timeline-inset: 26px 0px; }
+
+:root.kit-glass .tree-section > .row:first-child {
+  animation: glass-fade linear both;
+  animation-timeline: --step;
+  animation-range: exit 0% exit 25%;
+}
+/* A step's header keeps its flash when you jump to it. */
+:root.kit-glass .tree-section > .row.pulse:first-child {
+  animation: glass-fade linear both, pulse 1.3s ease-out;
+  animation-timeline: --step, auto;
+  animation-range: exit 0% exit 25%, normal;
+}
+:root.kit-glass .tree-resource > .row.stick,
+:root.kit-glass .list .group-head {
+  animation: glass-fade linear both;
+  animation-timeline: --resource;
+  animation-range: exit 0% exit 25%;
+}
+:root.kit-glass .list .group-head { animation-timeline: --group; }
+
+/* A resource's row has no square underlay: nothing goes under it. */
+:root.kit-glass .row.stick::before { background: none; }
 
 /* The keys you press, over the rows: all but opaque, as nothing blurs. */
 :root.kit-glass .keycast-pill { background: var(--float); }

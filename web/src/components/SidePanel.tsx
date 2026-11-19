@@ -737,7 +737,7 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
   cursor: string | null;
   renderRow: (row: R, path: string, chip: boolean, group?: string) => ReactNode;
 }) {
-  if (!props.groups) return <>{props.rows.map((r) => props.renderRow(r, r.path, true))}</>;
+  if (!props.groups) return <UnderHeader>{props.rows.map((r) => props.renderRow(r, r.path, true))}</UnderHeader>;
   const mixedSteps = new Set(props.groups.map((g) => g.step)).size > 1;
   return (
     <>
@@ -773,7 +773,11 @@ function RowList<R extends { tag: string; key: string; path: string }>(props: {
                 {g.count > 1 && <b>{fmt(g.fresh)}</b>}
               </span>
             </div>
-            {open && <Clusters rows={g.rows} renderRow={(r, path, chip) => props.renderRow(r, path, chip, g.key)} />}
+            {open && (
+              <UnderHeader>
+                <Clusters rows={g.rows} renderRow={(r, path, chip) => props.renderRow(r, path, chip, g.key)} />
+              </UnderHeader>
+            )}
           </section>
         );
       })}
@@ -808,6 +812,17 @@ function Clusters<R>(props: {
         </div>
       ))}
     </>
+  );
+}
+
+/** Rows that scroll under a sticky header (the column title, a resource's
+ *  header). No box of their own, except on AnkiGlass's glass, where they're
+ *  cut off at the header's edge (styles.css). */
+function UnderHeader({ children }: { children: ReactNode }) {
+  return (
+    <div className="under-header">
+      <div>{children}</div>
+    </div>
   );
 }
 

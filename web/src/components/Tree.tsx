@@ -1,5 +1,5 @@
 import { Bookmark, BookmarkMinus, BookmarkPlus, ChevronRight, CircleCheck, Folder, SearchX, Star } from "lucide-react";
-import { type CSSProperties, type ReactNode, memo, useEffect, useRef, useState } from "react";
+import { type CSSProperties, Fragment, type ReactNode, memo, useEffect, useRef, useState } from "react";
 import { ResourceIcon } from "../kit/resources";
 import { KeyCast, useKeyCastHold } from "../keycast";
 import type { AnyNode, Details, GroupNode, TagNode } from "../types";
@@ -16,6 +16,45 @@ export interface FlatRow {
 
 /** Key prefix of the "Show more" row at the end of a partly loaded folder. */
 export const MORE = "__more__:";
+
+/** A step's rows (its header, then its resources), or the rows before the
+ *  first step, which has no header. */
+interface Section {
+  head: FlatRow | null;
+  /** Rows that come before its first resource. */
+  loose: FlatRow[];
+  resources: { head: FlatRow; rows: FlatRow[] }[];
+}
+
+/** The rows, grouped under the headers that stick: a step's (or "Other
+ *  tags") and a resource's. The groups have no box of their own, so the
+ *  rows stay one list (styles.css), except on AnkiGlass's glass: there a
+ *  header sticks only within its group, so the next one pushes it out
+ *  rather than sliding over it, since a see-through header can't hide
+ *  what's under it. */
+function groupRows(rows: FlatRow[], nodes: Record<string, AnyNode>): Section[] {
+  const out: Section[] = [];
+  let section: Section | null = null;
+  let resource: Section["resources"][number] | null = null;
+  for (const r of rows) {
+    const node = r.more ? undefined : nodes[r.key];
+    if (node && isGroup(node)) {
+      section = { head: r, loose: [], resources: [] };
+      out.push(section);
+      resource = null;
+      continue;
+    }
+    if (!section) {
+      section = { head: null, loose: [], resources: [] };
+      out.push(section);
+    }
+    if (node && !isGroup(node) && node.top) {
+      resource = { head: r, rows: [] };
+      section.resources.push(resource);
+    } else (resource ? resource.rows : section.loose).push(r);
+  }
+  return out;
+}
 
 interface TreeProps {
   rows: FlatRow[];
@@ -273,6 +312,37 @@ export function Tree(props: TreeProps) {
     window.addEventListener("keydown", onKey);
     return () => window.removeEventListener("keydown", onKey);
   }, []);
+  const row = (r: FlatRow) => {
+    if (r.more) {
+      return (
+        <MoreRow
+          key={r.key}
+          depth={r.depth}
+          hidden={r.more}
+          selected={selected === r.key}
+          onLoad={() => props.onLoadMore(r.key.slice(MORE.length))}
+        />
+      );
+    }
+    const node = nodes[r.key];
+    if (!node) return null;
+    return (
+      <TreeRow
+        key={r.key}
+        node={node}
+        depth={r.depth}
+        open={expanded.has(r.key)}
+        selected={selected === r.key}
+        pulse={pulse === r.key}
+        words={props.words}
+        onSelect={props.onSelect}
+        onToggleExpand={props.onToggleExpand}
+        onToggleQueue={props.onToggleQueue}
+        onToggleLater={props.onToggleLater}
+        onContext={props.onContext}
+      />
+    );
+  };
   return (
     <>
       <div className="tree" ref={box} tabIndex={0} onKeyDown={onKeyDown} onBlur={() => setPending(0)} role="tree">
@@ -300,35 +370,33 @@ export function Tree(props: TreeProps) {
             <div>{props.emptyText}</div>
           </div>
         ) : (
-          rows.map((r) => {
-            if (r.more) {
-              return (
-                <MoreRow
-                  key={r.key}
-                  depth={r.depth}
-                  hidden={r.more}
-                  selected={selected === r.key}
-                  onLoad={() => props.onLoadMore(r.key.slice(MORE.length))}
-                />
-              );
-            }
-            const node = nodes[r.key];
-            if (!node) return null;
-            return (
-              <TreeRow
-                key={r.key}
-                node={node}
-                depth={r.depth}
-                open={expanded.has(r.key)}
-                selected={selected === r.key}
-                pulse={pulse === r.key}
-                words={props.words}
-                onSelect={props.onSelect}
-                onToggleExpand={props.onToggleExpand}
-                onToggleQueue={props.onToggleQueue}
-                onToggleLater={props.onToggleLater}
-                onContext={props.onContext}
-              />
+          groupRows(rows, nodes).map((s) => {
+            const body = (
+              <>
+                {s.head && row(s.head)}
+                {s.loose.length > 0 && (
+                  <div className="tree-rows" role="none">
+                    <div role="none">{s.loose.map(row)}</div>
+                  </div>
+                )}
+                {s.resources.map((g) => (
+                  <div key={g.head.key} className="tree-resource" role="none">
+                    {row(g.head)}
+                    {g.rows.length > 0 && (
+                      <div className="tree-rows" role="none">
+                        <div role="none">{g.rows.map(row)}</div>
+                      </div>
+                    )}
+                  </div>
+                ))}
+              </>
+            );
+            return s.head ? (
+              <div key={s.head.key} className="tree-section" role="none">
+                {body}
+              </div>
+            ) : (
+              <Fragment key="">{body}</Fragment>
             );
           })
         )}

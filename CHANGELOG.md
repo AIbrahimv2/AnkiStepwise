@@ -30,6 +30,13 @@ All notable changes to this project are documented here. The format is based on
 - Taking a topic off Queue, Later or Done (x, dd or its remove button) is
   instant too: the row goes as you press, so you can clear several in a row.
 
+### Fixed
+
+- With AnkiGlass, the headers that stay at the top of the tree and the queue
+  as you scroll stay glass instead of turning dark, and nothing shows through
+  them: rows go out of sight as they reach a header, and each step or
+  resource pushes the last one's header away instead of sliding over it.
+
 ## [1.4.0] - 2026-11-17
 
 ### Added
