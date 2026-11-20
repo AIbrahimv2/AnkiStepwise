@@ -337,7 +337,7 @@ python3 tools/screenshots.py      # writes docs/*.png
 | Stepwise | `screenshot.png` | its window at 120%, on pinned resources in Steps 1 to 3 (each with its logo) with one open, from `tests/fixture/` via its dev server |
 | AnkiGlass | `screenshot.png` | the deck list beside a real AnKing card under review, side by side (760×690 each, so the card shows whole) |
 | AnkiBare | `screenshot.png` | the window with and without its title bar, side by side, labelled Before and After on the image |
-| Skim | `screenshot.png` | its window (1180×1040 at 108%, so the card's diagram and its credit show whole and the card pane stays) on a real B&B topic full of verdicts, at a card with an openly licensed diagram it would unsuspend now, from a copy of a collection via its dev server |
+| Skim | `screenshot.png` | two windows side by side (1180×1040 at 108%, so the card pane stays): a real B&B topic full of verdicts at a card showing both steps and four systems, and that card in the editor with its openly licensed diagram, from a copy of a collection via its dev server |
 
 - **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
   dark mode, with AnkiGlass's CSS and glass on the main window, framed as a
