@@ -337,13 +337,15 @@ python3 tools/screenshots.py      # writes docs/*.png
 | Stepwise | `screenshot.png` | its window at 120%, on pinned resources in Steps 1 to 3 (each with its logo) with one open, from `tests/fixture/` via its dev server |
 | AnkiGlass | `screenshot.png` | the deck list beside a real AnKing card under review, side by side (760×690 each, so the card shows whole) |
 | AnkiBare | `screenshot.png` | the window with and without its title bar, side by side, labelled Before and After on the image |
-| Skim | `screenshot.png` | two windows side by side (1180×1040 at 108%, so the card pane stays): a real B&B topic full of verdicts at a card showing both steps and four systems, and that card in the editor with its openly licensed diagram, from a copy of a collection via its dev server |
+| Skim | `screenshot.png` | two windows side by side on AnkiGlass's glass (1180×1040 at 108%, so the card pane stays): a real B&B topic full of verdicts at a card showing both steps and four systems, and that card in the editor with its openly licensed diagram, from a copy of a collection via its dev server |
 
 - **Look:** Anki's own pages (its markup and stylesheets from Anki.app) in
   dark mode, with AnkiGlass's CSS and glass on the main window, framed as a
   macOS window on macOS Tahoe's dark wallpaper (top-left crop, chosen for
-  the contrast of the text over it), at 2x. Add-on windows stay solid, as
-  AnkiGlass leaves them. Where AnkiGlass isn't the subject, the image is
+  the contrast of the text over it), at 2x. An add-on's own window can be
+  on AnkiGlass's glass too, as AnkiGlass gives it (shots.load_glass()'s
+  "window" as capture's "preload", "transparent", and a "tint" on its
+  frame): Skim's is. Where AnkiGlass isn't the subject, the image is
   credited "Shown with AnkiGlass" in the README and the listing.
 - **Size:** one window and the wallpaper around it; main-window shots are
   760×622 points, so 1776×1556. Shown at `width="100%"`.
