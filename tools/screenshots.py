@@ -1,13 +1,14 @@
 #!/usr/bin/env python3
 """Make the screenshot for the README and the AnkiWeb listing.
 
-    python3 tools/screenshots.py [--collection PATH] [--capture-wallpaper | --wallpaper PATH]
+    python3 tools/screenshots.py [--collection PATH] [--plain] [--capture-wallpaper | --wallpaper PATH]
 
 Writes docs/screenshot.png: the Stepwise window at its default width, drawn
 at 120% (ZOOM, as Cmd+= draws it) so it reads at the listing's width: the
 tag tree on your pinned resources (PINS: a few in each of Step 1, 2 and 3,
 each with its logo), one of them open (OPEN) with its first topic selected,
-and today's queue. From a copy of a collection
+and today's queue. It's on AnkiGlass's glass, as AnkiGlass gives an add-on's
+window (--plain for none). From a copy of a collection
 (tests/fixture/collection.anki2 unless --collection names another) served
 by tools/devserver.py with Anki's own Python (ANKI_PYTHON, or the
 launcher's). The collection itself is never touched; the pins and the scope
@@ -102,10 +103,12 @@ def main() -> None:
     ap.add_argument("--collection", default=os.path.join(FIXTURE, "collection.anki2"))
     ap.add_argument("--colorful-tags", default=os.path.join(FIXTURE, "colorful_tags.json"),
                     help="Colorful Tags data to simulate the add-on with, if the file exists")
+    ap.add_argument("--plain", action="store_true", help="without AnkiGlass")
     shots.add_wallpaper_args(ap)
     args = ap.parse_args()
     if not os.path.isfile(args.collection):
         raise SystemExit(f"no collection at {args.collection}: pass --collection")
+    glass = None if args.plain else shots.load_glass()
     with shots.Session() as s:
         port = shots.free_port()
         cmd = [anki_python(), os.path.join(ROOT, "tools", "devserver.py"), "--collection", args.collection,
@@ -120,12 +123,14 @@ def main() -> None:
             bridge(port, "set_scope", value="pinned")
             s.capture([{"url": f"http://127.0.0.1:{port}/?theme=dark", "width": SIZE[0], "height": SIZE[1],
                         "setup": SETUP, "zoom": ZOOM, "wait": 800, "out": "stepwise.png",
-                        "result": s.path("rows.json")}])
+                        "result": s.path("rows.json"),
+                        **({"preload": glass["window"], "transparent": True} if glass else {})}])
         finally:
             dev.terminate()
         with open(s.path("rows.json")) as f:
             print("tree:", json.load(f))
-        written = s.frames([{"image": "stepwise.png", "size": SIZE, "title": "Stepwise", "out": "screenshot.png"}],
+        written = s.frames([{"image": "stepwise.png", "size": SIZE, "title": "Stepwise", "out": "screenshot.png",
+                            "tint": glass and glass["tint"]}],
                            shots.wallpaper_for(args, s), DOCS)
     for out in written:
         print("wrote", os.path.relpath(out, ROOT))

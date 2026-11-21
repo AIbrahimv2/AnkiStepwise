@@ -68,6 +68,8 @@ A study planner for AnKing and other medical school decks. Tick the topics you'r
 
 <p><img src="https://raw.githubusercontent.com/AIbrahimv2/AnkiStepwise/main/docs/screenshot.png" alt="Stepwise: the tag tree on your pinned resources in Steps 1, 2 and 3, each with its logo, beside today's queue" width="100%"></p>
 
+<p><small>Shown with <a href="https://ankiweb.net/shared/info/1866406123">AnkiGlass</a>, which gives Anki's windows, Stepwise's included, macOS Liquid Glass.</small></p>
+
 Unsuspend by tag without opening the Browser. Built for the AnKing Step 1 / Step 2 / Step 3 decks for USMLE and COMLEX, and works with any deck that uses hierarchical tags.
 
 **Features**

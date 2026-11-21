@@ -16,6 +16,8 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 
 <img src="docs/screenshot.png" width="100%" alt="Stepwise: the tag tree on your pinned resources in Steps 1, 2 and 3, each with its logo, beside today's queue">
 
+<sub>Shown with [AnkiGlass](https://github.com/AIbrahimv2/AnkiGlass), which gives Anki's windows, Stepwise's included, macOS Liquid Glass.</sub>
+
 ## Features
 
 - **Tag tree by resource, split by step.** Resources sit under colour-coded
@@ -259,7 +261,8 @@ Run `./build.sh` to build the UI and produce a distributable `.ankiaddon` in
 `python3 tools/screenshots.py` renders `docs/screenshot.png` (used here and on
 AnkiWeb) with the add-ons' shared screenshot tools in the kit
 (`../anki-addon-kit/screenshots`): the window from a copy of the test snapshot
-(`tests/fixture/`, or `--collection`), framed on macOS Tahoe's dark wallpaper.
+(`tests/fixture/`, or `--collection`), on AnkiGlass's glass (`--plain` for
+none), framed on macOS Tahoe's dark wallpaper.
 
 The tests in `tests/` run with Anki's own Python against a snapshot of a real
 collection (an AnKing deck, with Colorful Tags installed). The snapshot stays
