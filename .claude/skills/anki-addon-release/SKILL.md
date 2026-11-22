@@ -14,26 +14,28 @@ scripts in `scripts/`.
 
 | Add-on | Local repo | GitHub | AnkiWeb ID | Package |
 | --- | --- | --- | --- | --- |
-| 🪜 Stepwise | `~/Documents/Projects/anki-stepwise` | AIbrahimv2/AnkiStepwise | 1949793886 | `dist/stepwise.ankiaddon` |
-| 📅 Exam Timeline | `~/Documents/Projects/anki-exam-timeline` | AIbrahimv2/AnkiExamTimeline | 341595498 | `dist/anki-exam-timeline.ankiaddon` |
-| 🫧 AnkiGlass | `~/Documents/Projects/anki-glass` | AIbrahimv2/AnkiGlass | 1866406123 | `dist/anki-glass.ankiaddon` |
-| 🐻 AnkiBare | `~/Documents/Projects/anki-bare` | AIbrahimv2/AnkiBare | 1505882046 | `dist/anki-bare.ankiaddon` |
-| 👀 Skim | `~/Documents/Projects/anki-skim` | AIbrahimv2/AnkiSkim | 2141626960 | `dist/skim.ankiaddon` |
+| 🪜 Stepwise | `~/Projects/anki-stepwise` | AIbrahimv2/AnkiStepwise | 1949793886 | `dist/stepwise.ankiaddon` |
+| 📅 Exam Timeline | `~/Projects/anki-exam-timeline` | AIbrahimv2/AnkiExamTimeline | 341595498 | `dist/anki-exam-timeline.ankiaddon` |
+| 🫧 AnkiGlass | `~/Projects/anki-glass` | AIbrahimv2/AnkiGlass | 1866406123 | `dist/anki-glass.ankiaddon` |
+| 🐻 AnkiBare | `~/Projects/anki-bare` | AIbrahimv2/AnkiBare | 1505882046 | `dist/anki-bare.ankiaddon` |
+| 👀 Skim | `~/Projects/anki-skim` | AIbrahimv2/AnkiSkim | 2141626960 | `dist/skim.ankiaddon` |
 
 The signed-in list of the user's items is https://ankiweb.net/shared/mine.
 Add a row here when a new add-on is published, and fix rows that drift.
 
 **The shared kit:** every add-on carries a copy of
-`~/Documents/Projects/anki-addon-kit` (`src/kit/`, and `web/src/kit/` for
+`~/Projects/anki-addon-kit` (`src/kit/`, and `web/src/kit/` for
 those with a page): the theme and controls, the Settings / What's new /
 About dialog, and the notice after updates. Its `catalog.json` lists the
 add-ons for About; when one is published (or its AnkiWeb ID changes), update
 it there, bump `updated`, sync, and release an add-on so users see it.
 
 **Where this skill lives:** in the AnkiStepwise repo, at
-`.claude/skills/anki-addon-release/`. On the user's Mac,
+`.claude/skills/anki-addon-release/`. On the user's Linux machine and Mac,
 `~/.claude/skills/anki-addon-release` is a symlink to it, so every local
-session sees it. The other add-on repos have a `CLAUDE.md` pointing here for
+session sees it. Paths here are the Linux machine's, where the repos live in
+`~/Projects` and sessions run; the Mac's copies are in `~/Documents/Projects`.
+Mac-only steps (Anki.app, the screenshots) go to the Mac with `ssh mac`. The other add-on repos have a `CLAUDE.md` pointing here for
 cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
 
 ## Ground rules
@@ -84,9 +86,9 @@ cloud sessions. Edit it in the Stepwise repo and push, so both stay current.
 
 ```bash
 R=~/.claude/skills/anki-addon-release/scripts
-python3 $R/release.py ~/Documents/Projects/<repo>            # dry run
-python3 $R/release.py ~/Documents/Projects/<repo> --publish --co-author "Claude ... <noreply@anthropic.com>"
-python3 $R/release.py ~/Documents/Projects/<repo> --uploaded --co-author "..."   # after Save on AnkiWeb
+python3 $R/release.py ~/Projects/<repo>            # dry run
+python3 $R/release.py ~/Projects/<repo> --publish --co-author "Claude ... <noreply@anthropic.com>"
+python3 $R/release.py ~/Projects/<repo> --uploaded --co-author "..."   # after Save on AnkiWeb
 ```
 
 - **Dry run** (no flag): checks the repo is clean, on main, not behind origin
@@ -212,7 +214,7 @@ no work on it as of 2026-11-17). When it ships, `release.py` can call it.
     `tests/run_on_anki.sh <version>`. Its listed minimum and the reasons are
     in `docs/ankiweb-listing.md`. Rerun the tests on that version before each
     release.
-  - **Maximum:** the installed version, from `ls
+  - **Maximum:** the installed version, from `ssh mac ls
     /Applications/Anki.app/Contents/Resources/app_packages | grep aqt-` (26.9.4
     means "26.09.4"). Without a `-` in front, newer versions still get the
     add-on. A `-` blocks them.

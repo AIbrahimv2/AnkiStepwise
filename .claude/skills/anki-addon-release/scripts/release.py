@@ -32,7 +32,7 @@ from datetime import date
 from pathlib import Path
 
 from addons import (
-    KIT, LISTING, SCRIPTS, Addon, ankiweb_record, git, installed_anki, load, next_version,
+    KIT, LISTING, SCRIPTS, Addon, ankiweb_record, git, installed_anki, load, next_version, on_mac, ssh_mac, MAC_HOST,
     record_upload, release_changelog, release_notes,
 )
 
@@ -170,8 +170,16 @@ def ankiweb_handoff(addon: Addon, version: str, pkg: Path, interactive: bool, co
         return
     url = f"https://ankiweb.net/shared/upload?id={addon.ankiweb}"
     anki = installed_anki()
+    pick = str(pkg)
+    if not on_mac():  # the browser is on the Mac: copy the package to its home folder
+        r = ssh_mac("mkdir", "-p", "ankiweb-upload")
+        if r and r.returncode == 0 and subprocess.run(
+                ["scp", "-q", "-o", "BatchMode=yes", str(pkg), f"{MAC_HOST}:ankiweb-upload/"]).returncode == 0:
+            pick = f"~/ankiweb-upload/{pkg.name} on the Mac"
+        else:
+            say(f"  (Couldn't copy the package to the Mac over SSH: copy {pkg} there yourself.)")
     say(f"  1. Open {url} (sign in if asked).")
-    say(f"  2. Choose File: {pkg}")
+    say(f"  2. Choose File: {pick}")
     say("     (Cmd+Shift+G in the file dialog takes a path, or drag the file from Finder onto the button.)")
     if anki:
         say(f"  3. Supported versions: the maximum should be {anki}, the Anki installed here, with no '-'.")

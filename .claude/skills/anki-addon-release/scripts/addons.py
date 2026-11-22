@@ -3,7 +3,8 @@ is, its catalog entry (name, AnkiWeb ID), its changelog, its package, and
 which version AnkiWeb has, as recorded in docs/ankiweb-listing.md.
 
 Used by release_status.py and release.py. The add-on repos sit side by side
-(~/Documents/Projects on the user's Mac, found from where this file lives);
+(~/Projects on the Linux machine, ~/Documents/Projects on the Mac, found from
+where this file lives);
 set ANKI_PROJECTS to look elsewhere.
 """
 
@@ -204,11 +205,33 @@ def record_upload(text: str, version: str, date: str) -> str:
     return text[: first.start()] + section + text[first.start():]
 
 
+MAC_HOST = os.environ.get("MAC_HOST", "mac")  # the Mac, from the Linux machine
+
+
+def on_mac() -> bool:
+    return os.uname().sysname == "Darwin"
+
+
+def ssh_mac(*args: str) -> subprocess.CompletedProcess | None:
+    """Run a command on the Mac without prompting; None if it can't be reached."""
+    try:
+        return subprocess.run(["ssh", "-o", "BatchMode=yes", "-o", "ConnectTimeout=5", MAC_HOST, *args],
+                              capture_output=True, text=True, timeout=60)
+    except (OSError, subprocess.TimeoutExpired):
+        return None
+
+
 def installed_anki() -> str | None:
-    """The Anki installed on this Mac, as AnkiWeb writes it (26.9.4 -> 26.09.4)."""
+    """The Anki installed on the Mac, as AnkiWeb writes it (26.9.4 -> 26.09.4).
+    From the Linux machine it asks the Mac over SSH."""
     pkgs = Path("/Applications/Anki.app/Contents/Resources/app_packages")
-    for p in sorted(pkgs.glob("aqt-*.dist-info")) if pkgs.exists() else []:
-        parts = p.name[len("aqt-"): -len(".dist-info")].split(".")
+    if on_mac():
+        names = [p.name for p in pkgs.glob("aqt-*.dist-info")] if pkgs.exists() else []
+    else:
+        r = ssh_mac("ls", str(pkgs))
+        names = r.stdout.split() if r and r.returncode == 0 else []
+    for name in sorted(n for n in names if n.startswith("aqt-") and n.endswith(".dist-info")):
+        parts = name[len("aqt-"): -len(".dist-info")].split(".")
         if len(parts) == 3 and all(x.isdigit() for x in parts):
             return f"{parts[0]}.{int(parts[1]):02d}.{parts[2]}"
     return None
