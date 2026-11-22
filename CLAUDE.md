@@ -20,3 +20,12 @@ Stepwise is one of AIbrahimv2's Anki add-ons (AnkiWeb ID 1949793886).
   under `## [Unreleased]` in the session that makes it: that's what the
   next release is cut from. The release skill's `release_status.py` shows
   what's waiting in every add-on.
+
+## Screenshots
+
+Make them on the Mac, always: `../anki-addon-kit/screenshots/on-mac.sh`
+(with `tools/screenshots.py`'s arguments). They're shown on AnkiGlass's glass
+and need macOS (Anki.app, Tahoe's wallpaper, Chromium.app, your collection).
+On the Mac it runs `tools/screenshots.py`; from the Linux machine it runs it on
+the Mac over SSH and copies the PNGs back into `docs/`. Don't run
+`tools/screenshots.py` directly on Linux.
