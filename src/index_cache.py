@@ -6,8 +6,10 @@ Building the index reads every card (about 0.7 s on a full AnKing
 collection, twice that while Anki is starting up). So it's saved, in the
 add-on's user_files folder (never packaged, kept across updates), and read
 back when the profile opens, in about 40 ms. A saved index is a session old,
-so Stepwise treats it as out of date: it's shown straight away and rebuilt
-in the background later, never during startup.
+so Stepwise treats it as out of date: it's shown straight away and, once
+startup has settled, checked against the collection by its stamp (see
+counts.collection_stamp). If nothing changed it's used as it is; if
+something did, it's rebuilt in the background, never during startup.
 
 The file holds the index's plain data (dicts, lists, arrays), not the class,
 so it doesn't depend on the add-on's folder name; FORMAT guards changes to
@@ -37,11 +39,16 @@ def path_for(collection_path: str) -> str:
     return os.path.join(USER_FILES, f"index-{key}.pickle")
 
 
-def save(collection_path: str, index: TagIndex) -> None:
-    """Write the index (atomically: a half-written file is never read)."""
+def save(collection_path: str, index: TagIndex, current: bool = True) -> None:
+    """Write the index (atomically: a half-written file is never read).
+    One that isn't `current` (cards changed since it was built) is saved
+    without its stamp, so next session rebuilds it whatever the collection
+    looks like then."""
     target = path_for(collection_path)
     os.makedirs(os.path.dirname(target), exist_ok=True)
     data = {"format": FORMAT, "fields": {f.name: getattr(index, f.name) for f in fields(TagIndex)}}
+    if not current:
+        data["fields"]["stamp"] = []
     tmp = target + ".tmp"
     with open(tmp, "wb") as fh:
         pickle.dump(data, fh, protocol=pickle.HIGHEST_PROTOCOL)

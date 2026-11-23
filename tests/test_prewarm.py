@@ -1,6 +1,7 @@
 """Startup with an index saved last session: the window is made ahead of
 time, hidden, from the saved index, counting nothing. Opening it shows the
-tree at once, rebuilds in the background, and says "Syncing" meanwhile."""
+tree at once. If nothing changed since the index was saved, that's all; if
+something did, it rebuilds in the background and says "Syncing" meanwhile."""
 import os
 import sys
 import time
@@ -87,11 +88,25 @@ app.processEvents()
 rows = js(d, ROWS)
 shown_ms = (time.perf_counter() - t) * 1000
 check(rows and shown_ms < 300, f"opening it shows the tree at once ({shown_ms:.0f} ms, {rows} rows)")
+pump(20)
+check(not builds and not actions.index_stale(),
+      "nothing changed since it was saved (a restart the same day): it's used as it is, not rebuilt")
+check(js(d, "!!document.querySelector('.syncing')") is False, "so it never says Syncing")
+d.hide()
+pump(2)
+
+# The next session, with a card changed since (studied on another device).
+actions.reset()
+check(actions.load_saved_index(), "next session, the saved index is read again")
+cid = col.db.scalar("select id from cards where queue >= 0 limit 1")
+col.sched.suspend_cards([cid])
+ui.open_dialog()
 check(wait(d, "document.querySelector('.syncing') && document.querySelector('.syncing').textContent === 'Syncing'"),
-      "and says Syncing while it rebuilds the saved index in the background")
+      "opened before startup has settled, it says Syncing while it rebuilds the changed index in the background")
 check(wait(d, "!document.querySelector('.syncing')"), "when the rebuild lands, Syncing goes away")
 check(len(builds) == 1, "one rebuild, started by opening the window")
 check(actions.cached_index().names == saved_names and not actions.index_stale(), "and the index is up to date")
+col.sched.unsuspend_cards([cid])
 
 actions.build_index = real_build
 print(f"ok ({n} checks)")

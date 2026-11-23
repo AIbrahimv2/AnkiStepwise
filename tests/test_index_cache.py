@@ -62,9 +62,32 @@ actions.suspended_cards([idx.name(some)])
 check(searched, "until it's rebuilt, which cards are under a tag comes from Anki's search")
 actions.suspended_ids = real_suspended
 
+check(actions.settle_saved_index() is None and not calls and actions.cached_index() is idx
+      and not actions.index_stale() and not actions._membership_dirty,
+      "once startup settles, nothing has changed since it was saved: it's used as it is, not rebuilt")
 actions.request_index()
-check(len(calls) == 1 and actions.cached_index() is not idx and not actions.index_stale(), "asking for it rebuilds it")
+check(not calls and not actions.building(), "so opening Stepwise doesn't rebuild it either")
+
+# The next session again, with a card changed since (as a sync would bring).
+actions.reset()
+check(actions.load_saved_index(), "the next session reads it again")
+idx = actions.cached_index()
+cid = col.db.scalar("select id from cards where queue >= 0 limit 1")
+col.sched.suspend_cards([cid])
+actions.request_index()
+check(len(calls) == 1 and actions.cached_index() is not idx and not actions.index_stale(),
+      "with a card changed since, asking for it rebuilds it")
+col.sched.unsuspend_cards([cid])
 actions.build_index = real_build
+
+# An index saved while out of date is never trusted next session.
+actions.mark_index_dirty()
+actions._unsaved = True
+actions.save_index()
+actions.reset()
+actions.load_saved_index()
+check(not actions.check_saved_index() and actions.index_stale(), "an index saved out of date is rebuilt next session")
+actions.request_index()
 
 # --- saving: only what's new, and only good files are read ------------------------
 

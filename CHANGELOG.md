@@ -3,6 +3,17 @@
 All notable changes to this project are documented here. The format is based on
 [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [Unreleased]
+
+### Changed
+
+- Opening Stepwise for the first time after starting Anki is instant, with
+  no "Syncing": if nothing has changed since you last closed Anki (a
+  restart the same day), it uses what it counted then as it is. If
+  something has changed (a new day, or cards studied on your phone), it
+  recounts in the background a few seconds after Anki starts, on the deck
+  screen, so it's ready before you open it.
+
 ## [1.5.0] - 2026-11-19
 
 ### Added

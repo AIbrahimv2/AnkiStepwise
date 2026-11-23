@@ -248,6 +248,9 @@ class TagIndex:
     suspended_mask: bytearray = field(default_factory=bytearray)
     # Every tag, deepest first: children always come before their parent.
     post_order: list[str] = field(default_factory=list)
+    # What the collection looked like when this was built (collection_stamp):
+    # an index saved last session with the same stamp is still current.
+    stamp: list = field(default_factory=list)
 
     def name(self, key: str) -> str:
         return self.names.get(key, key)
@@ -291,11 +294,38 @@ class TagIndex:
         return [card_ids[i] for i in positions]
 
 
+# Everything an index is read from: the day (Anki's "today", which also
+# unburies yesterday's cards), every card and note (any change to one sets
+# its mod to now, so the sum moves even when the largest doesn't, as after
+# a sync; and what the index reads of them, for two changes within one
+# second), the tag list, and the decks and their options (burying).
+_STAMP_SQL = (
+    "select count(), max(mod), total(mod), total(queue), total(type), total(due), total(did), total(odid)"
+    " from cards",
+    "select count(), max(mod), total(mod), total(length(tags)) from notes",
+    "select count() from tags",
+    "select count(), total(mtime_secs) from decks",
+    "select count(), total(mtime_secs) from deck_config",
+)
+
+
+def collection_stamp(col) -> list:
+    """A fingerprint of what build_index reads: equal stamps, equal indexes.
+    One quick pass over the tables (about 35 ms for a full AnKing
+    collection), next to the second or so a rebuild takes."""
+    out: list = [col.sched.today]
+    for sql in _STAMP_SQL:
+        out.extend(col.db.first(sql) or [])
+    return out
+
+
 def build_index(col, mode: str) -> TagIndex:
     """Build the tag tree, count cards under every tag, and record which
     cards each tag holds, in one pass over the cards table (a few hundred
     ms for a full AnKing collection; still run it in the background)."""
-    idx = TagIndex(mode=mode)
+    # First: anything that changes while the cards are read makes the stamp
+    # out of date, never the other way round.
+    idx = TagIndex(mode=mode, stamp=collection_stamp(col))
     names = idx.names
     tag_cards: dict[str, list[int]] = {}
     # raw tag string -> (its key and all parent keys, its card list). Built

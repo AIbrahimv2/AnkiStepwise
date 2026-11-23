@@ -29,19 +29,24 @@ def _install() -> None:
     actions.menu_action = action  # so Settings can change the shortcut live
 
 
-# The window is made (hidden) once Anki's own startup has settled.
+# The window is made (hidden) once Anki's own startup has settled, and a
+# moment later the saved index is checked against the collection.
 PREWARM_MS = 8000
+SETTLE_MS = 9500
 
 
 def _on_profile_open() -> None:
     """Read the tag index saved last session (about 40 ms) and count
-    nothing: startup isn't slowed. The saved index is shown as it is and
-    rebuilt when you open Stepwise (it says "Syncing" meanwhile) or, for
-    the deck meter, once Anki has been running a while. Only the very first
-    time, with nothing saved, is it counted shortly after startup."""
+    nothing: startup isn't slowed. The saved index is shown as it is. Once
+    startup has settled it's checked against the collection (about 35 ms):
+    if nothing changed since (a restart the same day), it's used as it is;
+    if something did, it's rebuilt in the background, on the deck screen,
+    so opening Stepwise finds it current. Only the very first time, with
+    nothing saved, is it counted shortly after startup."""
     if not actions.load_saved_index():
         QTimer.singleShot(4000, lambda: mw.col is not None and actions.request_index())
     QTimer.singleShot(PREWARM_MS, ui.prewarm)
+    QTimer.singleShot(SETTLE_MS, lambda: mw.col is not None and actions.settle_saved_index())
 
 
 def _on_profile_close() -> None:

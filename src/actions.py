@@ -20,6 +20,7 @@ from .config import get_config
 from .counts import (
     TagIndex,
     build_index,
+    collection_stamp,
     fresh_ids,
     plan_fill,
     resource_roots,
@@ -432,11 +433,15 @@ _building_listeners: list[Callable[[bool], None]] = []
 _unsaved = False
 _saved_this_session = False
 _opened_at = 0.0  # when the profile opened (time.monotonic)
+# The index on hand is the one saved last session, not yet checked against
+# the collection (see check_saved_index).
+_from_disk = False
 _later_timer = None
 _later_callbacks: list[Callable[[], None]] = []
 # Rebuilding competes with Anki for Python: never in the first seconds of a
-# session, and only after a pause, when it's the deck meter that wants it.
-STARTUP_GRACE = 20.0
+# session, and only after a pause, when it's the deck meter or startup
+# (an index saved last session that's out of date) that wants it.
+STARTUP_GRACE = 12.0
 REFRESH_DELAY_MS = 2000
 
 
@@ -481,9 +486,9 @@ def _tell_building(on: bool) -> None:
 
 def load_saved_index() -> bool:
     """At profile open: the index saved last session, as out of date (so
-    it's shown at once, rebuilt later, and not trusted for which cards sit
-    under which tag until then). Nothing is counted now."""
-    global _index, _index_dirty, _membership_dirty, _opened_at, _unsaved, _saved_this_session
+    it's shown at once, and not trusted for which cards sit under which tag
+    until check_saved_index or a rebuild says so). Nothing is counted now."""
+    global _index, _index_dirty, _membership_dirty, _opened_at, _unsaved, _saved_this_session, _from_disk
     _opened_at = time.monotonic()
     _unsaved, _saved_this_session = False, False
     if mw.col is None or _index is not None:
@@ -491,8 +496,42 @@ def load_saved_index() -> bool:
     saved = index_cache.load(mw.col.path, get_config()["count_mode"])
     if saved is None:
         return False
-    _index, _index_dirty, _membership_dirty = saved, True, True
+    _index, _index_dirty, _membership_dirty, _from_disk = saved, True, True, True
     return True
+
+
+def check_saved_index() -> bool:
+    """Whether the index saved last session is still current: nothing it's
+    read from has changed since (the same day, no card, note, tag or deck
+    option touched, as when you restart Anki). Then it's used as it is, with
+    no rebuild and no "Syncing". A quick pass over the collection (about 35
+    ms), once a session, never at startup itself."""
+    global _index_dirty, _membership_dirty, _from_disk
+    if not _from_disk or _index is None or _building or mw.col is None:
+        return False
+    _from_disk = False
+    try:
+        current = bool(_index.stamp) and _index.stamp == collection_stamp(mw.col)
+    except Exception:  # an unusual collection: rebuild, as before
+        current = False
+    if not current or _index.mode != get_config()["count_mode"]:
+        return False
+    _index_dirty = _membership_dirty = False
+    consolidate()  # what a rebuild does next: re-check what's done
+    for fn in list(_index_listeners):
+        try:
+            fn(_index)
+        except RuntimeError:  # listener's Qt object is gone
+            off_index_built(fn)
+    return True
+
+
+def settle_saved_index() -> None:
+    """Once startup has settled: use the saved index if it's current, or
+    rebuild it soon (on the deck screen), so that opening Stepwise finds it
+    up to date rather than rebuilding then."""
+    if _from_disk and not check_saved_index() and _index_dirty:
+        refresh_index_later()
 
 
 def save_index() -> None:
@@ -501,7 +540,7 @@ def save_index() -> None:
     if _index is None or not _unsaved or mw.col is None:
         return
     try:
-        index_cache.save(mw.col.path, _index)
+        index_cache.save(mw.col.path, _index, current=not _index_dirty)
         _unsaved, _saved_this_session = False, True
     except OSError as exc:  # a full disk mustn't break Stepwise
         print(f"Stepwise: couldn't save the tag index: {exc!r}")
@@ -548,6 +587,8 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
     listeners from on_index_built() hear about every rebuild."""
     global _building, _index_dirty
     mode = get_config()["count_mode"]
+    if _from_disk and _index_dirty:
+        check_saved_index()
     if _index is not None and not _index_dirty and _index.mode == mode:
         if callback:
             callback(_index)
@@ -562,8 +603,8 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
     _tell_building(True)
 
     def on_done(index: TagIndex) -> None:
-        global _index, _building, _membership_dirty, _unsaved
-        _index, _building, _unsaved = index, False, True
+        global _index, _building, _membership_dirty, _unsaved, _from_disk
+        _index, _building, _unsaved, _from_disk = index, False, True, False
         if membership_was_dirty and not _index_dirty:
             _membership_dirty = False
         if not _saved_this_session:
@@ -598,8 +639,8 @@ def request_index(callback: Callable[[TagIndex], None] | None = None) -> None:
 
 def reset() -> None:
     """Forget everything tied to the current collection (profile switch)."""
-    global _index, _index_dirty, _membership_dirty, _building, _unsaved
-    _index, _index_dirty, _membership_dirty, _building, _unsaved = None, True, True, False, False
+    global _index, _index_dirty, _membership_dirty, _building, _unsaved, _from_disk
+    _index, _index_dirty, _membership_dirty, _building, _unsaved, _from_disk = None, True, True, False, False, False
     _waiters.clear()
     _later_callbacks.clear()
     if _later_timer is not None:
