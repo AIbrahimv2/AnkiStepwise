@@ -110,9 +110,12 @@ Anki's light and dark themes, with vim-style keyboard navigation.
 - The queue is saved in your collection, so it's per profile and syncs with it.
 - **Instant start.** Card counts are saved when you close Anki and read back
   when it opens, so neither Anki's startup nor the first open of Stepwise
-  waits for them. The window brings them up to date in the background and
-  says "Syncing" meanwhile. The saved counts live in the add-on's
-  `user_files` folder.
+  waits for them. If nothing has changed since (a restart the same day),
+  they're used as they are. If something has (a new day, or cards studied
+  on your phone), they're recounted in the background a few seconds after
+  Anki starts, on the deck screen, so they're current when you open
+  Stepwise; open it sooner and it says "Syncing" meanwhile. The saved
+  counts live in the add-on's `user_files` folder.
 
 ## Usage
 
