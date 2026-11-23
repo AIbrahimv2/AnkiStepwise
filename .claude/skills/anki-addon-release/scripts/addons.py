@@ -3,7 +3,8 @@ is, its catalog entry (name, AnkiWeb ID), its changelog, its package, and
 which version AnkiWeb has, as recorded in docs/ankiweb-listing.md.
 
 Used by release_status.py and release.py. The add-on repos sit side by side
-(~/Projects on the Linux machine, ~/Documents/Projects on the Mac, found from
+(~/Projects/anki on the Linux machine, ~/Documents/Projects/anki on the Mac,
+found from
 where this file lives);
 set ANKI_PROJECTS to look elsewhere.
 """
@@ -19,7 +20,7 @@ from dataclasses import dataclass, field
 from pathlib import Path
 
 SCRIPTS = Path(__file__).resolve().parent
-# scripts/ -> anki-addon-release/ -> skills/ -> .claude/ -> anki-stepwise/ -> Projects/
+# scripts/ -> anki-addon-release/ -> skills/ -> .claude/ -> anki-stepwise/ -> anki/
 PROJECTS = Path(os.environ.get("ANKI_PROJECTS") or SCRIPTS.parents[4])
 KIT = PROJECTS / "anki-addon-kit"
 
@@ -206,6 +207,8 @@ def record_upload(text: str, version: str, date: str) -> str:
 
 
 MAC_HOST = os.environ.get("MAC_HOST", "mac")  # the Mac, from the Linux machine
+# Where packages go on the Mac for the AnkiWeb upload, under its home folder.
+MAC_UPLOAD_DIR = "Documents/Projects/anki/work/ankiweb-upload"
 
 
 def on_mac() -> bool:
