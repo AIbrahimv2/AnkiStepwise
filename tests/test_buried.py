@@ -6,6 +6,10 @@ from harness import col, counts, mw
 from tq.config import get_config
 
 # Anki un-buries cards every day, so bury some here: by hand and as siblings.
+# First let today begin: the fixture was last opened days ago, so Anki's
+# first look at "today" (build_index's stamp reads it) unburies everything,
+# these cards too if they were buried before it.
+col.sched.today
 new = [cid for (cid,) in col.db.all("select id from cards where type=0 and queue=0 limit 60")]
 assert len(new) == 60, "expected unsuspended new cards in this collection"
 col.sched.bury_cards(new[:30])
